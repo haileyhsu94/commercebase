@@ -1,0 +1,49 @@
+import { Search, Sparkles } from "lucide-react"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { useAIAssistant } from "@/contexts/AIAssistantContext"
+import { useGlobalSearch } from "@/contexts/GlobalSearchContext"
+import { cn } from "@/lib/utils"
+
+export function Header() {
+  const { toggleOpen } = useAIAssistant()
+  const { openSearch } = useGlobalSearch()
+
+  return (
+    <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger className="-ml-1" />
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <button
+          type="button"
+          onClick={openSearch}
+          className={cn(
+            "relative flex h-9 w-full max-w-sm min-w-0 items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 text-left text-base text-muted-foreground transition-colors",
+            "hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          )}
+          aria-label="Open search"
+        >
+          <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 truncate text-sm">Search CommerceBase…</span>
+          <kbd className="pointer-events-none hidden shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-block">
+            ⌘K
+          </kbd>
+        </button>
+      </div>
+      <Button
+        onClick={toggleOpen}
+        variant="outline"
+        size="sm"
+        className={cn(
+          "gap-1.5 border-indigo-500/45 bg-indigo-500/15 text-indigo-950 shadow-none",
+          "hover:bg-indigo-500/28 hover:text-indigo-950",
+          "focus-visible:ring-indigo-500/45 [&_svg]:text-indigo-600",
+          "dark:border-indigo-400/50 dark:bg-indigo-500/22 dark:text-indigo-50",
+          "dark:hover:bg-indigo-500/32 dark:hover:text-indigo-50 dark:[&_svg]:text-indigo-300"
+        )}
+      >
+        <Sparkles className="h-4 w-4 shrink-0" />
+        Ask Aeris
+      </Button>
+    </header>
+  )
+}
