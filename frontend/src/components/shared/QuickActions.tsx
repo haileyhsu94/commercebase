@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { Plus, BarChart3, Bot, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useCampaignPlanAllowance } from "@/hooks/use-campaign-plan-allowance"
 
 const actions = [
   {
@@ -34,24 +35,34 @@ const actions = [
 ]
 
 export function QuickActions() {
+  const allowance = useCampaignPlanAllowance()
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {actions.map((action) => (
-        <Button
-          key={action.title}
-          variant={action.variant}
-          className="h-auto justify-start gap-3 p-4"
-          asChild
-        >
-          <Link to={action.href}>
-            <action.icon className="h-5 w-5 shrink-0" />
-            <div className="text-left">
-              <div className="font-medium">{action.title}</div>
-              <div className="text-xs font-normal opacity-70">{action.description}</div>
-            </div>
-          </Link>
-        </Button>
-      ))}
+      {actions.map((action) => {
+        const isCreate = action.title === "Create Campaign"
+        const subline =
+          isCreate && allowance.includedPerMonth > 0
+            ? `${allowance.usedThisMonth}/${allowance.includedPerMonth} campaigns used`
+            : action.description
+
+        return (
+          <Button
+            key={action.title}
+            variant={action.variant}
+            className="h-auto justify-start gap-3 p-4"
+            asChild
+          >
+            <Link to={action.href}>
+              <action.icon className="h-5 w-5 shrink-0" />
+              <div className="text-left">
+                <div className="font-medium">{action.title}</div>
+                <div className="text-xs font-normal opacity-70">{subline}</div>
+              </div>
+            </Link>
+          </Button>
+        )
+      })}
     </div>
   )
 }

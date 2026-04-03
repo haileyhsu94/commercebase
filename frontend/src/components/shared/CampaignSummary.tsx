@@ -27,7 +27,7 @@ export function CampaignSummary({ timeRange }: { timeRange: AiPresenceTimeRange 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-start justify-between gap-2">
           <div>
             <CardTitle className="text-sm font-medium">
               Active Campaigns
@@ -39,9 +39,10 @@ export function CampaignSummary({ timeRange }: { timeRange: AiPresenceTimeRange 
               Spend and revenue for {formatAiPresencePeriodShort(timeRange).toLowerCase()} (mock)
             </CardDescription>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/campaigns">
-              View All <ArrowRight className="ml-1 h-3 w-3" />
+          <Button variant="ghost" size="sm" className="shrink-0" asChild>
+            <Link to="/campaigns" className="inline-flex items-center gap-1">
+              <ArrowRight className="h-3 w-3" />
+              View All
             </Link>
           </Button>
         </div>

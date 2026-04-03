@@ -152,6 +152,12 @@ export const CAMPAIGN_OBJECTIVE_OPTIONS = [
     label: "New customers",
     description: "First-time buyers and sign-ups",
   },
+  {
+    value: "creator_commerce",
+    label: "Creator Commerce",
+    description:
+      "via StylMatch — Partner with fashion creators for authentic product discovery and social-first sales.",
+  },
 ] as const
 
 export const CAMPAIGN_TYPE_OPTIONS = [

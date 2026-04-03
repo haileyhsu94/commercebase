@@ -3,6 +3,13 @@ import { campaigns as seedCampaigns } from "@/lib/mock-data"
 
 const STORAGE_KEY = "commercebase_user_campaigns_v1"
 
+export const CAMPAIGN_STORAGE_UPDATED_EVENT = "commercebase-campaigns-updated"
+
+function notifyCampaignStorageUpdated() {
+  if (typeof window === "undefined") return
+  window.dispatchEvent(new CustomEvent(CAMPAIGN_STORAGE_UPDATED_EVENT))
+}
+
 function read(): Campaign[] {
   if (typeof window === "undefined") return []
   try {
@@ -17,6 +24,7 @@ function read(): Campaign[] {
 
 function write(campaigns: Campaign[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns))
+  notifyCampaignStorageUpdated()
 }
 
 /** User-launched campaigns (prepended to mock list). */
@@ -25,13 +33,13 @@ export function getUserCampaigns(): Campaign[] {
 }
 
 export function addLaunchedCampaign(campaign: Campaign): void {
-  const next = [campaign, ...read()]
-  write(next)
+  write([campaign, ...read()])
 }
 
 export function makeNewCampaignRow(name: string, currencySymbol: string): Campaign {
+  const launchedAt = new Date().toISOString()
   return {
-    id: `new-${Date.now().toString(36)}`,
+    id: `new-${Date.now()}`,
     name,
     status: "active",
     spent: `${currencySymbol}0`,
@@ -40,6 +48,7 @@ export function makeNewCampaignRow(name: string, currencySymbol: string): Campai
     roas: "—",
     cpc: "—",
     cps: "—",
+    launchedAt,
   }
 }
 

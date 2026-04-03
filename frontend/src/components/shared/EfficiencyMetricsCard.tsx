@@ -97,6 +97,7 @@ function MetricSparkline({
           tickMargin={4}
         />
         <ChartTooltip
+          isAnimationActive={false}
           cursor={{ stroke: "var(--border)", strokeWidth: 1, strokeDasharray: "4 4" }}
           content={
             <ChartTooltipContent
@@ -143,9 +144,9 @@ export function EfficiencyMetricsCard({ timeRange }: { timeRange: AiPresenceTime
             const trendPositive = lowerIsBetter ? metric.trend === "down" : metric.trend === "up"
             return (
             <div key={metric.key} className="space-y-2">
-              <div className="space-y-1.5 p-3 rounded-lg bg-muted/50">
+              <div className="space-y-1.5 rounded-lg bg-muted/50 p-3 ring-1 ring-transparent dark:bg-white/[0.1] dark:ring-border/50">
                 <span className="text-xs text-muted-foreground">{metric.label}</span>
-                <div className="flex items-baseline gap-2 flex-wrap">
+                <div className="flex flex-col gap-0.5">
                   <span className="text-2xl font-bold tabular-nums">{metric.value}</span>
                   <span
                     className={`flex items-center text-xs ${

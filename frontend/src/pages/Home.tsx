@@ -92,8 +92,8 @@ export function Home() {
           <h1 className="text-2xl font-semibold tracking-tight">
             Welcome back, {currentUser.name.split(" ")[0]}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Here's what's happening with your campaigns — {formatAiPresencePeriodShort(timeRange)}.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Here&apos;s what&apos;s happening with your campaigns — {formatAiPresencePeriodShort(timeRange)}.
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:items-center">

@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { DatePickerField, parseIsoDateString } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Slider } from "@/components/ui/slider"
@@ -45,6 +46,7 @@ import { getCompanyProfile, siteHostname } from "@/lib/company-profile"
 import { addLaunchedCampaign, makeNewCampaignRow } from "@/lib/campaign-storage"
 import { regionFlag } from "@/lib/region-flags"
 import { AdPreview } from "@/components/campaigns/AdPreview"
+import { CampaignPlanAllowanceBanner } from "@/components/campaigns/CampaignPlanAllowanceBanner"
 import {
   initialCampaignWizardForm,
   type CampaignWizardFormData,
@@ -213,6 +215,7 @@ const OBJECTIVE_ICONS = {
   traffic: MousePointerClick,
   awareness: Megaphone,
   newcustomer: UserPlus,
+  creator_commerce: Sparkles,
 } as const
 
 const CAMPAIGN_TYPE_ICONS = {
@@ -295,7 +298,7 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
         !formData.campaignType
       ) {
         setStepError(
-          "Add a campaign name, target market, objective, and campaign type to continue."
+          "Add a campaign name, objective, target market, and campaign type to continue."
         )
         return
       }
@@ -493,7 +496,8 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
       )}
 
       <Card className="mb-6">
-        <CardContent>
+        <CardContent className="space-y-6">
+          <CampaignPlanAllowanceBanner compact />
           {currentStep === 1 && (
             <div className="max-w-3xl space-y-8">
               <div className="space-y-2">
@@ -506,6 +510,39 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-sm font-medium">Objective</h3>
+                  <p className="text-xs text-muted-foreground">What success looks like for this campaign.</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {CAMPAIGN_OBJECTIVE_OPTIONS.map((o) => {
+                    const Icon = OBJECTIVE_ICONS[o.value as keyof typeof OBJECTIVE_ICONS]
+                    const selected = formData.objective === o.value
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, objective: o.value })}
+                        className={cn(
+                          "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
+                          selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                        )}
+                      >
+                        {selected && (
+                          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            <Check className="h-3 w-3" />
+                          </span>
+                        )}
+                        <Icon className="h-5 w-5 text-primary" />
+                        <span className="font-medium leading-tight">{o.label}</span>
+                        <span className="text-xs text-muted-foreground">{o.description}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -538,39 +575,6 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
                         {Icon && <Icon className="h-5 w-5 text-primary" />}
                         <span className="font-medium leading-tight">{m.label}</span>
                         <span className="text-xs text-muted-foreground">{m.description}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-sm font-medium">Objective</h3>
-                  <p className="text-xs text-muted-foreground">What success looks like for this campaign.</p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {CAMPAIGN_OBJECTIVE_OPTIONS.map((o) => {
-                    const Icon = OBJECTIVE_ICONS[o.value as keyof typeof OBJECTIVE_ICONS]
-                    const selected = formData.objective === o.value
-                    return (
-                      <button
-                        key={o.value}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, objective: o.value })}
-                        className={cn(
-                          "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
-                          selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
-                        )}
-                      >
-                        {selected && (
-                          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                            <Check className="h-3 w-3" />
-                          </span>
-                        )}
-                        <Icon className="h-5 w-5 text-primary" />
-                        <span className="font-medium leading-tight">{o.label}</span>
-                        <span className="text-xs text-muted-foreground">{o.description}</span>
                       </button>
                     )
                   })}
@@ -797,19 +801,27 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Start date</label>
-                  <Input
-                    type="date"
+                  <label htmlFor="campaign-start-date" className="text-sm font-medium">
+                    Start date
+                  </label>
+                  <DatePickerField
+                    id="campaign-start-date"
                     value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    onChange={(v) => setFormData({ ...formData, startDate: v })}
+                    maxDate={parseIsoDateString(formData.endDate)}
+                    placeholder="Start date"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">End date</label>
-                  <Input
-                    type="date"
+                  <label htmlFor="campaign-end-date" className="text-sm font-medium">
+                    End date
+                  </label>
+                  <DatePickerField
+                    id="campaign-end-date"
                     value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    onChange={(v) => setFormData({ ...formData, endDate: v })}
+                    minDate={parseIsoDateString(formData.startDate)}
+                    placeholder="End date"
                   />
                 </div>
               </div>
@@ -1301,12 +1313,12 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
                   <CardContent className="space-y-2 text-sm">
                     <ReviewRow label="Name" value={formData.name || "—"} />
                     <ReviewRow
-                      label="Target market"
-                      value={optionLabel(TARGET_MARKET_OPTIONS, formData.targetMarket)}
-                    />
-                    <ReviewRow
                       label="Objective"
                       value={optionLabel(CAMPAIGN_OBJECTIVE_OPTIONS, formData.objective)}
+                    />
+                    <ReviewRow
+                      label="Target market"
+                      value={optionLabel(TARGET_MARKET_OPTIONS, formData.targetMarket)}
                     />
                     <ReviewRow
                       label="Campaign type"

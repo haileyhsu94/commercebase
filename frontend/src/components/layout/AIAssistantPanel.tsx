@@ -37,7 +37,7 @@ function ChatMessage({ message }: { message: Message }) {
         )}
       >
         {isUser ? (
-          <div className="rounded-2xl rounded-tr-md bg-violet-100 px-3 py-2 text-sm leading-relaxed text-slate-900 ring-1 ring-violet-200/60 dark:bg-violet-950/40 dark:text-violet-50 dark:ring-violet-800/50">
+          <div className="rounded-2xl rounded-tr-md bg-indigo-100 px-3 py-2 text-sm leading-relaxed text-slate-900 ring-1 ring-indigo-200/60 dark:bg-indigo-950/40 dark:text-indigo-50 dark:ring-indigo-800/50">
             <p className="whitespace-pre-wrap">{message.content}</p>
           </div>
         ) : (
@@ -50,7 +50,7 @@ function ChatMessage({ message }: { message: Message }) {
                     key={i}
                     size="sm"
                     variant={action.variant || "outline"}
-                    className="h-8 rounded-xl border-violet-200/80 bg-white text-violet-900 hover:bg-violet-50 dark:border-violet-800 dark:bg-transparent dark:text-violet-100 dark:hover:bg-violet-950/40"
+                    className="h-8 rounded-xl border-indigo-200/80 bg-white text-indigo-900 hover:bg-indigo-50 dark:border-indigo-800 dark:bg-transparent dark:text-indigo-100 dark:hover:bg-indigo-950/40"
                     onClick={action.onClick}
                   >
                     {action.label}
@@ -98,8 +98,8 @@ function SuggestedQuestion({ question, onClick }: { question: string; onClick: (
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-xl border border-violet-200/90 bg-white px-3 py-2 text-left text-sm text-violet-950 transition-colors",
-        "hover:bg-violet-50/90 dark:border-violet-800/60 dark:bg-violet-950/25 dark:text-violet-100 dark:hover:bg-violet-950/45"
+        "rounded-xl border border-indigo-200/90 bg-white px-3 py-2 text-left text-sm text-indigo-950 transition-colors",
+        "hover:bg-indigo-50/90 dark:border-indigo-800/60 dark:bg-indigo-950/25 dark:text-indigo-100 dark:hover:bg-indigo-950/45"
       )}
     >
       {question}
@@ -206,7 +206,7 @@ export function AIAssistantPanel() {
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/60 px-3 py-2.5">
               <div className="flex min-w-0 items-center gap-2">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
@@ -214,7 +214,7 @@ export function AIAssistantPanel() {
                     <span className="truncate font-semibold tracking-tight">Aeris</span>
                     <Badge
                       variant="secondary"
-                      className="h-5 border border-violet-200/90 bg-violet-100 px-2 text-[10px] font-medium text-violet-800 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-300"
+                      className="h-5 border border-indigo-200/90 bg-indigo-100 px-2 text-[10px] font-medium text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300"
                     >
                       Beta
                     </Badge>
@@ -251,11 +251,16 @@ export function AIAssistantPanel() {
             </div>
 
             {/* Messages */}
-            <div className="min-h-0 flex-1 overflow-auto px-3 py-3">
+            <div
+              className={cn(
+                "min-h-0 flex-1 overflow-auto px-3 py-3",
+                messages.length === 0 && "flex flex-col justify-center"
+              )}
+            >
               {messages.length === 0 ? (
                 <div className="space-y-4">
                   <div className="text-center">
-                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <h3 className="mt-3 text-sm font-semibold">How can I help you?</h3>
@@ -313,7 +318,7 @@ export function AIAssistantPanel() {
                       key={q}
                       type="button"
                       onClick={() => handleSuggestedQuestion(q)}
-                      className="rounded-lg border border-violet-200/80 bg-violet-50/50 px-2 py-1 text-[11px] text-violet-900 transition-colors hover:bg-violet-100/80 dark:border-violet-800/50 dark:bg-violet-950/30 dark:text-violet-200 dark:hover:bg-violet-950/50"
+                      className="rounded-lg border border-indigo-200/80 bg-indigo-50/50 px-2 py-1 text-[11px] text-indigo-900 transition-colors hover:bg-indigo-100/80 dark:border-indigo-800/50 dark:bg-indigo-950/30 dark:text-indigo-200 dark:hover:bg-indigo-950/50"
                     >
                       {q}
                     </button>
@@ -327,7 +332,7 @@ export function AIAssistantPanel() {
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Message Aeris…"
                   disabled={isLoading}
-                  className="flex-1 rounded-xl border-border/80 bg-muted/40 py-2 text-sm shadow-none focus-visible:ring-violet-500/25 dark:bg-muted/25"
+                  className="flex-1 rounded-xl border-border/80 bg-muted/40 py-2 text-sm shadow-none focus-visible:ring-indigo-500/25 dark:bg-muted/25"
                 />
                 <Button
                   type="submit"

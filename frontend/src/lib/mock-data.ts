@@ -72,6 +72,8 @@ export interface Campaign {
   roas: string
   cpc: string
   cps: string
+  /** ISO timestamp when the campaign went live (user launches); used for included-campaigns-per-month. */
+  launchedAt?: string
 }
 
 export const campaigns: Campaign[] = [
@@ -272,7 +274,6 @@ export const revenueChartData = [
   { date: "Mar 29", revenue: 5300 },
   { date: "Mar 30", revenue: 6400 },
   { date: "Mar 31", revenue: 5900 },
-  { date: "Apr 1", revenue: 6800 },
 ]
 
 export const spendChartData = [
@@ -289,7 +290,6 @@ export const spendChartData = [
   { date: "Mar 29", spend: 800 },
   { date: "Mar 30", spend: 910 },
   { date: "Mar 31", spend: 850 },
-  { date: "Apr 1", spend: 940 },
 ]
 
 /** Daily efficiency metrics; same calendar span as revenue/spend charts. */
@@ -319,7 +319,6 @@ export const efficiencyChartData: EfficiencyChartRow[] = [
   { date: "Mar 29", cpc: 0.55, cps: 17.0, ctr: 0.023, cvr: 0.017 },
   { date: "Mar 30", cpc: 0.5, cps: 15.4, ctr: 0.025, cvr: 0.0188 },
   { date: "Mar 31", cpc: 0.52, cps: 16.0, ctr: 0.024, cvr: 0.018 },
-  { date: "Apr 1", cpc: 0.49, cps: 15.1, ctr: 0.0255, cvr: 0.019 },
 ]
 
 /** Sparkline + headline for the Efficiency Metrics card (last point vs mock prior-period delta). */
@@ -334,10 +333,10 @@ export interface EfficiencyMetricSummary {
 }
 
 export const efficiencyMetricSummaries: EfficiencyMetricSummary[] = [
-  { key: "cpc", label: "CPC", value: "$0.49", change: "-5.8%", trend: "down" },
-  { key: "cps", label: "CPS", value: "$15.10", change: "-4.2%", trend: "down" },
-  { key: "ctr", label: "CTR", value: "2.55%", change: "+2.1%", trend: "up" },
-  { key: "cvr", label: "Conv. rate", value: "1.90%", change: "+0.4pp", trend: "up" },
+  { key: "cpc", label: "CPC", value: "$0.52", change: "-10.3%", trend: "down" },
+  { key: "cps", label: "CPS", value: "$16.00", change: "-13.0%", trend: "down" },
+  { key: "ctr", label: "CTR", value: "2.40%", change: "+0.3pp", trend: "up" },
+  { key: "cvr", label: "Conv. rate", value: "1.80%", change: "+0.2pp", trend: "up" },
 ]
 
 export const currentUser = {

@@ -109,8 +109,9 @@
     --accent-foreground: oklch(0.92 0.012 264);
     --destructive: oklch(0.704 0.191 22.216);
     --destructive-foreground: oklch(0.92 0.012 264);
-    --border: oklch(0.274 0.032 258);
-    --input: oklch(0.274 0.032 258);
+    /* Lighter than card/popover/muted surfaces (~0.26–0.27) so borders read on dialogs & cards */
+    --border: oklch(0.4 0.03 258);
+    --input: oklch(0.4 0.03 258);
     --ring: oklch(0.704 0.04 256.788);
     --chart-1: oklch(0.704 0.04 256.788);
     --chart-2: oklch(0.6 0.118 184.704);
