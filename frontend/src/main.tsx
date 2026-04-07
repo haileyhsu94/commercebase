@@ -9,7 +9,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="light"
       enableSystem
       disableTransitionOnChange
       storageKey="commercebase-ui-theme"

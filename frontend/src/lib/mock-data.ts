@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react"
 import type { CampaignWizardFormData } from "@/types/campaign-wizard"
 import {
   LayoutDashboard,
-  ShoppingCart,
+  Megaphone,
   DollarSign,
   CreditCard,
   Activity,
@@ -20,7 +20,7 @@ export interface NavItem {
 /** Top-level items before AI Visibility hub + sections; Analytics + Assets use grouped nav in AppSidebar. */
 export const navigationItems: NavItem[] = [
   { title: "Home", icon: LayoutDashboard, href: "/" },
-  { title: "Campaigns", icon: ShoppingCart, href: "/campaigns" },
+  { title: "Campaigns", icon: Megaphone, href: "/campaigns" },
   { title: "AI Visibility", icon: Bot, href: "/ai-presence" },
 ]
 
