@@ -177,7 +177,7 @@ export function CompetitorInsightsPage() {
 
   return (
     <Tabs value={tab} onValueChange={handleTabChange}>
-      <TabsList className="mb-6">
+      <TabsList className="mb-3">
         <TabsTrigger value="competitors">Competitors</TabsTrigger>
         <TabsTrigger value="opportunities">
           Opportunities

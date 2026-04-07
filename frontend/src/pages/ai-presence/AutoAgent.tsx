@@ -4,8 +4,6 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   Clock,
   Code2,
   FileText,
@@ -120,7 +118,6 @@ const CURRENT_TIER: PermissionTier = "suggest"
 
 export function AutoAgentPage() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
-  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editedTexts, setEditedTexts] = useState<Record<string, string>>({})
   const [editBuffer, setEditBuffer] = useState("")
@@ -130,15 +127,12 @@ export function AutoAgentPage() {
 
   function dismiss(id: string) {
     setDismissed((prev) => new Set([...prev, id]))
-    if (expandedId === id) setExpandedId(null)
     if (editingId === id) setEditingId(null)
   }
 
   function startEdit(id: string, currentAfter: string) {
     setEditingId(id)
     setEditBuffer(editedTexts[id] ?? currentAfter)
-    // Auto-expand so the user can see full context
-    setExpandedId(id)
   }
 
   function saveEdit(id: string) {
@@ -284,7 +278,6 @@ export function AutoAgentPage() {
           {pendingVisible.map((change, index) => {
             const typeCfg = TASK_TYPE_CONFIG[change.taskType]
             const TypeIcon = typeCfg.icon
-            const isExpanded = expandedId === change.id
             const isEditing = editingId === change.id
             const hasBeenEdited = change.id in editedTexts
             const displayAfter = editedTexts[change.id] ?? change.after
@@ -346,12 +339,7 @@ export function AutoAgentPage() {
                           <span className="inline-block size-2 rounded-sm bg-red-400 dark:bg-red-500" />
                           Before
                         </p>
-                        <p
-                          className={cn(
-                            "mt-1.5 text-xs text-red-900/80 dark:text-red-200/70 leading-relaxed",
-                            !isExpanded && "line-clamp-2"
-                          )}
-                        >
+                        <p className="mt-1.5 text-xs text-red-900/80 dark:text-red-200/70 leading-relaxed">
                           {change.before}
                         </p>
                       </div>
@@ -430,8 +418,7 @@ export function AutoAgentPage() {
                               "mt-1.5 text-xs leading-relaxed",
                               hasBeenEdited
                                 ? "text-indigo-900/90 dark:text-indigo-200/80"
-                                : "text-emerald-900/90 dark:text-emerald-100/80",
-                              !isExpanded && "line-clamp-2"
+                                : "text-emerald-900/90 dark:text-emerald-100/80"
                             )}
                           >
                             {displayAfter}
@@ -440,17 +427,7 @@ export function AutoAgentPage() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => setExpandedId(isExpanded ? null : change.id)}
-                    >
-                      {isExpanded ? (
-                        <><ChevronUp className="size-3" /> Show less</>
-                      ) : (
-                        <><ChevronDown className="size-3" /> Show full diff</>
-                      )}
-                    </button>
+
                   </div>
                 </div>
               </div>
