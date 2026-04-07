@@ -38,9 +38,11 @@ export function AIPresenceLayout() {
             <h1 className="mt-3 text-2xl font-semibold tracking-tight">{section}</h1>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
           </div>
-          <div className="shrink-0 self-start sm:mt-7">
-            <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
-          </div>
+          {!pathname.includes("/auto-agent") && (
+            <div className="shrink-0 self-start sm:mt-7">
+              <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
+            </div>
+          )}
         </div>
       </div>
       <div className="min-h-0 min-w-0 flex-1 pt-6">

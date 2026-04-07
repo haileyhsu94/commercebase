@@ -31,10 +31,9 @@ export function SettingsTabNav() {
           key={s.id}
           value={s.id}
           className={triggerClass}
-          nativeButton={false}
-          render={<Link to={s.href} />}
+          asChild
         >
-          {s.label}
+          <Link to={s.href}>{s.label}</Link>
         </TabsTrigger>
       ))}
     </TabsList>

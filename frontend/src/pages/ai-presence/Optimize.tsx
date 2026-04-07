@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Line, LineChart, XAxis, YAxis } from "recharts"
+import { Bar, CartesianGrid, ComposedChart, Line, LineChart, XAxis, YAxis } from "recharts"
 import { PlatformLogo } from "@/components/shared/PlatformLogo"
 import { VisibilityScoreGauge } from "@/components/shared/VisibilityScoreGauge"
 import { cn } from "@/lib/utils"
@@ -53,27 +53,93 @@ const trendChartConfig = {
   geo: { label: "GEO", color: "var(--color-chart-2)" },
 } satisfies ChartConfig
 
-function severityStyles(s: AuditSeverity) {
-  switch (s) {
-    case "fail":
-      return "border-destructive/30 bg-destructive/5"
-    case "warn":
-      return "border-amber-500/40 bg-amber-500/5"
-    default:
-      return "border-emerald-500/30 bg-emerald-500/5"
-  }
+const regionChartConfig = {
+  ai:     { label: "AI visibility",      color: "var(--color-chart-1)" },
+  search: { label: "Traditional search", color: "var(--color-chart-5)" },
+} satisfies ChartConfig
+
+const regionChartData = seoGeoRows.map((r) => ({
+  code:   r.code,
+  ai:     r.aiVisibility,
+  search: r.classicSerp,
+}))
+
+const regionByCode = Object.fromEntries(seoGeoRows.map((r) => [r.code, r.region]))
+
+function flagEmoji(code: string): string {
+  return [...code.toUpperCase()]
+    .map((c) => String.fromCodePoint(0x1f1e6 - 65 + c.charCodeAt(0)))
+    .join("")
 }
 
-function toneStyles(tone: (typeof trendingTopics)[number]["tone"]) {
-  switch (tone) {
-    case "hot":
-      return "border-orange-500/30 bg-orange-500/5"
-    case "risk":
-      return "border-red-500/30 bg-red-500/5"
-    default:
-      return "border-amber-500/25 bg-amber-500/5"
-  }
+type RegionPayloadEntry = { dataKey: string; name: string; value: number; color: string }
+
+function RegionChartTooltip({ active, payload, label }: { active?: boolean; payload?: RegionPayloadEntry[]; label?: string }) {
+  if (!active || !payload?.length || !label) return null
+  // Bars and lines share the same dataKeys — deduplicate so each series shows once
+  const seen = new Set<string>()
+  const unique = (payload as RegionPayloadEntry[]).filter((e) => {
+    if (seen.has(e.dataKey)) return false
+    seen.add(e.dataKey)
+    return true
+  })
+  const fullName = regionByCode[label] ?? label
+  return (
+    <div className="min-w-[160px] rounded-lg border border-border bg-background px-3 py-2.5 shadow-md">
+      <p className="mb-2 text-xs font-semibold">
+        {flagEmoji(label)}&nbsp;&nbsp;{fullName}
+      </p>
+      {unique.map((entry) => (
+        <div key={entry.dataKey} className="flex items-center justify-between gap-3 py-0.5">
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="size-2 shrink-0 rounded-sm" style={{ backgroundColor: entry.color }} />
+            {entry.name}
+          </span>
+          <span className="text-xs font-medium tabular-nums">{entry.value}%</span>
+        </div>
+      ))}
+    </div>
+  )
 }
+
+const AUDIT_CONFIG = {
+  fail: {
+    dot: "bg-destructive",
+    pill: "bg-destructive/10 border-destructive/25 text-destructive dark:text-red-300",
+    label: "Fail",
+  },
+  warn: {
+    dot: "bg-amber-500",
+    pill: "bg-amber-500/10 border-amber-500/25 text-amber-700 dark:text-amber-300",
+    label: "Warn",
+  },
+  pass: {
+    dot: "bg-emerald-500",
+    pill: "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300",
+    label: "Pass",
+  },
+} as const
+
+const TONE_CONFIG = {
+  hot: {
+    dot: "bg-orange-500",
+    pill: "bg-orange-500/10 border-orange-500/25 text-orange-700 dark:text-orange-300",
+    action: "bg-orange-500/5 border-orange-500/20",
+    label: "Hot",
+  },
+  risk: {
+    dot: "bg-red-500",
+    pill: "bg-red-500/10 border-red-500/25 text-red-700 dark:text-red-300",
+    action: "bg-red-500/5 border-red-500/20",
+    label: "Risk",
+  },
+  watch: {
+    dot: "bg-amber-400",
+    pill: "bg-amber-400/10 border-amber-400/25 text-amber-700 dark:text-amber-300",
+    action: "bg-amber-400/5 border-amber-400/20",
+    label: "Watch",
+  },
+} as const
 
 function geoPercentNumber(s: string) {
   const n = Number.parseFloat(s.replace(/[^\d.]/g, ""))
@@ -444,45 +510,65 @@ export function OptimizePage() {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {trendingTopics.map((t) => (
-            <div
-              key={t.rank}
-              className={cn("rounded-lg border p-4", toneStyles(t.tone))}
-            >
-              <div className="flex flex-wrap items-baseline gap-2">
-                <span className="text-sm font-medium text-muted-foreground tabular-nums">{t.rank}.</span>
-                <span className="text-lg" aria-hidden>
-                  {t.tone === "hot" ? "🔥" : t.tone === "risk" ? "🔴" : "🟡"}
-                </span>
-                <h3 className="min-w-0 flex-1 font-semibold leading-snug">{t.title}</h3>
-                <Badge variant="outline" className="shrink-0 text-[10px]">
-                  {t.badge}
-                </Badge>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t.sourceUrl ? (
-                  <a
-                    href={t.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline-offset-2 hover:text-foreground hover:underline"
+        <CardContent className="divide-y divide-border/60 p-0">
+          {trendingTopics.map((t) => {
+            const cfg = TONE_CONFIG[t.tone]
+            return (
+              <div key={t.rank} className="space-y-2.5 px-6 py-4">
+                {/* Title row */}
+                <div className="flex flex-wrap items-start gap-2">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold tabular-nums text-muted-foreground">
+                    {t.rank}
+                  </span>
+                  <h3 className="min-w-0 flex-1 text-sm font-semibold leading-snug">{t.title}</h3>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                        cfg.pill
+                      )}
+                    >
+                      <span className={cn("size-1.5 rounded-full", cfg.dot)} aria-hidden />
+                      {cfg.label}
+                    </span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {t.badge}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Source + quote + action */}
+                <div className="ml-7 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    {t.sourceUrl ? (
+                      <a
+                        href={t.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline-offset-2 hover:text-foreground hover:underline"
+                      >
+                        {t.source}
+                      </a>
+                    ) : (
+                      t.source
+                    )}
+                  </p>
+                  <p className="border-l-2 border-muted-foreground/25 pl-3 text-xs italic leading-relaxed text-foreground/70">
+                    "{t.quote}"
+                  </p>
+                  <div
+                    className={cn(
+                      "flex items-start gap-2 rounded-md border px-3 py-2",
+                      cfg.action
+                    )}
                   >
-                    {t.source}
-                  </a>
-                ) : (
-                  t.source
-                )}
-              </p>
-              <blockquote className="mt-2 border-l-2 border-primary/40 pl-3 text-sm italic text-foreground/90">
-                {t.quote}
-              </blockquote>
-              <p className="mt-3 text-sm text-muted-foreground">
-                <Sparkles className="mr-1 inline size-3.5 text-primary" />
-                {t.action}
-              </p>
-            </div>
-          ))}
+                    <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
+                    <p className="text-xs leading-relaxed text-foreground/80">{t.action}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </CardContent>
       </Card>
 
@@ -688,32 +774,78 @@ export function OptimizePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Visibility by region</CardTitle>
-          <CardDescription>AI shopping visibility index vs classic SERP visibility</CardDescription>
+          <CardDescription>
+            Bars show brand visibility in AI-generated answers vs. traditional Google search, per country.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Region</TableHead>
-                <TableHead className="text-right">AI visibility</TableHead>
-                <TableHead className="text-right">Classic SERP</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {seoGeoRows.map((row) => (
-                <TableRow key={row.code}>
-                  <TableCell className="font-medium">
-                    {row.region}{" "}
-                    <span className="text-muted-foreground">({row.code})</span>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{row.aiVisibility}%</TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {row.classicSerp}%
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent>
+          <ChartContainer config={regionChartConfig} className="aspect-auto h-[300px] w-full">
+            <ComposedChart
+              data={regionChartData}
+              margin={{ top: 12, right: 8, bottom: 0, left: 8 }}
+              barGap={3}
+              barCategoryGap="32%"
+            >
+              <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.5} />
+              <XAxis dataKey="code" tickLine={false} axisLine={false} fontSize={11} />
+              <YAxis
+                domain={[0, 80]}
+                tickLine={false}
+                axisLine={false}
+                fontSize={11}
+                width={36}
+                tickFormatter={(v: number) => `${v}%`}
+              />
+              <ChartTooltip content={RegionChartTooltip as never} cursor={{ opacity: 0.08 }} />
+              <Bar
+                dataKey="ai"
+                fill="var(--color-ai)"
+                radius={[3, 3, 0, 0]}
+                maxBarSize={18}
+                fillOpacity={0.85}
+              />
+              <Bar
+                dataKey="search"
+                fill="var(--color-search)"
+                radius={[3, 3, 0, 0]}
+                maxBarSize={18}
+                fillOpacity={0.85}
+              />
+              <Line
+                type="monotone"
+                dataKey="ai"
+                stroke="var(--color-ai)"
+                strokeWidth={2}
+                dot={{ r: 3, fill: "var(--color-ai)", strokeWidth: 0 }}
+                activeDot={{ r: 4 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="search"
+                stroke="var(--color-search)"
+                strokeWidth={2}
+                strokeDasharray="5 3"
+                dot={{ r: 3, fill: "var(--color-search)", strokeWidth: 0 }}
+                activeDot={{ r: 4 }}
+              />
+            </ComposedChart>
+          </ChartContainer>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-2">
+              <span className="flex items-center gap-1">
+                <span className="size-2.5 rounded-sm bg-[var(--color-chart-1)]" />
+                <span className="h-0.5 w-4 bg-[var(--color-chart-1)]" />
+              </span>
+              AI visibility
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="flex items-center gap-1">
+                <span className="size-2.5 rounded-sm bg-[var(--color-chart-5)]" />
+                <span className="h-0.5 w-4 bg-[var(--color-chart-5)] [mask-image:repeating-linear-gradient(90deg,black_0,black_4px,transparent_4px,transparent_7px)]" />
+              </span>
+              Traditional search (Google)
+            </span>
+          </div>
         </CardContent>
       </Card>
 
@@ -762,40 +894,59 @@ export function OptimizePage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="divide-y divide-border/60 p-0">
             {filteredAudit.length === 0 ? (
-              <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+              <p className="mx-6 my-4 rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
                 No checks match these filters. Try another result or focus.
               </p>
             ) : null}
-            {filteredAudit.map((item) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between",
-                  severityStyles(item.severity)
-                )}
-              >
-                <div className="min-w-0 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{item.title}</span>
-                    <Badge variant="outline" className="text-[10px]">
+            {filteredAudit.map((item, index) => {
+              const cfg = AUDIT_CONFIG[item.severity]
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 px-6 py-3.5"
+                >
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold tabular-nums text-muted-foreground">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-sm font-medium">{item.title}</span>
+                      <Badge variant="secondary" className="text-[10px] capitalize">
+                        {item.impact} impact
+                      </Badge>
+                    </div>
+                    {item.affected && (
+                      <p className="text-xs text-muted-foreground">{item.affected}</p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Badge variant="outline" className="hidden sm:inline-flex text-[10px]">
                       {item.category}
                     </Badge>
-                    <Badge variant="secondary" className="text-[10px] capitalize">
-                      {item.impact}
-                    </Badge>
+                    <span
+                      className={cn(
+                        "hidden sm:inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                        cfg.pill
+                      )}
+                    >
+                      <span className={cn("size-1.5 rounded-full", cfg.dot)} aria-hidden />
+                      {cfg.label}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      render={<Link to="/products" />}
+                    >
+                      Review
+                      <ArrowRight className="size-3" />
+                    </Button>
                   </div>
-                  {item.affected && (
-                    <p className="text-xs text-muted-foreground">{item.affected}</p>
-                  )}
                 </div>
-                <Button variant="outline" size="sm" className="shrink-0 gap-1" render={<Link to="/products" />}>
-                  Review
-                  <ArrowRight className="size-3.5" />
-                </Button>
-              </div>
-            ))}
+              )
+            })}
           </CardContent>
         </Card>
       </div>

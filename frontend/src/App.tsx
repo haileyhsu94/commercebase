@@ -4,8 +4,6 @@ import {
   Home,
   CampaignList,
   CampaignDetail,
-  CompetitorComparison,
-  Opportunities,
   PerformanceOverview,
   AudiencesPage,
   ChannelAttribution,
@@ -27,6 +25,7 @@ import {
   PromptsPage,
   OptimizePage,
   AutoAgentPage,
+  CompetitorInsightsPage,
   Inbox,
 } from "@/pages"
 
@@ -53,8 +52,8 @@ const router = createBrowserRouter([
           { path: "seo-geo", element: <Navigate to="/ai-presence/optimize" replace /> },
           { path: "auto-agent", element: <AutoAgentPage /> },
           { path: "agent", element: <Navigate to="/ai-presence/auto-agent" replace /> },
-          { path: "competitors", element: <CompetitorComparison /> },
-          { path: "opportunities", element: <Opportunities /> },
+          { path: "competitors", element: <CompetitorInsightsPage /> },
+          { path: "opportunities", element: <Navigate to="/ai-presence/competitors?tab=opportunities" replace /> },
         ],
       },
       { path: "ai-visibility", element: <Navigate to="/ai-presence" replace /> },
@@ -64,7 +63,7 @@ const router = createBrowserRouter([
       },
       {
         path: "ai-visibility/opportunities",
-        element: <Navigate to="/ai-presence/opportunities" replace />,
+        element: <Navigate to="/ai-presence/competitors?tab=opportunities" replace />,
       },
       { path: "analytics/audiences", element: <AudiencesPage /> },
       { path: "analytics/channels", element: <ChannelAttribution /> },

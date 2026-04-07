@@ -28,9 +28,8 @@ export const aiVisibilitySubnavGroups: readonly AiVisibilitySubnavGroup[] = [
     groupLabel: "Growth & market",
     items: [
       { path: "optimize", label: "SEO / GEO" },
+      { path: "competitors", label: "Competitors & Gaps" },
       { path: "auto-agent", label: "Auto Agent" },
-      { path: "competitors", label: "Competitors" },
-      { path: "opportunities", label: "Opportunities" },
     ],
   },
 ] as const
@@ -69,8 +68,8 @@ export const aiVisibilityPageDescriptions: Record<string, string> = {
     "SEO and Generative Engine Optimization (GEO): scores, trends, citations, technical audits, and content gaps.",
   "auto-agent":
     "Background SEO & GEO optimization from your catalog signals—queue, impact, and controls.",
-  competitors: "Compare share of voice (SoV) against competitors across AI platforms.",
-  opportunities: "Discover gaps and get recommendations to improve your SoV.",
+  competitors:
+    "Track Share of Voice against competitors across AI platforms, then surface and act on the gaps — all in one place.",
 }
 
 export function aiVisibilityPageDescription(pathname: string): string {
@@ -676,11 +675,16 @@ export interface SeoGeoRow {
 }
 
 export const seoGeoRows: SeoGeoRow[] = [
-  { region: "United States", code: "US", aiVisibility: 62, classicSerp: 58 },
+  { region: "United States",  code: "US", aiVisibility: 62, classicSerp: 58 },
   { region: "United Kingdom", code: "GB", aiVisibility: 55, classicSerp: 61 },
-  { region: "Germany", code: "DE", aiVisibility: 48, classicSerp: 52 },
-  { region: "Japan", code: "JP", aiVisibility: 41, classicSerp: 47 },
-  { region: "France", code: "FR", aiVisibility: 44, classicSerp: 49 },
+  { region: "Canada",         code: "CA", aiVisibility: 57, classicSerp: 53 },
+  { region: "Australia",      code: "AU", aiVisibility: 50, classicSerp: 48 },
+  { region: "Germany",        code: "DE", aiVisibility: 48, classicSerp: 52 },
+  { region: "France",         code: "FR", aiVisibility: 44, classicSerp: 49 },
+  { region: "Spain",          code: "ES", aiVisibility: 42, classicSerp: 45 },
+  { region: "Japan",          code: "JP", aiVisibility: 41, classicSerp: 47 },
+  { region: "South Korea",    code: "KR", aiVisibility: 35, classicSerp: 44 },
+  { region: "Singapore",      code: "SG", aiVisibility: 63, classicSerp: 55 },
 ]
 
 /** Minimal v1 Auto Agent — headline stats + current run + impact + queue */
@@ -728,6 +732,7 @@ export interface AutoAgentQueueTask {
   itemCount?: number
   totalItems?: number
   etaMinutes?: number | null
+  skipReason?: string
 }
 
 export const autoAgentSummary: AutoAgentSummary = {
@@ -814,5 +819,139 @@ export const autoAgentQueueTasks: AutoAgentQueueTask[] = [
     priority: "medium",
     status: "skipped",
     etaMinutes: null,
+    skipReason: "Insufficient product review data — needs at least 10 reviews per category to generate credible comparisons.",
+  },
+]
+
+// ── Human-in-the-loop: pending approvals ─────────────────────────────────────
+
+export type AutoAgentTaskType = "description" | "schema" | "alt-text" | "faq" | "feed"
+
+export interface AutoAgentPendingChange {
+  id: string
+  product: string
+  sku: string
+  taskType: AutoAgentTaskType
+  field: string
+  before: string
+  after: string
+  /** Why the agent flagged this for change */
+  reason: string
+  draftedAt: string
+}
+
+export const autoAgentPendingChanges: AutoAgentPendingChange[] = [
+  {
+    id: "pc1",
+    product: "Nike Air Max 97 Silver Bullet",
+    sku: "NK-AM97-SB",
+    taskType: "description",
+    field: "Product description",
+    before: "Classic Nike sneaker with visible Air cushioning unit.",
+    after: "The Nike Air Max 97 Silver Bullet channels the aerodynamic lines of a high-speed train. Featuring a full-length Air unit for all-day cushioning, reflective piping for low-light visibility, and a breathable mesh upper — a collector's icon reissued for modern streets.",
+    reason: "Description is 9 words — below the 50-word threshold required for AI engine citations.",
+    draftedAt: "2 hours ago",
+  },
+  {
+    id: "pc2",
+    product: "Adidas Ultraboost 22",
+    sku: "AD-UB22-BLK",
+    taskType: "schema",
+    field: "Product schema markup",
+    before: "No structured data (JSON-LD) detected on product page.",
+    after: "Product + Offer JSON-LD added: name, description, price, currency, availability, brand entity, and aggregate rating with review count.",
+    reason: "Missing schema prevents AI engines from parsing price and availability. ChatGPT Shopping and Perplexity require structured data to surface buy links.",
+    draftedAt: "3 hours ago",
+  },
+  {
+    id: "pc3",
+    product: "Gucci Marmont Shoulder Bag",
+    sku: "GC-MMB-BLK-S",
+    taskType: "alt-text",
+    field: "Image alt text (3 images)",
+    before: "IMG_4521.jpg · IMG_4522.jpg · IMG_4523.jpg",
+    after: "\"Gucci GG Marmont small shoulder bag in black quilted leather, front view\" · \"Interior suede lining with embossed Gucci logo and zip pocket\" · \"Gold-toned Double G hardware clasp, close-up detail\"",
+    reason: "3 product images have no alt text. Missing alt text reduces SEO image indexing and blocks AI vision-based product matching.",
+    draftedAt: "4 hours ago",
+  },
+  {
+    id: "pc4",
+    product: "Moncler Maya Down Jacket",
+    sku: "MC-MAYA-NVY-M",
+    taskType: "faq",
+    field: "Category FAQ block",
+    before: "No FAQ content on Down Jackets category page.",
+    after: "3 questions added: \"What fill power does the Moncler Maya use?\" · \"How do I care for a down jacket?\" · \"Does the Moncler Maya run true to size?\"",
+    reason: "Category pages without FAQ blocks are rarely cited in AI answers. FAQs are the #1 content format cited by Perplexity Shopping.",
+    draftedAt: "5 hours ago",
+  },
+]
+
+// ── Activity log ──────────────────────────────────────────────────────────────
+
+export type AutoAgentActivityStatus = "approved" | "live" | "reverted"
+
+export interface AutoAgentActivityEntry {
+  id: string
+  product: string
+  sku: string
+  taskType: string
+  summary: string
+  status: AutoAgentActivityStatus
+  changedAt: string
+  /** Populated once the change has been live for ≥7 days */
+  impact?: { metric: string; delta: string; positive: boolean } | null
+}
+
+export const autoAgentActivityLog: AutoAgentActivityEntry[] = [
+  {
+    id: "al1",
+    product: "Prada Re-Nylon Tote",
+    sku: "PR-RNT-BLK-M",
+    taskType: "Description",
+    summary: "Description expanded from 12 words to 84 — material, sustainability claims, and care instructions added",
+    status: "live",
+    changedAt: "14 days ago",
+    impact: { metric: "AI visibility", delta: "+12%", positive: true },
+  },
+  {
+    id: "al2",
+    product: "Nike React Infinity Run FK 3",
+    sku: "NK-RIFK3-WHT",
+    taskType: "Schema",
+    summary: "Product + Offer JSON-LD added with size variants, price range, and availability by region",
+    status: "live",
+    changedAt: "10 days ago",
+    impact: { metric: "AI citations", delta: "+8 / week", positive: true },
+  },
+  {
+    id: "al3",
+    product: "Balenciaga Triple S Trainer",
+    sku: "BL-3S-WHT-42",
+    taskType: "Alt text",
+    summary: "5 gallery images given descriptive alt text with colourway, angle, and material detail",
+    status: "live",
+    changedAt: "5 days ago",
+    impact: null,
+  },
+  {
+    id: "al4",
+    product: "Louis Vuitton Neverfull MM",
+    sku: "LV-NF-MM-MNG",
+    taskType: "FAQ",
+    summary: "4-question FAQ block added to Totes category page targeting comparison queries",
+    status: "approved",
+    changedAt: "2 days ago",
+    impact: null,
+  },
+  {
+    id: "al5",
+    product: "Gucci Ace Sneaker",
+    sku: "GC-ACE-WHT-41",
+    taskType: "Description",
+    summary: "Description rewrite reverted — generated copy did not match brand voice guidelines",
+    status: "reverted",
+    changedAt: "1 day ago",
+    impact: null,
   },
 ]
