@@ -61,10 +61,11 @@
     /* slate-900 — default Button, links using primary */
     --primary: oklch(0.208 0.042 265.755);
     --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.968 0.007 247.896);
+    --secondary: oklch(0.93 0.01 248);
     --secondary-foreground: oklch(0.208 0.042 265.755);
     --muted: oklch(0.968 0.007 247.896);
-    --muted-foreground: oklch(0.554 0.046 257.417);
+    /* Darkened vs prior build for WCAG AA ~4.5:1 on white cards */
+    --muted-foreground: oklch(0.45 0.042 257.417);
     --accent: oklch(0.968 0.007 247.896);
     --accent-foreground: oklch(0.208 0.042 265.755);
     --destructive: oklch(0.577 0.245 27.325);
@@ -104,7 +105,7 @@
     --secondary: oklch(0.274 0.032 258);
     --secondary-foreground: oklch(0.92 0.012 264);
     --muted: oklch(0.274 0.032 258);
-    --muted-foreground: oklch(0.704 0.04 256.788);
+    --muted-foreground: oklch(0.72 0.038 256.788);
     --accent: oklch(0.274 0.032 258);
     --accent-foreground: oklch(0.92 0.012 264);
     --destructive: oklch(0.704 0.191 22.216);
@@ -138,4 +139,23 @@
   html {
     @apply font-sans;
     }
+}
+
+@layer components {
+  /*
+    shadcn sidebar: selected item uses sidebar-accent.
+    Base UI sets data-active="" on the anchor; this layer wins over stale or mismatched Tailwind
+    utility order in dev so the current route is visibly distinct from hover.
+  */
+  [data-slot="sidebar-menu-button"][data-active] {
+    background-color: var(--sidebar-accent) !important;
+    color: var(--sidebar-accent-foreground) !important;
+    font-weight: 500 !important;
+  }
+
+  [data-slot="sidebar-menu-sub-button"][data-active] {
+    background-color: var(--sidebar-accent) !important;
+    color: var(--sidebar-accent-foreground) !important;
+    font-weight: 500 !important;
+  }
 }

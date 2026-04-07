@@ -68,7 +68,7 @@ export const aiVisibilityPageDescriptions: Record<string, string> = {
   optimize:
     "SEO and Generative Engine Optimization (GEO): scores, trends, citations, technical audits, and content gaps.",
   "auto-agent":
-    "Background SEO & GEO optimization from your catalog signals—queue, impact, and controls (mock).",
+    "Background SEO & GEO optimization from your catalog signals—queue, impact, and controls.",
   competitors: "Compare share of voice (SoV) against competitors across AI platforms.",
   opportunities: "Discover gaps and get recommendations to improve your SoV.",
 }
@@ -184,55 +184,231 @@ export interface ShoppingJourneyStep {
   label: string
   description: string
   ratePct: number
+  volume?: number
+  change?: string
+  changeTrend?: "up" | "down" | "neutral"
 }
 
-export const shoppingJourneySteps: ShoppingJourneyStep[] = [
+export interface ShoppingJourneyInsight {
+  stageId: string
+  dropOffPct: number | null
+  headline: string
+  detail: string
+  actionLabel: string
+  actionHref: string
+  severity: "critical" | "warning" | "info"
+}
+
+/** Base data for 28-day window */
+const _baseJourneySteps: ShoppingJourneyStep[] = [
   {
     id: "discover",
     label: "AI discovery",
     description: "Shoppers see your brand or products in AI answers",
     ratePct: 100,
+    volume: 42500,
+    change: "+12%",
+    changeTrend: "up",
   },
   {
     id: "consider",
     label: "Consideration",
     description: "Users compare options the assistant surfaces",
     ratePct: 64,
+    volume: 27200,
+    change: "+8.3%",
+    changeTrend: "up",
   },
   {
     id: "click",
     label: "Click-through",
     description: "Clicks to your site or PDP from the assistant",
     ratePct: 41,
+    volume: 17425,
+    change: "−2.1%",
+    changeTrend: "down",
   },
   {
     id: "cart",
     label: "Cart / intent",
     description: "Add-to-cart or strong purchase intent signals",
     ratePct: 18,
+    volume: 7650,
+    change: "+5.7%",
+    changeTrend: "up",
   },
   {
     id: "checkout",
     label: "Checkout",
     description: "Completed purchases attributed to AI-assisted journeys",
     ratePct: 11,
+    volume: 4675,
+    change: "+14.2%",
+    changeTrend: "up",
   },
 ]
+
+/** Static export for legacy use */
+export const shoppingJourneySteps: ShoppingJourneyStep[] = _baseJourneySteps
+
+type TimePreset = "7d" | "14d" | "28d"
+
+const JOURNEY_VOLUME_SCALE: Record<TimePreset, number> = {
+  "7d": 0.28,
+  "14d": 0.52,
+  "28d": 1,
+}
+
+const JOURNEY_CHANGE_OVERRIDES: Record<
+  TimePreset,
+  { change: string; changeTrend: "up" | "down" | "neutral" }[]
+> = {
+  "7d": [
+    { change: "+18%", changeTrend: "up" },
+    { change: "+11%", changeTrend: "up" },
+    { change: "−4.8%", changeTrend: "down" },
+    { change: "+3.2%", changeTrend: "up" },
+    { change: "+9.1%", changeTrend: "up" },
+  ],
+  "14d": [
+    { change: "+15%", changeTrend: "up" },
+    { change: "+9.7%", changeTrend: "up" },
+    { change: "−3.4%", changeTrend: "down" },
+    { change: "+4.5%", changeTrend: "up" },
+    { change: "+11.8%", changeTrend: "up" },
+  ],
+  "28d": [
+    { change: "+12%", changeTrend: "up" },
+    { change: "+8.3%", changeTrend: "up" },
+    { change: "−2.1%", changeTrend: "down" },
+    { change: "+5.7%", changeTrend: "up" },
+    { change: "+14.2%", changeTrend: "up" },
+  ],
+}
+
+export function getShoppingJourneySteps(
+  range: { kind: "preset"; preset: string } | { kind: "custom"; from: string; to: string }
+): ShoppingJourneyStep[] {
+  const preset = range.kind === "preset" ? (range.preset as TimePreset) : null
+  const scale = preset ? JOURNEY_VOLUME_SCALE[preset] ?? 1 : 0.7
+  const changes = preset ? JOURNEY_CHANGE_OVERRIDES[preset] : undefined
+
+  return _baseJourneySteps.map((step, i) => ({
+    ...step,
+    volume: Math.round((step.volume ?? 0) * scale),
+    ...(changes?.[i] ?? {}),
+  }))
+}
+
+export function getShoppingJourneyInsights(steps: ShoppingJourneyStep[]): ShoppingJourneyInsight[] {
+  const insights: ShoppingJourneyInsight[] = []
+
+  for (let i = 1; i < steps.length; i++) {
+    const prev = steps[i - 1]
+    const curr = steps[i]
+    const dropOff = Math.round(100 - (curr.ratePct / prev.ratePct) * 100)
+    const lostVolume = (prev.volume ?? 0) - (curr.volume ?? 0)
+
+    const template = STAGE_INSIGHT_TEMPLATES[curr.id]
+    if (template) {
+      insights.push({
+        stageId: curr.id,
+        dropOffPct: dropOff,
+        headline: template.headline(dropOff, lostVolume),
+        detail: template.detail,
+        actionLabel: template.actionLabel,
+        actionHref: template.actionHref,
+        severity: dropOff > 50 ? "critical" : dropOff > 30 ? "warning" : "info",
+      })
+    }
+  }
+
+  return insights
+}
+
+const STAGE_INSIGHT_TEMPLATES: Record<
+  string,
+  {
+    headline: (drop: number, lost: number) => string
+    detail: string
+    actionLabel: string
+    actionHref: string
+  }
+> = {
+  consider: {
+    headline: (drop, lost) =>
+      `${drop}% drop at Consideration — ${lost.toLocaleString()} shoppers lost`,
+    detail:
+      "AI engines mention your brand but don't include enough detail for comparison. 3 attributes (sustainability claims, availability, reviews) have coverage gaps that limit what AI can say about your products.",
+    actionLabel: "Review attribute gaps",
+    actionHref: "/ai-presence/attributes?highlight=coverage",
+  },
+  click: {
+    headline: (drop, lost) =>
+      `${drop}% drop at Click-through — ${lost.toLocaleString()} shoppers lost`,
+    detail:
+      "Shoppers compare your products in AI answers but click competitor links instead. Your SEO/GEO combined score is 62 — improving structured data and content gaps can lift your click share.",
+    actionLabel: "Optimize SEO / GEO",
+    actionHref: "/ai-presence/optimize?highlight=scores",
+  },
+  cart: {
+    headline: (drop, lost) =>
+      `${drop}% drop at Cart — ${lost.toLocaleString()} shoppers lost`,
+    detail:
+      "Visitors land on your site from AI referrals but don't add to cart. This often means a mismatch between what the AI promised and what the PDP shows. Check which prompts drive this traffic and align your content.",
+    actionLabel: "Review top prompts",
+    actionHref: "/ai-presence/prompts?highlight=actions",
+  },
+  checkout: {
+    headline: (drop, lost) =>
+      `${drop}% drop at Checkout — ${lost.toLocaleString()} shoppers lost`,
+    detail:
+      "Shoppers with cart intent drop off before purchase. AI engines may surface competitor checkout links. Your merchant checkout share is 24% — review which competitors capture the remaining 76%.",
+    actionLabel: "Check merchant share",
+    actionHref: "/ai-presence/merchants?highlight=share",
+  },
+}
 
 export interface AttributeCoverageRow {
   attribute: string
   coveragePct: number
   gap: boolean
-  note?: string
+  /** How much this attribute affects AI recommendation quality (high / medium / low) */
+  aiImpact: "high" | "medium" | "low"
+  /** Number of SKUs missing this attribute */
+  missingSKUs: number
+  /** Why this gap matters for AI recommendations */
+  whyItMatters?: string
 }
 
 export const attributeCoverage: AttributeCoverageRow[] = [
-  { attribute: "Size & fit", coveragePct: 94, gap: false },
-  { attribute: "Materials & care", coveragePct: 88, gap: false },
-  { attribute: "Sustainability claims", coveragePct: 52, gap: true, note: "AI often infers; add structured data" },
-  { attribute: "Price & currency", coveragePct: 97, gap: false },
-  { attribute: "Availability / ships to", coveragePct: 71, gap: true },
-  { attribute: "Reviews aggregate", coveragePct: 63, gap: true },
+  { attribute: "Size & fit", coveragePct: 94, gap: false, aiImpact: "high", missingSKUs: 48 },
+  { attribute: "Materials & care", coveragePct: 88, gap: false, aiImpact: "medium", missingSKUs: 96 },
+  {
+    attribute: "Sustainability claims",
+    coveragePct: 52,
+    gap: true,
+    aiImpact: "high",
+    missingSKUs: 384,
+    whyItMatters: "AI engines often infer sustainability from unstructured text and get it wrong. Add structured data to control the narrative.",
+  },
+  { attribute: "Price & currency", coveragePct: 97, gap: false, aiImpact: "high", missingSKUs: 24 },
+  {
+    attribute: "Availability / ships to",
+    coveragePct: 71,
+    gap: true,
+    aiImpact: "medium",
+    missingSKUs: 232,
+    whyItMatters: "Without this, AI may recommend your products to shoppers in regions you don't serve, driving clicks that can't convert.",
+  },
+  {
+    attribute: "Reviews aggregate",
+    coveragePct: 63,
+    gap: true,
+    aiImpact: "high",
+    missingSKUs: 296,
+    whyItMatters: "AI engines heavily weight review signals when ranking products. Missing this reduces how often your products get cited.",
+  },
 ]
 
 export type PromptIntent = "commercial" | "comparison" | "navigational" | "informational"
@@ -249,7 +425,7 @@ export interface PromptInsightRow {
   volume: string
   /** Thousands of weekly queries — for sort / filter */
   volumeKPerWeek: number
-  /** WoW volume change % (mock) */
+  /** WoW volume change % */
   volumeTrendPctWoW: number
   /** Your aggregate SoV % across engines (headline) */
   visibility: number
@@ -507,7 +683,7 @@ export const seoGeoRows: SeoGeoRow[] = [
   { region: "France", code: "FR", aiVisibility: 44, classicSerp: 49 },
 ]
 
-/** Minimal v1 Auto Agent — headline stats + current run + impact + queue (mock) */
+/** Minimal v1 Auto Agent — headline stats + current run + impact + queue */
 
 export interface AutoAgentSummary {
   stateLabel: string
@@ -556,7 +732,7 @@ export interface AutoAgentQueueTask {
 
 export const autoAgentSummary: AutoAgentSummary = {
   stateLabel: "Agent running",
-  subtitle: "Autonomous SEO & GEO optimization — runs continuously in the background (mock).",
+  subtitle: "Autonomous SEO & GEO optimization — runs continuously in the background.",
   actionsToday: 47,
   actionsDeltaVsYesterday: "+12",
   seoImprovementPtsVsWeek: 7,

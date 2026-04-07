@@ -1,13 +1,7 @@
-import { Link, useOutletContext } from "react-router-dom"
+import { useEffect, useRef } from "react"
+import { Link, useOutletContext, useSearchParams } from "react-router-dom"
+import { TrendingDown, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { PlatformLogo } from "@/components/shared/PlatformLogo"
 import {
   merchantCheckoutShare,
@@ -24,144 +18,203 @@ import {
 export function MerchantsPage() {
   const { timeRange } = useOutletContext<AIPresenceOutletContext>()
   const period = formatAiPresencePeriodShort(timeRange)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const shareRef = useRef<HTMLDivElement>(null)
+  const shouldHighlight = searchParams.get("highlight") === "share"
+
+  useEffect(() => {
+    if (shouldHighlight && shareRef.current) {
+      shareRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+      const timeout = setTimeout(() => {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete("highlight")
+          return next
+        }, { replace: true })
+      }, 2500)
+      return () => clearTimeout(timeout)
+    }
+  }, [shouldHighlight, setSearchParams])
 
   return (
     <>
-      <Card className="mb-6">
+      {/* Merchant checkout share — horizontal bar chart */}
+      <Card
+        ref={shareRef}
+        className={cn(
+          "mb-6 transition-all duration-700",
+          shouldHighlight && "animate-pulse ring-2 ring-primary/50"
+        )}
+      >
         <CardHeader>
           <CardTitle className="text-base">Merchant checkout share</CardTitle>
-          <CardDescription className="space-y-2 text-pretty">
-            <span>
-              When an AI answer recommends where to buy, we attribute the resulting click to a merchant.
-              <strong className="font-medium text-foreground"> Share</strong> is each merchant&apos;s
-              percentage of those <strong className="font-medium text-foreground">AI-attributed checkout</strong>{" "}
-              clicks — all rows sum to 100%.
-            </span>
-            <span className="block text-xs text-muted-foreground">Period: {period} (matches header)</span>
+          <CardDescription>
+            Who gets the click when AI recommends where to buy · {period}
           </CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Merchant</TableHead>
-                <TableHead className="text-right">Share</TableHead>
-                <TableHead className="text-right">Est. checkouts</TableHead>
-                <TableHead className="text-right">Δ vs prior</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {merchantCheckoutShare.map((row) => (
-                <TableRow key={row.merchant} className={row.isYou ? "bg-primary/5" : undefined}>
-                  <TableCell className="font-medium">
+        <CardContent className="space-y-3">
+          {merchantCheckoutShare.map((row) => (
+            <div key={row.merchant} className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={cn("text-sm font-medium truncate", row.isYou && "text-primary")}>
                     {row.merchant}
-                    {row.isYou && <span className="ml-2 text-xs text-primary">(You)</span>}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{row.share}%</TableCell>
-                  <TableCell className="text-right">{row.estCheckouts}</TableCell>
-                  <TableCell
+                    {row.isYou && <span className="ml-1 text-xs">(You)</span>}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs text-muted-foreground">{row.estCheckouts} checkouts</span>
+                  <span
                     className={cn(
-                      "text-right tabular-nums",
-                      row.change >= 0 ? "text-green-600" : "text-red-600"
+                      "inline-flex items-center gap-0.5 text-xs font-medium tabular-nums",
+                      row.change >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                     )}
                   >
-                    {row.change >= 0 ? "+" : ""}
-                    {row.change}%
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    {row.change >= 0 ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    {row.change >= 0 ? "+" : ""}{row.change}%
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums w-10 text-right">{row.share}%</span>
+                </div>
+              </div>
+              <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    row.isYou ? "bg-primary" : "bg-muted-foreground/30"
+                  )}
+                  style={{ width: `${row.share}%` }}
+                />
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
+      {/* Your share by category — comparative bars */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Your share by category</CardTitle>
-          <CardDescription className="space-y-2 text-pretty">
-            <span>
-              Each percentage is your <strong className="font-medium text-foreground">share of AI-attributed
-              merchant clicks</strong> in that category. The competitor % is their share of the{" "}
-              <em>same</em> category total — not a two-way split, so numbers won&apos;t add to 100% with only
-              two brands.
-            </span>
-            <span className="block text-xs text-muted-foreground">Period: {period}</span>
+          <CardDescription>
+            Your AI-attributed checkout share vs top competitor per category · {period}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {merchantCategoryShare.map((row) => {
-              const otherApprox = Math.max(0, 100 - row.youPct - row.competitorPct)
-              return (
-                <div
-                  key={row.category}
-                  className="rounded-lg bg-muted/40 p-4"
-                >
+        <CardContent className="space-y-5">
+          {merchantCategoryShare.map((row) => {
+            const winning = row.youPct >= row.competitorPct
+            return (
+              <div key={row.category} className="space-y-2">
+                <div className="flex items-baseline justify-between gap-2">
                   <p className="text-sm font-medium">{row.category}</p>
-                  <p className="text-xs text-muted-foreground">vs {row.topCompetitor}</p>
-                  <div className="mt-3 flex items-end justify-between gap-2">
-                    <div>
-                      <p className="text-xs text-muted-foreground">You</p>
-                      <p className="text-lg font-semibold tabular-nums">{row.youPct}%</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">{row.topCompetitor}</p>
-                      <p className="text-lg font-semibold tabular-nums text-muted-foreground">
-                        {row.competitorPct}%
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-                    ~{otherApprox}% other merchants in this category (illustrative)
-                  </p>
+                  <span
+                    className={cn(
+                      "text-xs font-medium",
+                      winning ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                    )}
+                  >
+                    {winning ? "Leading" : `Behind by ${row.competitorPct - row.youPct}pts`}
+                  </span>
                 </div>
-              )
-            })}
-          </div>
+                {/* You */}
+                <div className="flex items-center gap-2">
+                  <span className="w-24 shrink-0 text-xs text-muted-foreground truncate">You</span>
+                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{ width: `${row.youPct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 text-right text-xs font-semibold tabular-nums">{row.youPct}%</span>
+                </div>
+                {/* Competitor */}
+                <div className="flex items-center gap-2">
+                  <span className="w-24 shrink-0 text-xs text-muted-foreground truncate">{row.topCompetitor}</span>
+                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-muted-foreground/40 transition-all duration-500"
+                      style={{ width: `${row.competitorPct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 text-right text-xs font-medium tabular-nums text-muted-foreground">{row.competitorPct}%</span>
+                </div>
+              </div>
+            )
+          })}
         </CardContent>
       </Card>
 
+      {/* Your share by AI engine */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Your share by AI engine</CardTitle>
-          <CardDescription className="space-y-2 text-pretty">
-            <span>
-              <strong className="font-medium text-foreground">Your share</strong> is what portion of{" "}
-              <strong className="font-medium text-foreground">AI-attributed merchant clicks</strong> came from
-              answers produced by <em>that</em> engine (ChatGPT vs Perplexity vs …). Top competitor shows who
-              wins the most share on the same engine basis ({SOV_SHORT}-style slice, 0–100).
-            </span>
-            <span className="block text-xs text-muted-foreground">Period: {period}</span>
+          <CardDescription>
+            How your checkout share compares to the top rival on each engine · {period}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
-            {engineMerchantShare.map((engine) => (
-              <div
-                key={engine.name}
-                className="flex flex-col gap-3 rounded-lg border border-border/80 p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <PlatformLogo
-                    name={engine.name}
-                    shortName={engine.shortName}
-                    iconSlug={engine.iconSlug}
-                    color={engine.color}
-                    size="md"
-                  />
-                  <div>
-                    <p className="text-sm font-medium">{engine.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Strongest rival on this engine: {engine.topCompetitor} ({engine.competitorShare}% share)
-                    </p>
+            {engineMerchantShare.map((engine) => {
+              const winning = engine.yourShare >= engine.competitorShare
+              return (
+                <div
+                  key={engine.name}
+                  className="rounded-lg border border-border/80 p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <PlatformLogo
+                        name={engine.name}
+                        shortName={engine.shortName}
+                        iconSlug={engine.iconSlug}
+                        color={engine.color}
+                        size="md"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{engine.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          vs {engine.topCompetitor}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-semibold tabular-nums">{engine.yourShare}%</p>
+                      <p className={cn(
+                        "text-[11px] font-medium",
+                        winning ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                      )}>
+                        {winning
+                          ? `+${engine.yourShare - engine.competitorShare}pts ahead`
+                          : `${engine.competitorShare - engine.yourShare}pts behind`}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Comparative bars */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-16 shrink-0 text-[11px] text-muted-foreground">You</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${engine.yourShare}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-16 shrink-0 text-[11px] text-muted-foreground truncate">{engine.topCompetitor}</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-muted-foreground/40 transition-all duration-500"
+                          style={{ width: `${engine.competitorShare}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="text-left sm:text-right">
-                  <p className="text-2xl font-semibold tabular-nums">{engine.yourShare}%</p>
-                  <p className="text-xs text-muted-foreground">your share of engine traffic</p>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
           <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
             Tweak prompts and catalog attributes in{" "}

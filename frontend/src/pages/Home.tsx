@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { GripVertical, LayoutGrid } from "lucide-react"
+import { GripVertical, Pencil } from "lucide-react"
 import { currentUser } from "@/lib/mock-data"
 import {
   getHomeLayout,
@@ -85,12 +85,15 @@ export function Home() {
 
   const visibleOrdered = getVisibleWidgetsInOrder(layout)
 
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+
   return (
     <>
       <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome back, {currentUser.name.split(" ")[0]}
+            {greeting}, {currentUser.name.split(" ")[0]}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Here&apos;s what&apos;s happening with your campaigns — {formatAiPresencePeriodShort(timeRange)}.
@@ -99,13 +102,12 @@ export function Home() {
         <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:items-center">
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            className="gap-2"
+            variant="ghost"
+            size="icon-sm"
             onClick={() => setCustomizeOpen(true)}
+            aria-label="Customize home"
           >
-            <LayoutGrid className="size-4" />
-            Customize home
+            <Pencil className="size-4" />
           </Button>
           <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
         </div>

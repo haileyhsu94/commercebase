@@ -83,10 +83,10 @@ export function AiPresenceTimeRangeControl({ value, onChange }: AiPresenceTimeRa
               type="button"
               onClick={() => onChange({ kind: "preset", preset })}
               className={cn(
-                "rounded px-2 py-1 font-medium",
+                "rounded px-2 py-1 font-medium transition-colors",
                 value.kind === "preset" && value.preset === preset
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               {preset}
@@ -100,10 +100,10 @@ export function AiPresenceTimeRangeControl({ value, onChange }: AiPresenceTimeRa
           type="button"
           onClick={openCustomDialog}
           className={cn(
-            "rounded px-2 py-1 font-medium",
+            "rounded px-2 py-1 font-medium transition-colors",
             value.kind === "custom"
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
           Custom

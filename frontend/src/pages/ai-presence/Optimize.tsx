@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react"
-import { Link } from "react-router-dom"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Link, useSearchParams } from "react-router-dom"
 import {
   AlertCircle,
   ArrowDown,
@@ -173,6 +173,24 @@ function matchesCategoryScope(
 }
 
 export function OptimizePage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const scoresRef = useRef<HTMLDivElement>(null)
+  const shouldHighlight = searchParams.get("highlight") === "scores"
+
+  useEffect(() => {
+    if (shouldHighlight && scoresRef.current) {
+      scoresRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+      const timeout = setTimeout(() => {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete("highlight")
+          return next
+        }, { replace: true })
+      }, 2500)
+      return () => clearTimeout(timeout)
+    }
+  }, [shouldHighlight, setSearchParams])
+
   const [auditFilter, setAuditFilter] = useState<AuditTab>("all")
   const [auditCategoryScope, setAuditCategoryScope] = useState<AuditCategoryScope>("all")
   const auditSectionRef = useRef<HTMLDivElement>(null)
@@ -227,7 +245,7 @@ export function OptimizePage() {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
+      <div ref={scoresRef} className={cn("grid gap-6 lg:grid-cols-2 lg:items-stretch transition-all duration-700", shouldHighlight && "animate-pulse ring-2 ring-primary/50 rounded-lg")}>
       <Card className="min-w-0 h-full">
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
@@ -235,7 +253,7 @@ export function OptimizePage() {
             <CardDescription className="max-w-2xl">
               Combined SEO and GEO scores reflect overall health. The check counts below are from the{" "}
               <span className="font-medium text-foreground">same technical audit</span> — how many rules
-              passed, need attention, or failed in that run (mock).
+              passed, need attention, or failed in that run.
             </CardDescription>
           </div>
           <Button type="button" variant="outline" size="sm" className="shrink-0 gap-2">
@@ -353,7 +371,7 @@ export function OptimizePage() {
       <Card className="flex min-h-0 min-w-0 h-full flex-col">
         <CardHeader>
           <CardTitle className="text-base">Score trend</CardTitle>
-          <CardDescription>SEO vs GEO over the last several weeks (mock)</CardDescription>
+          <CardDescription>SEO vs GEO over the last several weeks</CardDescription>
         </CardHeader>
         <CardContent className="flex min-h-0 flex-1 flex-col">
           <ChartContainer config={trendChartConfig} className="aspect-auto h-[240px] min-h-[220px] w-full flex-1">
@@ -511,11 +529,9 @@ export function OptimizePage() {
                     {row.trend}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" asChild>
-                      <Link to="/ai-presence/prompts">
-                        Details
-                        <ChevronRight className="size-3" />
-                      </Link>
+                    <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" render={<Link to="/ai-presence/prompts" />}>
+                      Details
+                      <ChevronRight className="size-3" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -528,7 +544,7 @@ export function OptimizePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Product-level optimization</CardTitle>
-          <CardDescription>SEO and GEO scores for individual products — top products by revenue (mock)</CardDescription>
+          <CardDescription>SEO and GEO scores for individual products — top products by revenue</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <Table>
@@ -620,11 +636,9 @@ export function OptimizePage() {
                   <TableCell className="text-right tabular-nums text-muted-foreground">{p.rank}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{p.issue}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" asChild>
-                      <Link to="/products">
-                        Fix
-                        <ArrowRight className="size-3" />
-                      </Link>
+                    <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" render={<Link to="/products" />}>
+                      Fix
+                      <ArrowRight className="size-3" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -674,7 +688,7 @@ export function OptimizePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Visibility by region</CardTitle>
-          <CardDescription>AI shopping visibility index vs classic SERP visibility (mock)</CardDescription>
+          <CardDescription>AI shopping visibility index vs classic SERP visibility</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <Table>
@@ -776,11 +790,9 @@ export function OptimizePage() {
                     <p className="text-xs text-muted-foreground">{item.affected}</p>
                   )}
                 </div>
-                <Button variant="outline" size="sm" className="shrink-0 gap-1" asChild>
-                  <Link to="/products">
-                    Review
-                    <ArrowRight className="size-3.5" />
-                  </Link>
+                <Button variant="outline" size="sm" className="shrink-0 gap-1" render={<Link to="/products" />}>
+                  Review
+                  <ArrowRight className="size-3.5" />
                 </Button>
               </div>
             ))}

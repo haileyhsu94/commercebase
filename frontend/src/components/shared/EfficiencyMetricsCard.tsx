@@ -134,7 +134,7 @@ export function EfficiencyMetricsCard({ timeRange }: { timeRange: AiPresenceTime
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium">Efficiency metrics</CardTitle>
         <CardDescription>
-          {formatAiPresencePeriodShort(timeRange)} · {formatOverviewTrendVsPriorLabel(timeRange)} (mock)
+          {formatAiPresencePeriodShort(timeRange)} · {formatOverviewTrendVsPriorLabel(timeRange)}
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -11,4 +11,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // Avoid stale module graph / HMR after large refactors (e.g. sidebar tokens)
+    headers: {
+      "Cache-Control": "no-store",
+    },
+  },
 })

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react"
+import { useLocation } from "react-router-dom"
 import {
   X,
   Send,
@@ -7,6 +8,7 @@ import {
   GripVertical,
   ThumbsUp,
   ThumbsDown,
+  ChevronUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -119,10 +121,18 @@ export function AIAssistantPanel() {
     sendAssistantQuery,
     currentContext,
     suggestedQuestions,
+    examplePromptGroups,
+    pendingComposerText,
+    clearPendingComposerText,
   } = useAIAssistant()
+
+  const location = useLocation()
+  const showCampaignCopyHint =
+    currentContext.page === "Campaigns" || location.pathname.includes("/campaign")
 
   const [input, setInput] = useState("")
   const [isResizing, setIsResizing] = useState(false)
+  const [disclaimerMinimized, setDisclaimerMinimized] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -135,6 +145,13 @@ export function AIAssistantPanel() {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || pendingComposerText == null) return
+    setInput(pendingComposerText)
+    clearPendingComposerText()
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }, [isOpen, pendingComposerText, clearPendingComposerText])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -243,6 +260,32 @@ export function AIAssistantPanel() {
               </div>
             </div>
 
+            {!disclaimerMinimized ? (
+              <div className="flex shrink-0 items-start gap-2 border-b border-amber-200/70 bg-amber-50 px-3 py-2 dark:border-amber-800/50 dark:bg-amber-950/35">
+                <p className="min-w-0 flex-1 text-xs leading-snug text-amber-950 dark:text-amber-50">
+                  Aeris is in Beta. Responses may be incomplete or inaccurate.
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  className="shrink-0 text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900/40"
+                  aria-label="Minimize disclaimer"
+                  onClick={() => setDisclaimerMinimized(true)}
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="shrink-0 border-b border-border/60 bg-muted/30 px-3 py-1.5 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted/50"
+                onClick={() => setDisclaimerMinimized(false)}
+              >
+                Aeris Beta disclaimer minimized — tap to show
+              </button>
+            )}
+
             {/* Context */}
             <div className="shrink-0 border-b border-border/50 bg-muted/15 px-3 py-1.5">
               <p className="text-[11px] text-muted-foreground">
@@ -267,20 +310,32 @@ export function AIAssistantPanel() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       Ask about campaigns, analytics, or AI visibility.
                     </p>
+                    {showCampaignCopyHint && (
+                      <p className="mx-auto mt-3 max-w-[20rem] rounded-lg border border-indigo-200/80 bg-indigo-50/80 px-3 py-2 text-left text-[11px] leading-snug text-indigo-950 dark:border-indigo-800/60 dark:bg-indigo-950/40 dark:text-indigo-100">
+                        <span className="font-semibold">Campaign copy:</span> say you want to{" "}
+                        <span className="font-medium">copy</span>, <span className="font-medium">reuse</span>, or{" "}
+                        <span className="font-medium">start from</span> a campaign — after you send, Aeris can show{" "}
+                        <span className="font-medium">Open copy in wizard</span> to pre-fill the create flow.
+                      </p>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Suggested
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      {suggestedQuestions.map((question) => (
-                        <SuggestedQuestion
-                          key={question}
-                          question={question}
-                          onClick={() => handleSuggestedQuestion(question)}
-                        />
-                      ))}
-                    </div>
+                  <div className="space-y-4">
+                    {examplePromptGroups.map((group) => (
+                      <div key={group.category} className="space-y-2">
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {group.category}
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {group.prompts.map((question) => (
+                            <SuggestedQuestion
+                              key={question}
+                              question={question}
+                              onClick={() => handleSuggestedQuestion(question)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ) : (
@@ -330,7 +385,7 @@ export function AIAssistantPanel() {
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Message Aeris…"
+                  placeholder="Ask Aeris to analyze, suggest, or act on your campaigns…"
                   disabled={isLoading}
                   className="flex-1 rounded-xl border-border/80 bg-muted/40 py-2 text-sm shadow-none focus-visible:ring-indigo-500/25 dark:bg-muted/25"
                 />

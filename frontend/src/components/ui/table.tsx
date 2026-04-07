@@ -21,7 +21,11 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn(
+        /* `tr:hover` must be in the variant — `[&_tr]:hover:*` targets thead hover, not row hover */
+        "[&_tr]:border-b [&_tr:hover]:!bg-transparent",
+        className
+      )}
       {...props}
     />
   )

@@ -1,4 +1,5 @@
 import { Loader2, Pause, Play, Sparkles } from "lucide-react"
+import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -37,6 +38,7 @@ function statusLabel(s: AutoAgentQueueStatus): string {
 
 export function AutoAgentPage() {
   const s = autoAgentSummary
+  const { openPanelWithComposerText } = useAIAssistant()
 
   return (
     <div className="space-y-6">
@@ -70,12 +72,12 @@ export function AutoAgentPage() {
             <div className="rounded-lg border border-border/80 bg-muted/30 px-3 py-3">
               <p className="text-xs font-medium text-muted-foreground">SEO improvement</p>
               <p className="mt-1 text-2xl font-semibold tabular-nums">+{s.seoImprovementPtsVsWeek} pts</p>
-              <p className="text-xs text-muted-foreground">vs last week</p>
+              <p className="text-xs text-muted-foreground">vs prior week</p>
             </div>
             <div className="rounded-lg border border-border/80 bg-muted/30 px-3 py-3">
               <p className="text-xs font-medium text-muted-foreground">GEO improvement</p>
               <p className="mt-1 text-2xl font-semibold tabular-nums">+{s.geoImprovementPtsVsWeek} pts</p>
-              <p className="text-xs text-muted-foreground">vs last week</p>
+              <p className="text-xs text-muted-foreground">vs prior week</p>
             </div>
             <div className="rounded-lg border border-border/80 bg-muted/30 px-3 py-3">
               <p className="text-xs font-medium text-muted-foreground">Queue</p>
@@ -105,6 +107,17 @@ export function AutoAgentPage() {
             <span className="font-semibold tabular-nums">{autoAgentCurrentRun.progressPct}%</span>
           </div>
           <Progress value={autoAgentCurrentRun.progressPct} className="h-2" />
+          <button
+            type="button"
+            className="mt-2 text-left text-sm font-medium text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-300"
+            onClick={() =>
+              openPanelWithComposerText(
+                `Ask about my Auto Agent run: "${autoAgentCurrentRun.taskTitle}" on ${autoAgentCurrentRun.productName} (SKU ${autoAgentCurrentRun.sku}, ${autoAgentCurrentRun.progressPct}% complete, ${autoAgentCurrentRun.current}/${autoAgentCurrentRun.total} items).`
+              )
+            }
+          >
+            Ask Aeris about this run →
+          </button>
         </CardContent>
       </Card>
 
@@ -136,7 +149,7 @@ export function AutoAgentPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Task queue</CardTitle>
-          <CardDescription>Prioritized work derived from SEO / GEO signals (mock)</CardDescription>
+          <CardDescription>Prioritized work derived from SEO / GEO signals</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {autoAgentQueueTasks.map((task) => (

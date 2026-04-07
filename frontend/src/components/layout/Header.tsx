@@ -1,4 +1,5 @@
 import { Search, Sparkles } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
@@ -43,6 +44,12 @@ export function Header() {
       >
         <Sparkles className="h-4 w-4 shrink-0" />
         Ask Aeris
+        <Badge
+          variant="secondary"
+          className="h-5 border border-violet-300/90 bg-violet-100 px-1.5 text-[10px] font-semibold text-violet-900 dark:border-violet-500/40 dark:bg-violet-950/60 dark:text-violet-200"
+        >
+          Beta
+        </Badge>
       </Button>
     </header>
   )

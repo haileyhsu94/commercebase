@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react"
+import type { CampaignWizardFormData } from "@/types/campaign-wizard"
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -66,21 +67,39 @@ export interface Campaign {
   id: string
   name: string
   status: "active" | "paused" | "draft" | "ended"
+  goal?: string
+  budget?: string
   spent: string
+  clicks?: string
+  orders?: number
   revenue: string
   cvr: string
   roas: string
+  cpa?: string
   cpc: string
   cps: string
   /** ISO timestamp when the campaign went live (user launches); used for included-campaigns-per-month. */
   launchedAt?: string
+  /** Saved when launched from the wizard — used for Duplicate campaign. */
+  wizardSnapshot?: CampaignWizardFormData
 }
 
 export const campaigns: Campaign[] = [
-  { id: "1", name: "SS26 Luxury — Drive Sales", status: "active", spent: "$3.2K", revenue: "$28.6K", cvr: "1.69%", roas: "879%", cpc: "$0.52", cps: "$18.40" },
-  { id: "2", name: "Sneakers Q2 — New Customer", status: "active", spent: "$1.9K", revenue: "$19.2K", cvr: "2.48%", roas: "1034%", cpc: "$0.41", cps: "$12.10" },
-  { id: "3", name: "FW26 Collection Launch", status: "active", spent: "$5.1K", revenue: "$15.6K", cvr: "0.59%", roas: "305%", cpc: "$0.68", cps: "$26.50" },
-  { id: "4", name: "Summer Sale — Stock Clearance", status: "active", spent: "$890", revenue: "$12.4K", cvr: "3.00%", roas: "1393%", cpc: "$0.35", cps: "$9.80" },
+  // Active (4)
+  { id: "1", name: "SS26 Luxury — Drive Sales", status: "active", goal: "Drive Sales", budget: "$5.0K", spent: "$3.2K", clicks: "6,154", orders: 104, revenue: "$28.6K", cvr: "1.69%", roas: "879%", cpa: "$30.77", cpc: "$0.52", cps: "$18.40" },
+  { id: "2", name: "Sneakers Q2 — New Customer", status: "active", goal: "New Customer", budget: "$3.0K", spent: "$1.9K", clicks: "4,634", orders: 115, revenue: "$19.2K", cvr: "2.48%", roas: "1034%", cpa: "$16.52", cpc: "$0.41", cps: "$12.10" },
+  { id: "3", name: "FW26 Collection Launch", status: "active", goal: "Product Push", budget: "$8.0K", spent: "$5.1K", clicks: "7,500", orders: 44, revenue: "$15.6K", cvr: "0.59%", roas: "305%", cpa: "$115.91", cpc: "$0.68", cps: "$26.50" },
+  { id: "4", name: "Summer Sale — Stock Clearance", status: "active", goal: "Drive Sales", budget: "$1.5K", spent: "$890", clicks: "2,543", orders: 76, revenue: "$12.4K", cvr: "3.00%", roas: "1393%", cpa: "$11.71", cpc: "$0.35", cps: "$9.80" },
+  // Paused (2)
+  { id: "5", name: "Brand Awareness — Luxury Segment", status: "paused", goal: "Brand Awareness", budget: "$4.0K", spent: "$2.8K", clicks: "5,210", orders: 31, revenue: "$9.3K", cvr: "0.60%", roas: "332%", cpa: "$90.32", cpc: "$0.54", cps: "$22.00" },
+  { id: "6", name: "Retargeting — Cart Abandoners", status: "paused", goal: "Drive Sales", budget: "$2.0K", spent: "$1.7K", clicks: "3,880", orders: 62, revenue: "$8.1K", cvr: "1.60%", roas: "476%", cpa: "$27.42", cpc: "$0.44", cps: "$14.50" },
+  // Draft (1)
+  { id: "7", name: "Back to School 2026", status: "draft", goal: "New Customer", budget: "$6.0K", spent: "$0", clicks: "0", orders: 0, revenue: "$0", cvr: "0.00%", roas: "0%", cpa: "—", cpc: "$0.00", cps: "$0.00" },
+  // Ended (4)
+  { id: "8", name: "Valentine's Day Gifting", status: "ended", goal: "Drive Sales", budget: "$3.5K", spent: "$3.5K", clicks: "8,920", orders: 189, revenue: "$22.4K", cvr: "2.12%", roas: "640%", cpa: "$18.52", cpc: "$0.39", cps: "$11.80" },
+  { id: "9", name: "Spring Sneaker Drop", status: "ended", goal: "Product Push", budget: "$2.5K", spent: "$2.5K", clicks: "4,100", orders: 58, revenue: "$10.7K", cvr: "1.41%", roas: "428%", cpa: "$43.10", cpc: "$0.61", cps: "$19.30" },
+  { id: "10", name: "Holiday 2025 — Premium Gifts", status: "ended", goal: "Drive Sales", budget: "$10.0K", spent: "$10.0K", clicks: "18,400", orders: 312, revenue: "$56.2K", cvr: "1.70%", roas: "562%", cpa: "$32.05", cpc: "$0.54", cps: "$17.60" },
+  { id: "11", name: "Black Friday Flash Sale", status: "ended", goal: "Drive Sales", budget: "$7.0K", spent: "$7.0K", clicks: "22,300", orders: 485, revenue: "$41.8K", cvr: "2.18%", roas: "597%", cpa: "$14.43", cpc: "$0.31", cps: "$8.90" },
 ]
 
 /** Default company context for catalog, AI copy, and onboarding (override in Settings). */

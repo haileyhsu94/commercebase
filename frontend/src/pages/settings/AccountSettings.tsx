@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowRight, ChevronDown, ExternalLink, Shield, Trash2 } from "lucide-react"
+import { ArrowRight, ExternalLink, Shield, Trash2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -22,12 +22,10 @@ import { cn } from "@/lib/utils"
 import { currentUser, simpleIconSvgUrl } from "@/lib/mock-data"
 import { getCompanyProfile, saveCompanyProfile } from "@/lib/company-profile"
 import {
-  ADDITIONAL_CAMPAIGN_COPY,
   buildPlanCatalog,
   CURRENT_PLAN_ID,
   getMediaPlan,
   planBulletsLine,
-  upgradeOptionsFrom,
 } from "@/lib/media-plans"
 import {
   Dialog,
@@ -165,7 +163,6 @@ const initialApiKeys: ApiKeyRow[] = [
 ]
 
 const currentMediaPlan = getMediaPlan(CURRENT_PLAN_ID)!
-const mediaUpgradePlans = upgradeOptionsFrom(CURRENT_PLAN_ID)
 const allMediaPlansCatalog = buildPlanCatalog(CURRENT_PLAN_ID)
 
 const SETTINGS_MAIN_TABS = new Set([
@@ -191,7 +188,6 @@ export function AccountSettings() {
   }, [searchParams, navigate])
 
   const skipApiKeyCloseConfirmRef = useRef(false)
-  const [allPlansOpen, setAllPlansOpen] = useState(false)
   const [billingDialogOpen, setBillingDialogOpen] = useState(false)
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false)
   const [apiKeyStep, setApiKeyStep] = useState<"name" | "secret">("name")
@@ -670,13 +666,7 @@ export function AccountSettings() {
                 <p className="mt-1 text-2xl font-semibold tabular-nums">
                   {currentMediaPlan.priceDisplay}
                 </p>
-                <p className="text-xs text-muted-foreground">Billed monthly · media package</p>
-              </div>
-              <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Additional campaigns
-                </p>
-                <p className="mt-2 text-sm text-foreground">{ADDITIONAL_CAMPAIGN_COPY}</p>
+                <p className="text-xs text-muted-foreground">Billed monthly</p>
               </div>
               <Button variant="outline" type="button" onClick={() => setBillingDialogOpen(true)}>
                 Manage billing
@@ -685,17 +675,18 @@ export function AccountSettings() {
           </Card>
 
           <div>
-            <h3 className="mb-3 text-sm font-medium">Upgrade</h3>
+            <h3 className="mb-3 text-sm font-medium">All plans</h3>
             <p className="mb-4 text-xs text-muted-foreground">
-              Higher tiers add onsite placements, creator amplification, and more included campaigns.
-              Need more campaigns than your tier? Each extra campaign is priced from its own
-              settings—see above. Full comparison under &quot;View all plans&quot;.
+              No lock-in. No minimums after onboarding. Scale from free to enterprise as you grow.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {mediaUpgradePlans.map((plan) => (
-                <Card key={plan.id}>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {allMediaPlansCatalog.map((plan) => (
+                <Card key={plan.id} className={plan.relation === "current" ? "ring-2 ring-primary" : ""}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">{plan.name}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-base">{plan.name}</CardTitle>
+                      {plan.relation === "current" && <Badge>Current</Badge>}
+                    </div>
                     <CardDescription className="text-foreground">
                       <span className="text-lg font-semibold tabular-nums">{plan.priceDisplay}</span>
                       {plan.period}
@@ -703,81 +694,32 @@ export function AccountSettings() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <p className="text-xs text-muted-foreground">{plan.tagline}</p>
-                    <p className="text-xs text-muted-foreground">{planBulletsLine(plan)}</p>
-                    <Button type="button" className="w-full">
-                      Upgrade to {plan.name}
-                    </Button>
+                    <ul className="space-y-1">
+                      {plan.highlights.map((h) => (
+                        <li key={h} className="text-xs text-muted-foreground">
+                          &bull; {h}
+                        </li>
+                      ))}
+                    </ul>
+                    {plan.relation === "current" && (
+                      <Button size="sm" variant="outline" className="w-full" disabled>
+                        Current plan
+                      </Button>
+                    )}
+                    {plan.relation === "upgrade" && (
+                      <Button size="sm" type="button" className="w-full">
+                        {plan.id === "enterprise" ? "Contact sales" : `Upgrade to ${plan.name}`}
+                      </Button>
+                    )}
+                    {plan.relation === "downgrade" && (
+                      <Button size="sm" variant="outline" type="button" className="w-full">
+                        Downgrade
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </div>
-
-          <div className="rounded-lg border border-border/80">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium hover:bg-muted/50"
-              onClick={() => setAllPlansOpen((o) => !o)}
-              aria-expanded={allPlansOpen}
-            >
-              View all plans
-              <ChevronDown
-                className={`h-4 w-4 shrink-0 transition-transform ${allPlansOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            {allPlansOpen && (
-              <div className="border-t border-border/80 px-4 py-3">
-                <p className="mb-3 text-xs text-muted-foreground">
-                  Packages follow the Realry / StylMatch media matrix. To downgrade, contact
-                  support first. Extra campaigns use per-campaign pricing from your campaign
-                  settings—see &quot;Additional campaigns&quot; above.
-                </p>
-                <div className="space-y-3">
-                  {allMediaPlansCatalog.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className="flex flex-col gap-2 rounded-md bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium">{plan.name}</span>
-                          {plan.relation === "current" && <Badge>Current</Badge>}
-                          {plan.relation === "upgrade" && (
-                            <Badge variant="secondary">Upgrade</Badge>
-                          )}
-                          {plan.relation === "downgrade" && (
-                            <Badge variant="outline">Downgrade</Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{plan.tagline}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{planBulletsLine(plan)}</p>
-                        <p className="mt-1 text-sm tabular-nums">
-                          <span className="font-semibold">{plan.priceDisplay}</span>
-                          {plan.period}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 gap-2">
-                        {plan.relation === "current" && (
-                          <Button size="sm" variant="outline" disabled>
-                            Current plan
-                          </Button>
-                        )}
-                        {plan.relation === "upgrade" && (
-                          <Button size="sm" type="button">
-                            Upgrade
-                          </Button>
-                        )}
-                        {plan.relation === "downgrade" && (
-                          <Button size="sm" variant="outline" type="button">
-                            Contact to downgrade
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </TabsContent>
 
@@ -1164,7 +1106,7 @@ export function AccountSettings() {
               QR code
             </div>
             <p className="text-center text-xs text-muted-foreground">
-              Can&apos;t scan? Use the setup key shown in your authenticator app flow (mock).
+              Can&apos;t scan? Use the setup key shown in your authenticator app flow.
             </p>
           </div>
           <DialogFooter>
@@ -1172,7 +1114,7 @@ export function AccountSettings() {
               Close
             </Button>
             <Button type="button" disabled>
-              Verify code (mock)
+              Verify code
             </Button>
           </DialogFooter>
         </DialogContent>

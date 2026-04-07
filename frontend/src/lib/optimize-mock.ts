@@ -31,7 +31,7 @@ export interface TrendingTopic {
   title: string
   badge: string
   source: string
-  /** Opens in new tab — subreddit, report, or article (mock) */
+  /** Opens in new tab — subreddit, report, or article */
   sourceUrl?: string
   quote: string
   action: string

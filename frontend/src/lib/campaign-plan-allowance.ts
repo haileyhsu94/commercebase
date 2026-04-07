@@ -1,6 +1,6 @@
 import { getUserCampaigns } from "@/lib/campaign-storage"
 import type { Campaign } from "@/lib/mock-data"
-import { ADDITIONAL_CAMPAIGN_COPY, CURRENT_PLAN_ID, getMediaPlan } from "@/lib/media-plans"
+import { CURRENT_PLAN_ID, getMediaPlan } from "@/lib/media-plans"
 
 /** When the campaign “went live” for slot counting — prefers `launchedAt`, else parses numeric `new-<ts>` ids. */
 export function effectiveLaunchedAt(c: Campaign): Date | null {
@@ -59,5 +59,3 @@ export function getCampaignPlanAllowance(): CampaignPlanAllowance {
     isAtOrOverIncludedLimit: included > 0 && used >= included,
   }
 }
-
-export { ADDITIONAL_CAMPAIGN_COPY }

@@ -1,6 +1,14 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
+import {
+  AERIS_EXAMPLE_PROMPT_GROUPS,
+  type AerisExamplePromptGroup,
+} from "@/lib/aeris-example-prompts"
 import { getMockResponse } from "@/lib/assistant-mock"
+import {
+  CAMPAIGN_WIZARD_AI_DRAFT_KEY,
+  tryBuildAiCampaignCopy,
+} from "@/lib/campaign-ai-copy-mock"
 
 export type MessageRole = "user" | "assistant"
 
@@ -27,7 +35,11 @@ interface AIAssistantContextType {
   panelWidth: number
   setPanelWidth: (width: number) => void
   messages: Message[]
-  addMessage: (content: string, role: MessageRole) => void
+  addMessage: (
+    content: string,
+    role: MessageRole,
+    options?: Pick<Message, "actions">
+  ) => void
   clearMessages: () => void
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
@@ -40,6 +52,11 @@ interface AIAssistantContextType {
     entityId?: string
   }
   suggestedQuestions: string[]
+  examplePromptGroups: AerisExamplePromptGroup[]
+  /** Opens the panel and pre-fills the composer (user can edit before sending). */
+  openPanelWithComposerText: (text: string) => void
+  pendingComposerText: string | null
+  clearPendingComposerText: () => void
 }
 
 const AIAssistantContext = createContext<AIAssistantContextType | null>(null)
@@ -65,7 +82,7 @@ const pageContextMap: Record<string, { name: string; questions: string[] }> = {
     name: "Campaigns",
     questions: [
       "Which campaign has the best CVR?",
-      "Create a new campaign",
+      "Copy my best-performing campaign with a higher daily budget",
       "Pause underperforming campaigns",
     ],
   },
@@ -103,12 +120,20 @@ const pageContextMap: Record<string, { name: string; questions: string[] }> = {
   },
 }
 
+function normalizePathname(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1)
+  }
+  return pathname
+}
+
 function getPageContext(pathname: string): { name: string; questions: string[] } {
-  const exactMatch = pageContextMap[pathname]
+  const p = normalizePathname(pathname)
+  const exactMatch = pageContextMap[p]
   if (exactMatch) return exactMatch
 
   const baseMatch = Object.entries(pageContextMap).find(([key]) => 
-    pathname.startsWith(key) && key !== "/"
+    p.startsWith(key) && key !== "/"
   )
   if (baseMatch) return baseMatch[1]
 
@@ -125,11 +150,13 @@ const DEFAULT_PANEL_WIDTH = 400
 
 export function AIAssistantProvider({ children }: AIAssistantProviderProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>(["view"])
+  const [pendingComposerText, setPendingComposerText] = useState<string | null>(null)
   const loadingLock = useRef(false)
 
   const pageContext = getPageContext(location.pathname)
@@ -138,34 +165,75 @@ export function AIAssistantProvider({ children }: AIAssistantProviderProps) {
     setIsOpen((prev) => !prev)
   }, [])
 
-  const addMessage = useCallback((content: string, role: MessageRole) => {
-    const message: Message = {
-      id: crypto.randomUUID(),
-      role,
-      content,
-      timestamp: new Date(),
-    }
-    setMessages((prev) => [...prev, message])
-  }, [])
+  const addMessage = useCallback(
+    (content: string, role: MessageRole, options?: Pick<Message, "actions">) => {
+      const message: Message = {
+        id: crypto.randomUUID(),
+        role,
+        content,
+        timestamp: new Date(),
+        ...options,
+      }
+      setMessages((prev) => [...prev, message])
+    },
+    []
+  )
 
-  const sendAssistantQuery = useCallback(async (content: string) => {
-    const trimmed = content.trim()
-    if (!trimmed || loadingLock.current) return
-    loadingLock.current = true
-    addMessage(trimmed, "user")
-    setIsOpen(true)
-    setIsLoading(true)
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      addMessage(getMockResponse(trimmed), "assistant")
-    } finally {
-      setIsLoading(false)
-      loadingLock.current = false
-    }
-  }, [addMessage])
+  const sendAssistantQuery = useCallback(
+    async (content: string) => {
+      const trimmed = content.trim()
+      if (!trimmed || loadingLock.current) return
+      loadingLock.current = true
+      addMessage(trimmed, "user")
+      setIsOpen(true)
+      setIsLoading(true)
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        const copyResult = tryBuildAiCampaignCopy(trimmed, location.pathname)
+        if (copyResult.matched) {
+          const draftSnapshot = copyResult.draft
+          addMessage(copyResult.summary, "assistant", {
+            actions: [
+              {
+                label: "Open copy in wizard",
+                variant: "default",
+                onClick: () => {
+                  try {
+                    sessionStorage.setItem(
+                      CAMPAIGN_WIZARD_AI_DRAFT_KEY,
+                      JSON.stringify(draftSnapshot)
+                    )
+                  } catch {
+                    /* ignore quota / private mode */
+                  }
+                  navigate("/campaigns?create=1")
+                  setIsOpen(false)
+                },
+              },
+            ],
+          })
+          return
+        }
+        addMessage(getMockResponse(trimmed), "assistant")
+      } finally {
+        setIsLoading(false)
+        loadingLock.current = false
+      }
+    },
+    [addMessage, location.pathname, navigate]
+  )
 
   const clearMessages = useCallback(() => {
     setMessages([])
+  }, [])
+
+  const clearPendingComposerText = useCallback(() => {
+    setPendingComposerText(null)
+  }, [])
+
+  const openPanelWithComposerText = useCallback((text: string) => {
+    setPendingComposerText(text)
+    setIsOpen(true)
   }, [])
 
   const grantPermission = useCallback((permission: Permission) => {
@@ -226,6 +294,10 @@ export function AIAssistantProvider({ children }: AIAssistantProviderProps) {
       entityId: undefined,
     },
     suggestedQuestions: pageContext.questions,
+    examplePromptGroups: AERIS_EXAMPLE_PROMPT_GROUPS,
+    openPanelWithComposerText,
+    pendingComposerText,
+    clearPendingComposerText,
   }
 
   return (

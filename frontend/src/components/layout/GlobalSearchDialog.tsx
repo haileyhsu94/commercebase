@@ -257,7 +257,7 @@ export function GlobalSearchDialog() {
                     “{query.trim()}”
                   </span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
-                    Natural-language answer (mock) — like GA4 search insights
+                    Natural-language answer — like GA4 search insights
                   </span>
                 </span>
               </button>

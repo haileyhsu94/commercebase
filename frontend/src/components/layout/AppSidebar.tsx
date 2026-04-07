@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Accordion } from "@base-ui/react/accordion"
-import { BarChart3, ChevronDown, Inbox, Package, Settings, Star } from "lucide-react"
+import { BarChart3, ChevronDown, Inbox, Package, Settings } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuAction,
@@ -31,7 +30,6 @@ import {
 } from "@/lib/sidebar-nav"
 import { useUnreadInboxCount } from "@/hooks/use-inbox-unread"
 import { navigationItems, currentUser } from "@/lib/mock-data"
-import { isStarredHrefAllowed, useStarredNav } from "@/lib/starred-nav"
 
 const AI_PRESENCE_HREF = "/ai-presence" as const
 const platformNavItems = navigationItems.filter((i) => i.href !== AI_PRESENCE_HREF)
@@ -49,75 +47,10 @@ function aiPresenceSubActive(pathname: string, path: string) {
 const accordionTriggerClass =
   "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground [&_svg]:size-4 [&_svg]:shrink-0"
 
-function SidebarNavStar({
-  href,
-  starred,
-  onToggle,
-}: {
-  href: string
-  starred: boolean
-  onToggle: () => void
-}) {
-  if (!isStarredHrefAllowed(href)) return null
-  return (
-    <SidebarMenuAction
-      showOnHover
-      render={<button type="button" />}
-      onClick={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        onToggle()
-      }}
-      title={starred ? "Remove from starred" : "Add to starred"}
-      aria-label={starred ? "Remove from starred" : "Add to starred"}
-      aria-pressed={starred}
-      className={cn(
-        starred &&
-          "text-amber-500 opacity-100 hover:text-amber-500 md:opacity-100 peer-data-active/menu-button:text-amber-500"
-      )}
-    >
-      <Star className={cn(starred && "fill-amber-400/40")} strokeWidth={starred ? 1.5 : 2} />
-    </SidebarMenuAction>
-  )
-}
-
-function SubNavStar({
-  href,
-  starred,
-  onToggle,
-}: {
-  href: string
-  starred: boolean
-  onToggle: () => void
-}) {
-  if (!isStarredHrefAllowed(href)) return null
-  return (
-    <button
-      type="button"
-      className={cn(
-        "absolute right-0.5 top-1/2 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-md p-0 text-sidebar-foreground ring-sidebar-ring outline-hidden transition-opacity hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 group-data-[collapsible=icon]:hidden",
-        !starred &&
-          "opacity-0 group-hover/menu-sub-item:opacity-100 group-focus-within/menu-sub-item:opacity-100",
-        starred && "text-amber-500 opacity-100 hover:text-amber-500"
-      )}
-      aria-label={starred ? "Remove from starred" : "Add to starred"}
-      aria-pressed={starred}
-      onClick={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        onToggle()
-      }}
-    >
-      <Star className={cn("size-3.5", starred && "fill-amber-400/40")} strokeWidth={starred ? 1.5 : 2} />
-    </button>
-  )
-}
-
 export function AppSidebar() {
   const location = useLocation()
   const pathname = location.pathname
   const { open: sidebarOpen, setOpen: setSidebarOpen } = useSidebar()
-  const { starredEntries, toggle, isStarred } = useStarredNav()
   const unreadInboxCount = useUnreadInboxCount()
 
   const [aiOpen, setAiOpen] = useState<string[]>(() =>
@@ -223,11 +156,6 @@ export function AppSidebar() {
                     <item.icon />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
-                  <SidebarNavStar
-                    href={item.href}
-                    starred={isStarred(item.href)}
-                    onToggle={() => toggle(item.href)}
-                  />
                 </SidebarMenuItem>
               ))}
               {aiVisibilityNavItem && (
@@ -256,17 +184,11 @@ export function AppSidebar() {
                             return (
                               <SidebarMenuSubItem key={path || "overview"}>
                                 <SidebarMenuSubButton
-                                  className="pr-7"
                                   isActive={aiPresenceSubActive(pathname, path)}
                                   render={<Link to={href} />}
                                 >
                                   <span className="truncate">{label}</span>
                                 </SidebarMenuSubButton>
-                                <SubNavStar
-                                  href={href}
-                                  starred={isStarred(href)}
-                                  onToggle={() => toggle(href)}
-                                />
                               </SidebarMenuSubItem>
                             )
                           })}
@@ -299,17 +221,11 @@ export function AppSidebar() {
                         {analyticsSubnav.map(({ href, label }) => (
                           <SidebarMenuSubItem key={href}>
                             <SidebarMenuSubButton
-                              className="pr-7"
                               isActive={analyticsSubItemActive(pathname, href)}
                               render={<Link to={href} />}
                             >
                               <span className="truncate">{label}</span>
                             </SidebarMenuSubButton>
-                            <SubNavStar
-                              href={href}
-                              starred={isStarred(href)}
-                              onToggle={() => toggle(href)}
-                            />
                           </SidebarMenuSubItem>
                         ))}
                       </SidebarMenuSub>
@@ -340,17 +256,11 @@ export function AppSidebar() {
                         {assetsSubnav.map(({ href, label }) => (
                           <SidebarMenuSubItem key={href}>
                             <SidebarMenuSubButton
-                              className="pr-7"
                               isActive={assetsSubItemActive(pathname, href)}
                               render={<Link to={href} />}
                             >
                               <span className="truncate">{label}</span>
                             </SidebarMenuSubButton>
-                            <SubNavStar
-                              href={href}
-                              starred={isStarred(href)}
-                              onToggle={() => toggle(href)}
-                            />
                           </SidebarMenuSubItem>
                         ))}
                       </SidebarMenuSub>
@@ -361,27 +271,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {starredEntries.length > 0 && (
-          <SidebarGroup className="px-1.5 pb-1.5 pt-2">
-            <SidebarGroupLabel className="group-data-[collapsible=icon]:sr-only">Starred</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {starredEntries.map((entry) => (
-                  <SidebarMenuItem key={entry.href}>
-                    <SidebarMenuButton
-                      isActive={isActive(entry.href)}
-                      tooltip={entry.title}
-                      render={<Link to={entry.href} />}
-                    >
-                      <entry.Icon />
-                      <span className="truncate">{entry.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
       <SidebarFooter className="gap-1.5 p-1.5">
         <SidebarMenu>

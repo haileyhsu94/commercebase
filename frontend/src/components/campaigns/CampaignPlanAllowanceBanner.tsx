@@ -31,7 +31,7 @@ export function CampaignPlanAllowanceBanner({ className, compact, variant = "def
 
   const shortLine =
     n <= 0
-      ? "Included slots not set (mock)"
+      ? "Included slots not set"
       : a.usedThisMonth <= n
         ? `${a.usedThisMonth}/${n} included ${slotWord} this month`
         : `${a.usedThisMonth}/${n} included used · ${a.usedThisMonth - n} beyond plan`

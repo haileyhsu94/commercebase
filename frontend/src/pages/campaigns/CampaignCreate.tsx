@@ -25,6 +25,8 @@ import {
   SlidersHorizontal,
   Sparkles,
   Upload,
+  Copy,
+  Info,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -43,7 +45,13 @@ import {
 import { cn } from "@/lib/utils"
 import { defaultCompanyProfile } from "@/lib/mock-data"
 import { getCompanyProfile, siteHostname } from "@/lib/company-profile"
-import { addLaunchedCampaign, makeNewCampaignRow } from "@/lib/campaign-storage"
+import {
+  addLaunchedCampaign,
+  getMergedCampaigns,
+  makeNewCampaignRow,
+  wizardFormFromCampaign,
+} from "@/lib/campaign-storage"
+import { CAMPAIGN_WIZARD_AI_DRAFT_KEY } from "@/lib/campaign-ai-copy-mock"
 import { regionFlag } from "@/lib/region-flags"
 import { AdPreview } from "@/components/campaigns/AdPreview"
 import { CampaignPlanAllowanceBanner } from "@/components/campaigns/CampaignPlanAllowanceBanner"
@@ -246,15 +254,32 @@ export type CampaignCreateProps = {
   /** When true, wizard runs inside a dialog (no back link; close via onClose). */
   embedded?: boolean
   onClose?: () => void
+  /** Pre-fill all steps from this campaign id (Copy campaign). */
+  duplicateSourceId?: string | null
 }
 
-export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProps = {}) {
+export function CampaignCreate({
+  embedded = false,
+  onClose,
+  duplicateSourceId = null,
+}: CampaignCreateProps = {}) {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<CampaignWizardFormData>(initialCampaignWizardForm)
   const [stepError, setStepError] = useState("")
   const [uploadPreview, setUploadPreview] = useState<string | null>(null)
   const uploadObjectUrlRef = useRef<string | null>(null)
+  const skipDupEffectRef = useRef(false)
+  const prevDupIdRef = useRef<string | null>(null)
+  const [copyPickerValue, setCopyPickerValue] = useState<string>(
+    () => duplicateSourceId ?? "__none__"
+  )
+  const [showAiDraftBanner, setShowAiDraftBanner] = useState(false)
+
+  const duplicateSourceCampaign = useMemo(() => {
+    if (!duplicateSourceId) return null
+    return getMergedCampaigns().find((c) => c.id === duplicateSourceId) ?? null
+  }, [duplicateSourceId])
 
   useEffect(() => {
     return () => {
@@ -263,6 +288,61 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (duplicateSourceId !== prevDupIdRef.current) {
+      skipDupEffectRef.current = false
+      prevDupIdRef.current = duplicateSourceId
+      if (duplicateSourceId) {
+        setCopyPickerValue(duplicateSourceId)
+      } else {
+        setCopyPickerValue("__none__")
+        setShowAiDraftBanner(false)
+      }
+    }
+  }, [duplicateSourceId])
+
+  useEffect(() => {
+    if (!duplicateSourceId) return
+    if (skipDupEffectRef.current) return
+    const c = getMergedCampaigns().find((x) => x.id === duplicateSourceId)
+    if (!c) return
+    if (uploadObjectUrlRef.current) {
+      URL.revokeObjectURL(uploadObjectUrlRef.current)
+      uploadObjectUrlRef.current = null
+    }
+    setUploadPreview(null)
+    setFormData(wizardFormFromCampaign(c))
+    setCurrentStep(1)
+    setStepError("")
+  }, [duplicateSourceId])
+
+  // Precedence: parent duplicateSourceId wins over Aeris draft (same sessionStorage key discarded unread).
+  useEffect(() => {
+    if (typeof sessionStorage === "undefined") return
+    const raw = sessionStorage.getItem(CAMPAIGN_WIZARD_AI_DRAFT_KEY)
+    if (!raw) return
+    if (duplicateSourceId) {
+      sessionStorage.removeItem(CAMPAIGN_WIZARD_AI_DRAFT_KEY)
+      return
+    }
+    try {
+      const parsed = JSON.parse(raw) as Partial<CampaignWizardFormData>
+      if (uploadObjectUrlRef.current) {
+        URL.revokeObjectURL(uploadObjectUrlRef.current)
+        uploadObjectUrlRef.current = null
+      }
+      setUploadPreview(null)
+      setFormData({ ...initialCampaignWizardForm, ...parsed })
+      setShowAiDraftBanner(true)
+      setCopyPickerValue("__none__")
+      setCurrentStep(1)
+      setStepError("")
+    } catch {
+      /* ignore invalid JSON */
+    }
+    sessionStorage.removeItem(CAMPAIGN_WIZARD_AI_DRAFT_KEY)
+  }, [duplicateSourceId])
 
   const creativeImageDisplay = uploadPreview || formData.imageUrl.trim() || undefined
 
@@ -284,7 +364,7 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
     const sym =
       CURRENCY_OPTIONS.find((c) => c.value === formData.currency)?.symbol ?? "$"
     addLaunchedCampaign(
-      makeNewCampaignRow(formData.name.trim() || "Untitled campaign", sym)
+      makeNewCampaignRow(formData.name.trim() || "Untitled campaign", sym, { ...formData })
     )
     exitToCampaigns()
   }
@@ -353,6 +433,26 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
     if (uploadObjectUrlRef.current) URL.revokeObjectURL(uploadObjectUrlRef.current)
     uploadObjectUrlRef.current = null
     setUploadPreview(null)
+  }
+
+  const handleCopyFromExistingChange = (value: string | null) => {
+    if (value == null) return
+    setCopyPickerValue(value)
+    if (value === "__none__") {
+      if (duplicateSourceId) skipDupEffectRef.current = true
+      clearCreativeUpload()
+      setFormData({ ...initialCampaignWizardForm })
+      setStepError("")
+      setShowAiDraftBanner(false)
+      return
+    }
+    skipDupEffectRef.current = false
+    const c = getMergedCampaigns().find((x) => x.id === value)
+    if (!c) return
+    clearCreativeUpload()
+    setFormData(wizardFormFromCampaign(c))
+    setStepError("")
+    setShowAiDraftBanner(false)
   }
 
   const toggleChannel = (channel: string) => {
@@ -437,14 +537,28 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
             </Link>
           )}
           <div>
-            <h1
-              className={cn(
-                "font-semibold tracking-tight",
-                embedded ? "text-xl" : "text-2xl"
+            <div className="flex flex-wrap items-center gap-2">
+              <h1
+                className={cn(
+                  "font-semibold tracking-tight",
+                  embedded ? "text-xl" : "text-2xl"
+                )}
+              >
+                Create Campaign
+              </h1>
+              {duplicateSourceId && duplicateSourceCampaign && (
+                <span className="inline-flex items-center rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-foreground">
+                  <Copy className="mr-1 h-3 w-3" aria-hidden />
+                  Copying
+                </span>
               )}
-            >
-              Create Campaign
-            </h1>
+              {showAiDraftBanner && (
+                <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  <Sparkles className="mr-1 h-3 w-3" aria-hidden />
+                  From Aeris
+                </span>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               Step {currentStep} of {STEP_COUNT}: {steps[currentStep - 1].title}
             </p>
@@ -495,8 +609,77 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
         </p>
       )}
 
+      {duplicateSourceId && duplicateSourceCampaign && (
+        <div
+          className="mb-4 flex gap-3 rounded-lg border border-l-4 border-l-foreground/20 bg-muted/40 px-4 py-3 text-sm"
+          role="status"
+        >
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-foreground" aria-hidden />
+          <div>
+            <p className="font-medium text-foreground">Manual copy</p>
+            <p className="mt-1 text-muted-foreground">
+              Settings are pre-filled from{" "}
+              <span className="font-medium text-foreground">{duplicateSourceCampaign.name}</span>. Review
+              every step before launch.
+            </p>
+          </div>
+        </div>
+      )}
+      {showAiDraftBanner && (
+        <div
+          className="mb-4 flex gap-3 rounded-lg border border-l-4 border-l-primary bg-primary/5 px-4 py-3 text-sm"
+          role="status"
+        >
+          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+          <div>
+            <p className="font-medium text-foreground">Aeris draft</p>
+            <p className="mt-1 text-muted-foreground">
+              This wizard was opened from Aeris with a suggested copy of an existing campaign. Check each
+              step, then launch when ready.
+            </p>
+          </div>
+        </div>
+      )}
+
       <Card className="mb-6">
         <CardContent className="space-y-6">
+          {currentStep === 1 && (
+            <div
+              id="wizard-start-from-existing"
+              className="max-w-3xl scroll-mt-4 space-y-3 rounded-xl border-2 border-dashed border-primary/40 bg-muted/30 p-4 sm:p-5"
+            >
+              <div className="flex items-start gap-2">
+                <Copy className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                <div>
+                  <span className="text-sm font-semibold text-foreground" id="copy-from-existing-label">
+                    Start from an existing campaign
+                  </span>
+                  <p className="mt-1 text-xs text-muted-foreground" id="copy-from-existing-desc">
+                    Choose a campaign below to load its settings (same as{" "}
+                    <span className="font-medium text-foreground">Copy campaign</span> on the list). Leave
+                    blank to start fresh.
+                  </p>
+                </div>
+              </div>
+              <Select value={copyPickerValue} onValueChange={handleCopyFromExistingChange}>
+                <SelectTrigger
+                  className="max-w-full sm:max-w-md"
+                  aria-labelledby="copy-from-existing-label"
+                  aria-describedby="copy-from-existing-desc"
+                >
+                  <SelectValue placeholder="Don't copy — start blank" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Don't copy — start blank</SelectItem>
+                  {getMergedCampaigns().map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <CampaignPlanAllowanceBanner compact />
           {currentStep === 1 && (
             <div className="max-w-3xl space-y-8">
@@ -1173,7 +1356,7 @@ export function CampaignCreate({ embedded = false, onClose }: CampaignCreateProp
                   . Edit any field before launch.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={applyAiHeadlines}>
+                  <Button type="button" variant="outline" size="sm" onClick={applyAiHeadlines}>
                     <Sparkles className="mr-2 h-4 w-4" />
                     Apply AI draft from website
                   </Button>

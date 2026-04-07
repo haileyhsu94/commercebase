@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react"
-import { useParams, Link } from "react-router-dom"
-import { ArrowLeft, Play, Pause, Settings, TrendingUp, TrendingDown } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom"
+import { ArrowLeft, Copy, Play, Pause, Settings, Sparkles, TrendingUp, TrendingDown } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,9 +15,16 @@ import {
 import { Input } from "@/components/ui/input"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, Line, LineChart, XAxis, YAxis } from "recharts"
+import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { getMergedCampaigns } from "@/lib/campaign-storage"
 import { channelPerformance, revenueChartData } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
+import {
+  AiPresenceTimeRangeControl,
+  defaultAiPresenceTimeRange,
+  formatAiPresencePeriodShort,
+  type AiPresenceTimeRange,
+} from "@/pages/ai-presence/ai-presence-time-range"
 
 const chartConfig = {
   revenue: {
@@ -42,7 +49,19 @@ const statusClassNames = {
 
 export function CampaignDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { openPanelWithComposerText } = useAIAssistant()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [editOpen, setEditOpen] = useState(false)
+  const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
+
+  useEffect(() => {
+    if (searchParams.get("edit") !== "1") return
+    setEditOpen(true)
+    const next = new URLSearchParams(searchParams)
+    next.delete("edit")
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   const campaign = useMemo(() => {
     const list = getMergedCampaigns()
@@ -69,15 +88,33 @@ export function CampaignDetail() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{campaign.name}</h1>
-            <Badge variant={statusVariants[campaign.status]} className={statusClassNames[campaign.status]}>
-              {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
-            </Badge>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-semibold tracking-tight">{campaign.name}</h1>
+                <Badge variant={statusVariants[campaign.status]} className={statusClassNames[campaign.status]}>
+                  {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
+                </Badge>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit shrink-0"
+                onClick={() =>
+                  openPanelWithComposerText(
+                    `Copy campaign "${campaign.name}" (${campaign.id}) with these changes: `
+                  )
+                }
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Copy with Aeris
+              </Button>
+            </div>
+            <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
           </div>
-          <p className="text-sm text-muted-foreground">Campaign ID: {campaign.id}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {campaign.status === "active" ? (
             <Button variant="outline">
               <Pause className="mr-2 h-4 w-4" />
@@ -92,6 +129,14 @@ export function CampaignDetail() {
           <Button
             type="button"
             variant="outline"
+            onClick={() => navigate(`/campaigns?duplicate=${encodeURIComponent(campaign.id)}`)}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Copy campaign
+          </Button>
+          <Button
+            type="button"
+            variant="default"
             onClick={() => setEditOpen(true)}
             aria-label="Edit campaign settings"
           >
@@ -112,9 +157,15 @@ export function CampaignDetail() {
                 <span className="text-2xl font-bold">{metric.value}</span>
                 <span className={`flex items-center text-xs ${metric.trend === "up" ? "text-green-600" : "text-red-600"}`}>
                   {metric.trend === "up" ? (
-                    <TrendingUp className="h-3 w-3 mr-0.5" />
+                    <span className="inline-flex items-center">
+                      <TrendingUp className="h-3 w-3 mr-0.5" aria-hidden />
+                      <span className="sr-only">Up</span>
+                    </span>
                   ) : (
-                    <TrendingDown className="h-3 w-3 mr-0.5" />
+                    <span className="inline-flex items-center">
+                      <TrendingDown className="h-3 w-3 mr-0.5" aria-hidden />
+                      <span className="sr-only">Down</span>
+                    </span>
                   )}
                   {metric.change}
                 </span>
@@ -129,12 +180,19 @@ export function CampaignDetail() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">Revenue Trend</CardTitle>
-              <CardDescription>Last 14 days</CardDescription>
+              <CardDescription>{formatAiPresencePeriodShort(timeRange)}</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[250px] w-full">
                 <LineChart data={revenueChartData}>
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={12} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={12}
+                    tickMargin={10}
+                    height={36}
+                  />
                   <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `$${v / 1000}k`} fontSize={12} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Line
@@ -152,12 +210,19 @@ export function CampaignDetail() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">Daily Performance</CardTitle>
-              <CardDescription>Revenue by day</CardDescription>
+              <CardDescription>{formatAiPresencePeriodShort(timeRange)} · daily bars</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[250px] w-full">
                 <BarChart data={revenueChartData.slice(-7)}>
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={12} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={12}
+                    tickMargin={10}
+                    height={36}
+                  />
                   <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `$${v / 1000}k`} fontSize={12} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="revenue" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />

@@ -1,99 +1,59 @@
 /**
- * Media / placement packages — aligned with CommerceBase `plan.pdf` (Realry + StylMatch 2026).
- * Campaigns: each tier includes a number of active campaigns; additional campaigns bill when added.
+ * Pricing plans — aligned with CommerceBase v1 platform pricing.
+ * Three tiers: Free, Starter, Enterprise.
  */
-
-/** Shown in billing UI — extra campaigns use per-campaign pricing, not one flat add-on fee. */
-export const ADDITIONAL_CAMPAIGN_COPY =
-  "Beyond your included campaigns, each extra campaign is priced from that campaign's settings (placements, targeting, creatives, duration, and more). You'll see the estimate before you publish, and you're billed when the campaign goes live."
 
 export type MediaPlanDefinition = {
   id: string
   name: string
-  /** Monthly package price (PDF) */
+  /** Monthly package price display string */
   priceDisplay: string
   period: string
   tagline: string
-  /** Short onsite + creator highlights */
+  /** Short feature highlights */
   highlights: string[]
-  /** Active campaigns included in this package */
+  /** Active campaigns included in this package (0 = unlimited / custom) */
   includedCampaigns: number
 }
 
-/** Ordered low → high (PDF) */
 export const MEDIA_PLANS: readonly MediaPlanDefinition[] = [
   {
-    id: "pilot",
-    name: "Pilot",
-    priceDisplay: "$500",
+    id: "free",
+    name: "Free",
+    priceDisplay: "$0",
     period: "/mo",
-    tagline: "Prime navigational real estate & creator network intro",
-    highlights: ["Discovery Banner", "Bi-weekly creator newsletters", "StylMatch partner program"],
+    tagline: "Get started with the basics — no credit card required",
+    highlights: ["1 product catalog", "Realry network only", "Basic reporting"],
     includedCampaigns: 1,
   },
   {
-    id: "affinity",
-    name: "Affinity",
-    priceDisplay: "$1,200",
+    id: "starter",
+    name: "Starter",
+    priceDisplay: "$1K–$10K",
     period: "/mo",
-    tagline: "Target users at comparison with authentic social proof",
-    highlights: ["Catalog Insert Banner", "1× Instagram Story (Nano-Creator)", "Product list & search placement"],
-    includedCampaigns: 1,
-  },
-  {
-    id: "momentum",
-    name: "Momentum",
-    priceDisplay: "$2,500",
-    period: "/mo",
-    tagline: "Dominate a category with sequential storytelling",
-    highlights: ["Category Banner · Store Spotlight", "2× Instagram Stories (Micro-Creator)"],
-    includedCampaigns: 2,
-  },
-  {
-    id: "growth",
-    name: "Growth",
-    priceDisplay: "$5,000",
-    period: "/mo",
-    tagline: "High-traffic search utility + micro-creator endorsements",
-    highlights: ["Promotion · Store · Search banners", "1× IG Post + 2× Stories (Micro-Creator)"],
-    includedCampaigns: 3,
-  },
-  {
-    id: "accelerator",
-    name: "Accelerator",
-    priceDisplay: "$10,000",
-    period: "/mo",
-    tagline: "Homepage visibility + intent-driving creator content",
-    highlights: ["Hero · Featured Collections · Catalog insert", "Feed/Reels + 2× Stories (2 Micro-Creators)"],
-    includedCampaigns: 4,
-  },
-  {
-    id: "authority",
-    name: "Authority",
-    priceDisplay: "$15,000",
-    period: "/mo",
-    tagline: "Multi-voice creator campaign — trending effect",
-    highlights: ["Category · Promo · Store · Discovery · Search · Featured", "2× Reels + 3× Stories (3 Micro-Creators)"],
+    tagline: "Full publisher network with hybrid pricing",
+    highlights: ["Full publisher network", "CPC + CPS hybrid pricing model", "Monthly reporting"],
     includedCampaigns: 5,
   },
   {
-    id: "dominance",
-    name: "Dominance",
-    priceDisplay: "$20,000",
+    id: "enterprise",
+    name: "Enterprise",
+    priceDisplay: "$100K+",
     period: "/mo",
-    tagline: "Full site takeover + StylMatch social army",
-    highlights: ["Full site takeover · 1st position placements", "5 Creators (Micro & Nano) + advisory"],
-    includedCampaigns: 6,
+    tagline: "Dedicated team, RTB, and real-time analytics at scale",
+    highlights: ["Dedicated account team", "RTB + programmatic capabilities", "Real-time dashboard"],
+    includedCampaigns: 0,
   },
 ] as const
 
-export const CURRENT_PLAN_ID = "growth" as const
+export const CURRENT_PLAN_ID = "starter" as const
 
 export function getMediaPlan(id: string): MediaPlanDefinition | undefined {
   return MEDIA_PLANS.find((p) => p.id === id)
 }
 
 export function planBulletsLine(plan: MediaPlanDefinition): string {
+  if (plan.includedCampaigns <= 0) return `Unlimited campaigns · ${plan.highlights[0] ?? plan.tagline}`
   const n = plan.includedCampaigns
   const campaignLine = `${n} active campaign${n === 1 ? "" : "s"} included`
   return `${campaignLine} · ${plan.highlights[0] ?? plan.tagline}`
@@ -107,7 +67,7 @@ export type PlanRow = MediaPlanDefinition & {
 
 export function buildPlanCatalog(currentId: string): PlanRow[] {
   const idx = MEDIA_PLANS.findIndex((p) => p.id === currentId)
-  const currentIndex = idx === -1 ? 3 : idx
+  const currentIndex = idx === -1 ? 1 : idx
 
   return MEDIA_PLANS.map((plan, i) => {
     let relation: PlanRelation = "current"

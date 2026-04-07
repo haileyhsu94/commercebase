@@ -1,4 +1,5 @@
-import { Link, useOutletContext } from "react-router-dom"
+import { useEffect, useRef } from "react"
+import { Link, useOutletContext, useSearchParams } from "react-router-dom"
 import { TrendingUp, TrendingDown, AlertCircle, Lightbulb, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -7,6 +8,7 @@ import { VisibilityScoreGauge } from "@/components/shared/VisibilityScoreGauge"
 import { PlatformBreakdown } from "@/components/shared/PlatformBreakdown"
 import { aiVisibilityData } from "@/lib/mock-data"
 import { SOV_DESCRIPTION, SOV_LABEL_WITH_ABBR } from "@/lib/sov"
+import { adjustAiVisibilityForHomeRange, daysFromAiPresenceTimeRange } from "@/lib/home-range-metrics"
 import {
   formatOverviewTrendVsPriorLabel,
   formatOverviewVolumePeriodLabel,
@@ -40,8 +42,29 @@ const recommendations = [
 ]
 
 export function AIPresenceOverview() {
-  const { overallScore, shoppingQueries, missedOpportunities } = aiVisibilityData
   const { timeRange } = useOutletContext<AIPresenceOutletContext>()
+  const days = daysFromAiPresenceTimeRange(timeRange)
+  const { overallScore, shoppingQueries, missedOpportunities } = adjustAiVisibilityForHomeRange(
+    aiVisibilityData,
+    days
+  )
+  const [searchParams, setSearchParams] = useSearchParams()
+  const recsRef = useRef<HTMLDivElement>(null)
+  const shouldHighlight = searchParams.get("highlight") === "recommendations"
+
+  useEffect(() => {
+    if (shouldHighlight && recsRef.current) {
+      recsRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+      const timeout = setTimeout(() => {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete("highlight")
+          return next
+        }, { replace: true })
+      }, 2500)
+      return () => clearTimeout(timeout)
+    }
+  }, [shouldHighlight, setSearchParams])
   const volumePeriodLabel = formatOverviewVolumePeriodLabel(timeRange)
   const trendVsPriorLabel = formatOverviewTrendVsPriorLabel(timeRange)
 
@@ -143,10 +166,8 @@ export function AIPresenceOverview() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">Top Shopping Queries</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/ai-presence/opportunities">
-                  View All <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
+              <Button variant="ghost" size="sm" render={<Link to="/ai-presence/opportunities" />}>
+                View All <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             </div>
             <CardDescription>Query-level SoV vs top competitors (illustrative)</CardDescription>
@@ -191,7 +212,14 @@ export function AIPresenceOverview() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          ref={recsRef}
+          className={
+            shouldHighlight
+              ? "animate-pulse ring-2 ring-primary/50 transition-all duration-700"
+              : "transition-all duration-700"
+          }
+        >
           <CardHeader>
             <CardTitle className="text-sm font-medium">Recommendations</CardTitle>
             <CardDescription>AI-powered optimization suggestions</CardDescription>

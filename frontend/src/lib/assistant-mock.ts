@@ -38,6 +38,19 @@ Would you like to grant this permission?`,
 export function getMockResponse(input: string): string {
   const lowerInput = input.toLowerCase()
 
+  if (
+    lowerInput.includes("pause my campaign") ||
+    lowerInput.includes("pause campaign") ||
+    lowerInput.includes("stop campaign") ||
+    (lowerInput.includes("pause") && lowerInput.includes("campaign"))
+  ) {
+    return `Pausing campaigns from chat would use the **Manage Campaigns** connector, which isn’t connected yet.
+
+**What this will do:** safely pause or resume campaigns from Aeris once the connector is on.
+
+**Coming soon** — you’ll see a “Connect” prompt here when the campaigns connector ships. For now, use **Campaigns** in the sidebar to pause manually.`
+  }
+
   if (lowerInput.includes("perform") || lowerInput.includes("roas") || lowerInput.includes("campaign")) {
     return mockResponses.performance
   }

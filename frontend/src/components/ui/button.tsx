@@ -1,5 +1,12 @@
 "use client"
 
+/**
+ * Button variants (design system):
+ * - **Primary** (`default`): filled, brand — main CTAs (save, continue, create).
+ * - **Secondary** (`outline`, `secondary`): bordered or muted fill — supporting actions.
+ * - **Ghost** (`ghost`, `link`): text-only / minimal — tertiary actions, toolbars.
+ * Destructive or reversible actions (pause, delete) should use `outline` or `ghost`, never `default`.
+ */
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 

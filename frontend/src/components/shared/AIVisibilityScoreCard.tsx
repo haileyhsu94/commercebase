@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Lightbulb } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { aiVisibilityData } from "@/lib/mock-data"
 import { SOV_LABEL_WITH_ABBR } from "@/lib/sov"
 import { PlatformLogo } from "@/components/shared/PlatformLogo"
@@ -10,6 +11,12 @@ import {
   type AiPresenceTimeRange,
 } from "@/pages/ai-presence/ai-presence-time-range"
 import { adjustAiVisibilityForHomeRange, daysFromAiPresenceTimeRange } from "@/lib/home-range-metrics"
+
+const topRecommendations = [
+  "Add 'Italian leather' to product descriptions",
+  "Include customer reviews in feed",
+  "Optimize price positioning",
+]
 
 export function AIVisibilityScoreCard({ timeRange }: { timeRange: AiPresenceTimeRange }) {
   const days = daysFromAiPresenceTimeRange(timeRange)
@@ -25,13 +32,12 @@ export function AIVisibilityScoreCard({ timeRange }: { timeRange: AiPresenceTime
           <div>
             <CardTitle className="text-sm font-medium">{SOV_LABEL_WITH_ABBR}</CardTitle>
             <CardDescription className="mt-1">
-              {formatAiPresencePeriodShort(timeRange)} (mock)
+              {formatAiPresencePeriodShort(timeRange)}
             </CardDescription>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/ai-presence">
-              Explore <ArrowRight className="ml-1 h-3 w-3" />
-            </Link>
+          <Button variant="ghost" size="sm" render={<Link to="/ai-presence" />}>
+            Explore
+            <ArrowRight className="h-3 w-3" />
           </Button>
         </div>
       </CardHeader>
@@ -59,8 +65,9 @@ export function AIVisibilityScoreCard({ timeRange }: { timeRange: AiPresenceTime
                 transform="rotate(-90 18 18)"
               />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xl font-bold">{overallScore}</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-xl font-bold leading-none">{overallScore}</span>
+              <span className="text-[10px] text-muted-foreground">/ 100</span>
             </div>
           </div>
           <div className="flex-1 space-y-1">
@@ -68,10 +75,41 @@ export function AIVisibilityScoreCard({ timeRange }: { timeRange: AiPresenceTime
               <span className="text-sm font-medium">{shoppingQueries.toLocaleString()}</span>
               <span className="text-xs text-muted-foreground">shopping queries/wk</span>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-medium text-amber-600">{missedOpportunities}</span>
-              <span className="text-xs text-muted-foreground">missed opportunities</span>
-            </div>
+            <TooltipProvider delay={200}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Link
+                    to="/ai-presence?highlight=recommendations"
+                    className="flex items-baseline gap-2 rounded-md decoration-amber-400/50 underline-offset-2 hover:underline"
+                  >
+                    <span className="text-sm font-medium text-amber-600">{missedOpportunities}</span>
+                    <span className="text-xs text-muted-foreground">missed opportunities</span>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  align="start"
+                  className="flex max-w-72 flex-col gap-2 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-md [&>:last-child]:hidden"
+                >
+                  <p className="text-xs font-semibold">Top recommendations</p>
+                  <ul className="flex flex-col gap-1.5">
+                    {topRecommendations.map((rec) => (
+                      <li key={rec} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                        <Lightbulb className="mt-0.5 h-3 w-3 shrink-0 text-amber-500" />
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    to="/ai-presence?highlight=recommendations"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                  >
+                    See all in AI Visibility
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 

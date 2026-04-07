@@ -1,5 +1,9 @@
 import type { Campaign } from "@/lib/mock-data"
 import { campaigns as seedCampaigns } from "@/lib/mock-data"
+import {
+  initialCampaignWizardForm,
+  type CampaignWizardFormData,
+} from "@/types/campaign-wizard"
 
 const STORAGE_KEY = "commercebase_user_campaigns_v1"
 
@@ -36,7 +40,11 @@ export function addLaunchedCampaign(campaign: Campaign): void {
   write([campaign, ...read()])
 }
 
-export function makeNewCampaignRow(name: string, currencySymbol: string): Campaign {
+export function makeNewCampaignRow(
+  name: string,
+  currencySymbol: string,
+  wizardSnapshot?: CampaignWizardFormData
+): Campaign {
   const launchedAt = new Date().toISOString()
   return {
     id: `new-${Date.now()}`,
@@ -49,6 +57,22 @@ export function makeNewCampaignRow(name: string, currencySymbol: string): Campai
     cpc: "—",
     cps: "—",
     launchedAt,
+    ...(wizardSnapshot ? { wizardSnapshot: { ...wizardSnapshot } } : {}),
+  }
+}
+
+/** Pre-fill wizard for Copy campaign — uses saved snapshot when present. */
+export function wizardFormFromCampaign(c: Campaign): CampaignWizardFormData {
+  if (c.wizardSnapshot) {
+    return {
+      ...initialCampaignWizardForm,
+      ...c.wizardSnapshot,
+      name: `${(c.wizardSnapshot.name || c.name).trim() || c.name} (copy)`,
+    }
+  }
+  return {
+    ...initialCampaignWizardForm,
+    name: `${c.name} (copy)`,
   }
 }
 
