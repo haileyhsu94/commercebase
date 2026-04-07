@@ -12,6 +12,7 @@ import {
   History,
   Image,
   MessageSquare,
+  Pencil,
   RefreshCw,
   RotateCcw,
   Settings,
@@ -120,6 +121,9 @@ const CURRENT_TIER: PermissionTier = "suggest"
 export function AutoAgentPage() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editedTexts, setEditedTexts] = useState<Record<string, string>>({})
+  const [editBuffer, setEditBuffer] = useState("")
 
   const currentTierCfg = TIER_CONFIG[CURRENT_TIER]
   const pendingVisible = autoAgentPendingChanges.filter((c) => !dismissed.has(c.id))
@@ -127,6 +131,27 @@ export function AutoAgentPage() {
   function dismiss(id: string) {
     setDismissed((prev) => new Set([...prev, id]))
     if (expandedId === id) setExpandedId(null)
+    if (editingId === id) setEditingId(null)
+  }
+
+  function startEdit(id: string, currentAfter: string) {
+    setEditingId(id)
+    setEditBuffer(editedTexts[id] ?? currentAfter)
+    // Auto-expand so the user can see full context
+    setExpandedId(id)
+  }
+
+  function saveEdit(id: string) {
+    setEditedTexts((prev) => ({ ...prev, [id]: editBuffer }))
+    setEditingId(null)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+  }
+
+  function wordCount(text: string) {
+    return text.trim().split(/\s+/).filter(Boolean).length
   }
 
   return (
@@ -260,6 +285,9 @@ export function AutoAgentPage() {
             const typeCfg = TASK_TYPE_CONFIG[change.taskType]
             const TypeIcon = typeCfg.icon
             const isExpanded = expandedId === change.id
+            const isEditing = editingId === change.id
+            const hasBeenEdited = change.id in editedTexts
+            const displayAfter = editedTexts[change.id] ?? change.after
 
             return (
               <div key={change.id} className="space-y-3 px-6 py-4">
@@ -286,9 +314,10 @@ export function AutoAgentPage() {
                           size="sm"
                           className="h-7 gap-1 text-xs"
                           onClick={() => dismiss(change.id)}
+                          disabled={isEditing}
                         >
                           <Check className="size-3" />
-                          Approve
+                          Approve{hasBeenEdited ? " (edited)" : ""}
                         </Button>
                         <Button
                           type="button"
@@ -296,6 +325,7 @@ export function AutoAgentPage() {
                           size="sm"
                           className="h-7 gap-1 text-xs text-muted-foreground hover:text-destructive"
                           onClick={() => dismiss(change.id)}
+                          disabled={isEditing}
                         >
                           <X className="size-3" />
                           Reject
@@ -325,19 +355,88 @@ export function AutoAgentPage() {
                           {change.before}
                         </p>
                       </div>
-                      <div className="bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2.5">
-                        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-                          <span className="inline-block size-2 rounded-sm bg-emerald-500" />
-                          After (AI draft)
-                        </p>
-                        <p
-                          className={cn(
-                            "mt-1.5 text-xs text-emerald-900/90 dark:text-emerald-100/80 leading-relaxed",
-                            !isExpanded && "line-clamp-2"
-                          )}
-                        >
-                          {change.after}
-                        </p>
+                      <div
+                        className={cn(
+                          "px-3 py-2.5 transition-colors",
+                          isEditing
+                            ? "bg-emerald-50/80 dark:bg-emerald-950/20 border-b border-dashed border-emerald-300 dark:border-emerald-700"
+                            : "bg-emerald-50 dark:bg-emerald-950/30"
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                            <span className="inline-block size-2 rounded-sm bg-emerald-500" />
+                            {hasBeenEdited && !isEditing ? "After (edited)" : "After (AI draft)"}
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            {hasBeenEdited && !isEditing && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                                <Pencil className="size-2.5" />
+                                Edited
+                              </span>
+                            )}
+                            {!isEditing && (
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-200/60 dark:text-emerald-300 dark:hover:bg-emerald-800/40"
+                                onClick={() => startEdit(change.id, change.after)}
+                              >
+                                <Pencil className="size-2.5" />
+                                Edit
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {isEditing ? (
+                          <div className="mt-2 space-y-2">
+                            <textarea
+                              className="w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-xs leading-relaxed text-emerald-900 shadow-sm outline-none transition-shadow placeholder:text-emerald-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-100 dark:placeholder:text-emerald-600 dark:focus:border-emerald-600 dark:focus:ring-emerald-500/30"
+                              value={editBuffer}
+                              onChange={(e) => setEditBuffer(e.target.value)}
+                              rows={Math.max(3, editBuffer.split("\n").length + 1)}
+                              autoFocus
+                            />
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[10px] tabular-nums text-emerald-600/70 dark:text-emerald-400/60">
+                                {wordCount(editBuffer)} words · {editBuffer.length} chars
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 gap-1 px-2 text-[11px] text-muted-foreground"
+                                  onClick={cancelEdit}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-6 gap-1 px-2.5 text-[11px]"
+                                  onClick={() => saveEdit(change.id)}
+                                  disabled={editBuffer.trim().length === 0}
+                                >
+                                  <Check className="size-3" />
+                                  Save edit
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <p
+                            className={cn(
+                              "mt-1.5 text-xs leading-relaxed",
+                              hasBeenEdited
+                                ? "text-indigo-900/90 dark:text-indigo-200/80"
+                                : "text-emerald-900/90 dark:text-emerald-100/80",
+                              !isExpanded && "line-clamp-2"
+                            )}
+                          >
+                            {displayAfter}
+                          </p>
+                        )}
                       </div>
                     </div>
 
