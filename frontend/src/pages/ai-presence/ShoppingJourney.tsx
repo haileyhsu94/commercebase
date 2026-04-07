@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
-import { AlertCircle, ArrowRight, CheckCircle2, Info, Sparkles, TrendingDown } from "lucide-react"
+import { AlertCircle, ArrowRight, Info, Sparkles, TrendingDown } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FunnelChart, type FunnelStage } from "@/components/shared/FunnelChart"

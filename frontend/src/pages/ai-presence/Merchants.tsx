@@ -8,7 +8,6 @@ import {
   merchantCategoryShare,
   engineMerchantShare,
 } from "@/lib/ai-presence-mock"
-import { SOV_SHORT } from "@/lib/sov"
 import { cn } from "@/lib/utils"
 import {
   formatAiPresencePeriodShort,
