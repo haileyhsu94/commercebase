@@ -86,7 +86,14 @@ export function Home() {
   const visibleOrdered = getVisibleWidgetsInOrder(layout)
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+  const greeting =
+    hour >= 5 && hour < 12
+      ? "Good morning"
+      : hour >= 12 && hour < 18
+      ? "Good afternoon"
+      : hour >= 18 && hour < 21
+      ? "Good evening"
+      : "Welcome back"
 
   return (
     <>
