@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom"
+import { Toaster } from "sonner"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AIAssistantProvider, useAIAssistant } from "@/contexts/AIAssistantContext"
 import { GlobalSearchProvider } from "@/contexts/GlobalSearchContext"
@@ -35,6 +36,7 @@ export function RootLayout() {
           <MainContent />
           <AIAssistantPanel />
           <GlobalSearchDialog />
+          <Toaster richColors position="bottom-right" />
         </SidebarProvider>
       </GlobalSearchProvider>
     </AIAssistantProvider>

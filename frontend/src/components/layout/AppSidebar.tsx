@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Accordion } from "@base-ui/react/accordion"
-import { BarChart3, ChevronDown, Inbox, Package, Settings } from "lucide-react"
+import { BarChart3, ChevronDown, Inbox, Package, Settings, Workflow } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -267,6 +267,18 @@ export function AppSidebar() {
                     </Accordion.Panel>
                   </Accordion.Item>
                 </Accordion.Root>
+              </SidebarMenuItem>
+
+              {/* Workflows — top-level standalone */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={isActive("/workflows")}
+                  tooltip="Workflows"
+                  render={<Link to="/workflows" />}
+                >
+                  <Workflow />
+                  <span>Workflows</span>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

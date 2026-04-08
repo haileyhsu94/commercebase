@@ -112,7 +112,7 @@ export function PublishersPage() {
                   <div className="mt-1 flex items-center justify-between text-sm">
                     <span className="text-xs text-muted-foreground">Impressions</span>
                     <span className="text-xs font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-                      {segment.roas}x ROAS
+                      {segment.roas} ROAS
                     </span>
                   </div>
                 </CardContent>

@@ -30,7 +30,7 @@ export function AssetsLayout() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <div className="shrink-0 border-b border-border/60 pb-4 pt-2">
+      <div className="shrink-0 pb-4 pt-2">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0 flex-1">
             <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-sm">
