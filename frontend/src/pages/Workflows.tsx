@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { PageHeader } from "@/components/shared/PageHeader"
 
 const templateWorkflows = [
   {
@@ -42,24 +43,18 @@ const templateWorkflows = [
 export function WorkflowsPage() {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <div className="shrink-0 pb-4 pt-2">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Workflows</h1>
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Build automated pipelines that connect your catalog, campaigns, audiences, and AI agents — no manual monitoring required.
-            </p>
-          </div>
-          <div className="shrink-0 self-start">
-            <Button className="gap-1.5" disabled>
-              <Plus className="size-4" />
-              New workflow
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Workflows"
+        description="Build automated pipelines that connect your catalog, campaigns, audiences, and AI agents — no manual monitoring required."
+        actions={
+          <Button className="gap-1.5" disabled>
+            <Plus className="size-4" />
+            New workflow
+          </Button>
+        }
+      />
 
-      <div className="min-h-0 min-w-0 flex-1 pt-6">
+      <div className="min-h-0 min-w-0 flex-1">
 
         {/* Empty state canvas */}
         <div className="mb-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/20 py-16 text-center">

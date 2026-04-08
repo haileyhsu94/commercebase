@@ -345,6 +345,12 @@ export function AttributesPage() {
         </CardContent>
       </Card>
 
+      {/* ── Context orientation ── */}
+      <p className="text-xs text-muted-foreground">
+        Each bar shows what share of your active SKUs have this attribute filled in. Gaps mean AI engines
+        may skip or misrepresent your products.
+      </p>
+
       {/* ── Needs attention ── */}
       <Card
         ref={cardRef}

@@ -10,6 +10,7 @@ import {
   resetHomeLayoutToDefault,
   saveHomeLayout,
 } from "@/lib/home-layout"
+import { PageHeader } from "@/components/shared/PageHeader"
 import { AlertsPanel } from "@/components/shared/AlertsPanel"
 import { EfficiencyMetricsCard } from "@/components/shared/EfficiencyMetricsCard"
 import { HealthScoreCard } from "@/components/shared/HealthScoreCard"
@@ -97,28 +98,24 @@ export function Home() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {greeting}, {currentUser.name.split(" ")[0]}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Here&apos;s what&apos;s happening with your campaigns — {formatAiPresencePeriodShort(timeRange)}.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setCustomizeOpen(true)}
-            aria-label="Customize home"
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
-        </div>
-      </div>
+      <PageHeader
+        title={`${greeting}, ${currentUser.name.split(" ")[0]}`}
+        description={`Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`}
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setCustomizeOpen(true)}
+              aria-label="Customize home"
+            >
+              <Pencil className="size-4" />
+            </Button>
+            <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
+          </>
+        }
+      />
 
       <div className="space-y-6">
         {visibleOrdered.length === 0 ? (

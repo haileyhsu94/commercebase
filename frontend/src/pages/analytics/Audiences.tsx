@@ -15,86 +15,67 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Users, Target, Activity, RefreshCcw, TrendingUp, Zap } from "lucide-react"
-import { FunnelChart, type FunnelStage } from "@/components/shared/FunnelChart"
+import { FunnelChart } from "@/components/shared/FunnelChart"
 import { cn } from "@/lib/utils"
+import { getAudienceKpis, getAudienceFunnelStages } from "@/lib/analytics-mock"
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Static data (not scaled by time — qualitative / structural) ──────────────
 
 const mockSegments = [
-  { name: "High-intent shoppers", size: "128K", cvr: "4.2%", avgOrder: "$145", ltv: "$420", growth: "+12%", channel: "Search", color: "bg-blue-500" },
-  { name: "Luxury fashion interest", size: "89K", cvr: "2.8%", avgOrder: "$310", ltv: "$890", growth: "+5%", channel: "Paid Social", color: "bg-purple-500" },
-  { name: "Returning visitors (90d)", size: "34K", cvr: "6.1%", avgOrder: "$110", ltv: "$350", growth: "-2%", channel: "Direct", color: "bg-emerald-500" },
-  { name: "Cart Abandoners (7d)", size: "12K", cvr: "8.5%", avgOrder: "$165", ltv: "$480", growth: "+18%", channel: "Email", color: "bg-amber-500" },
+  { name: "High-intent shoppers",    size: "128K", cvr: "4.2%", avgOrder: "$145", ltv: "$420", growth: "+12%", channel: "Search",      color: "bg-blue-500" },
+  { name: "Luxury fashion interest", size: "89K",  cvr: "2.8%", avgOrder: "$310", ltv: "$890", growth: "+5%",  channel: "Paid Social", color: "bg-purple-500" },
+  { name: "Returning visitors (90d)",size: "34K",  cvr: "6.1%", avgOrder: "$110", ltv: "$350", growth: "-2%",  channel: "Direct",      color: "bg-emerald-500" },
+  { name: "Cart Abandoners (7d)",    size: "12K",  cvr: "8.5%", avgOrder: "$165", ltv: "$480", growth: "+18%", channel: "Email",       color: "bg-amber-500" },
 ]
 
 const categoryAffinity = [
   { name: "Luxury Fashion", index: 182, progress: 90 },
-  { name: "Sneakers", index: 145, progress: 75 },
-  { name: "Activewear", index: 110, progress: 55 },
-  { name: "Outerwear", index: 85, progress: 40 },
-]
-
-const funnelStages: FunnelStage[] = [
-  { id: "new-visitors", label: "New visitors", value: 28400, pct: 100, change: "this month" },
-  { id: "engaged", label: "Engaged", value: 8400, pct: 29.6, change: "2+ page views" },
-  { id: "intent-signal", label: "Intent signal", value: 3200, pct: 11.3, change: "price / size guide" },
-  { id: "first-purchase", label: "First purchase", value: 764, pct: 2.69, change: "2.69% overall CVR" },
+  { name: "Sneakers",       index: 145, progress: 75 },
+  { name: "Activewear",     index: 110, progress: 55 },
+  { name: "Outerwear",      index: 85,  progress: 40 },
 ]
 
 const intentSignals = [
-  { signal: "Price comparison viewed", shoppers: "18.2K", cvrLift: "+34%", strength: "Very high" },
-  { signal: "Size guide opened", shoppers: "12.1K", cvrLift: "+28%", strength: "High" },
-  { signal: "Product page 3+ visits", shoppers: "9.4K", cvrLift: "+22%", strength: "High" },
-  { signal: "Wishlist add", shoppers: "7.8K", cvrLift: "+19%", strength: "Medium" },
-  { signal: "Cart add (no checkout)", shoppers: "6.2K", cvrLift: "+41%", strength: "Very high" },
-  { signal: "Return visit within 48h", shoppers: "4.1K", cvrLift: "+15%", strength: "Medium" },
-  { signal: "Review page scroll", shoppers: "2.9K", cvrLift: "+11%", strength: "Low" },
+  { signal: "Price comparison viewed",   shoppers: "18.2K", cvrLift: "+34%", strength: "Very high" },
+  { signal: "Size guide opened",         shoppers: "12.1K", cvrLift: "+28%", strength: "High" },
+  { signal: "Product page 3+ visits",   shoppers: "9.4K",  cvrLift: "+22%", strength: "High" },
+  { signal: "Wishlist add",             shoppers: "7.8K",  cvrLift: "+19%", strength: "Medium" },
+  { signal: "Cart add (no checkout)",   shoppers: "6.2K",  cvrLift: "+41%", strength: "Very high" },
+  { signal: "Return visit within 48h",  shoppers: "4.1K",  cvrLift: "+15%", strength: "Medium" },
+  { signal: "Review page scroll",       shoppers: "2.9K",  cvrLift: "+11%", strength: "Low" },
 ]
 
 const retargetingPools = [
-  { name: "Cart abandoners (7d)", size: "12K", estCvr: "8.5%", suggestedBid: "$1.20", channel: "Email" },
-  { name: "High-intent, no purchase", size: "9.4K", estCvr: "6.2%", suggestedBid: "$0.95", channel: "Paid Social" },
-  { name: "Lapsed buyers (90d+)", size: "22K", estCvr: "3.1%", suggestedBid: "$0.60", channel: "Display" },
-  { name: "Wishlist, no purchase", size: "7.8K", estCvr: "5.4%", suggestedBid: "$0.85", channel: "Email" },
-  { name: "Price-drop eligible", size: "4.3K", estCvr: "11.2%", suggestedBid: "$1.50", channel: "Push" },
+  { name: "Cart abandoners (7d)",       size: "12K",  estCvr: "8.5%",  suggestedBid: "$1.20", channel: "Email" },
+  { name: "High-intent, no purchase",   size: "9.4K", estCvr: "6.2%",  suggestedBid: "$0.95", channel: "Paid Social" },
+  { name: "Lapsed buyers (90d+)",       size: "22K",  estCvr: "3.1%",  suggestedBid: "$0.60", channel: "Display" },
+  { name: "Wishlist, no purchase",      size: "7.8K", estCvr: "5.4%",  suggestedBid: "$0.85", channel: "Email" },
+  { name: "Price-drop eligible",        size: "4.3K", estCvr: "11.2%", suggestedBid: "$1.50", channel: "Push" },
 ]
+
+const KPIS_ICONS = [Users, Activity, Target, RefreshCcw]
 
 const strengthConfig: Record<string, string> = {
   "Very high": "bg-emerald-50 text-emerald-700 ring-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-400",
-  "High": "bg-blue-50 text-blue-700 ring-blue-200/60 dark:bg-blue-950/30 dark:text-blue-400",
-  "Medium": "bg-amber-50 text-amber-700 ring-amber-200/60 dark:bg-amber-950/30 dark:text-amber-400",
-  "Low": "bg-muted text-muted-foreground ring-border/60",
+  "High":      "bg-blue-50 text-blue-700 ring-blue-200/60 dark:bg-blue-950/30 dark:text-blue-400",
+  "Medium":    "bg-amber-50 text-amber-700 ring-amber-200/60 dark:bg-amber-950/30 dark:text-amber-400",
+  "Low":       "bg-muted text-muted-foreground ring-border/60",
 }
 
-// ─── Component ─────────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function AudiencesPage() {
   const { timeRange } = useOutletContext<AnalyticsOutletContext>()
   const days = daysFromAiPresenceTimeRange(timeRange)
 
-  const activeTopCards = useMemo(() => {
-    const factor = 0.8 + days / 60
-    return [
-      { title: "Total Shoppers", value: `${(2.4 * factor).toFixed(1)}M`, description: "All identified profiles", icon: Users },
-      { title: "Active (30D)", value: `${Math.round(850 * factor)}K`, description: "Visited in last 30 days", icon: Activity },
-      { title: "High-Intent Pool", value: `${Math.round(128 * factor)}K`, description: "Ready-to-purchase score >80", icon: Target },
-      { title: "Retarget Pool", value: `${Math.round(45 * factor)}K`, description: "Cart abandoned or recent view", icon: RefreshCcw },
-    ]
-  }, [days])
+  const kpis         = useMemo(() => getAudienceKpis(timeRange),        [timeRange])
+  const funnelStages = useMemo(() => getAudienceFunnelStages(timeRange), [timeRange])
 
   const activeSegments = useMemo(() => {
     const factor = 0.7 + days / 50
     return mockSegments.map((s) => ({
       ...s,
       size: `${Math.round(parseInt(s.size.replace("K", "")) * factor)}K`,
-    }))
-  }, [days])
-
-  const activeFunnelStages = useMemo(() => {
-    const factor = 0.6 + days / 45
-    return funnelStages.map((s) => ({
-      ...s,
-      value: Math.round(s.value * factor),
     }))
   }, [days])
 
@@ -118,8 +99,8 @@ export function AudiencesPage() {
     <>
       {/* KPI cards */}
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {activeTopCards.map((card) => {
-          const Icon = card.icon
+        {kpis.map((card, i) => {
+          const Icon = KPIS_ICONS[i] ?? Users
           return (
             <Card key={card.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -142,7 +123,7 @@ export function AudiencesPage() {
           <CardDescription>First-time buyer journey for the selected period</CardDescription>
         </CardHeader>
         <CardContent>
-          <FunnelChart stages={activeFunnelStages} chartHeight={180} />
+          <FunnelChart stages={funnelStages} chartHeight={180} />
         </CardContent>
       </Card>
 

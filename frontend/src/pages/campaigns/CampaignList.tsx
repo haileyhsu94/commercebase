@@ -49,6 +49,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
+import { PageHeader } from "@/components/shared/PageHeader"
 import { getMergedCampaigns } from "@/lib/campaign-storage"
 import { useCampaignPlanAllowance } from "@/hooks/use-campaign-plan-allowance"
 import {
@@ -446,33 +447,31 @@ export function CampaignList() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Campaigns</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage and monitor your advertising campaigns.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() =>
-              openPanelWithComposerText(
-                "Help me create a new campaign. Suggest targeting, budget, and channels based on my best-performing campaigns."
-              )
-            }
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            Create with Aeris
-          </Button>
-          <Button type="button" onClick={openCreateModal}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Campaign
-          </Button>
-          <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
-        </div>
-      </div>
+      <PageHeader
+        title="Campaigns"
+        description="Manage and monitor your advertising campaigns."
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                openPanelWithComposerText(
+                  "Help me create a new campaign. Suggest targeting, budget, and channels based on my best-performing campaigns."
+                )
+              }
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Create with Aeris
+            </Button>
+            <Button type="button" onClick={openCreateModal}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Campaign
+            </Button>
+            <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
+          </>
+        }
+      />
 
       <div className="@container mb-6">
       <div className="grid gap-4 @sm:grid-cols-2 @3xl:grid-cols-4">
