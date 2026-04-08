@@ -9,6 +9,8 @@ import {
   ChannelAttribution,
   ProductPerformance,
   RegionalBreakdown,
+  AssetsLayout,
+  CatalogsPage,
   PublishersPage,
   ProductList,
   ProductDetail,
@@ -67,6 +69,16 @@ const router = createBrowserRouter([
         element: <Navigate to="/ai-presence/competitors?tab=opportunities" replace />,
       },
       {
+        element: <AssetsLayout />,
+        children: [
+          { path: "catalogs", element: <CatalogsPage /> },
+          { path: "publishers", element: <PublishersPage /> },
+          { path: "products", element: <ProductList /> },
+          { path: "products/sync", element: <SyncStatus /> },
+          { path: "products/:id", element: <ProductDetail /> },
+        ],
+      },
+      {
         path: "analytics",
         element: <AnalyticsLayout />,
         children: [
@@ -77,11 +89,6 @@ const router = createBrowserRouter([
           { path: "regions", element: <RegionalBreakdown /> },
         ],
       },
-      { path: "catalogs", element: <Navigate to="/products" replace /> },
-      { path: "publishers", element: <PublishersPage /> },
-      { path: "products", element: <ProductList /> },
-      { path: "products/sync", element: <SyncStatus /> },
-      { path: "products/:id", element: <ProductDetail /> },
       { path: "settings", element: <AccountSettings /> },
       { path: "settings/team", element: <TeamSettings /> },
       { path: "settings/ai-permissions", element: <AIPermissions /> },

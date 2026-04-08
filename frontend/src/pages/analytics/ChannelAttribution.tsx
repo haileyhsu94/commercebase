@@ -1,3 +1,4 @@
+import { useOutletContext } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -11,6 +12,9 @@ import {
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
 import { channelPerformance } from "@/lib/mock-data"
+import { useMemo } from "react"
+import type { AnalyticsOutletContext } from "./AnalyticsLayout"
+import { daysFromAiPresenceTimeRange } from "@/lib/home-range-metrics"
 
 const chartConfig = {
   revenue: {
@@ -19,18 +23,32 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const pieData = channelPerformance.map((c, i) => ({
-  name: c.name,
-  value: c.share,
-  fill: i === 0 ? "var(--color-primary)" : i === 1 ? "var(--color-chart-2)" : "var(--color-chart-3)",
-}))
-
-const barData = channelPerformance.map((c) => ({
-  name: c.name,
-  revenue: parseFloat(c.revenue.replace(/[$,K]/g, "")) * 1000,
-}))
-
 export function ChannelAttribution() {
+  const { timeRange } = useOutletContext<AnalyticsOutletContext>()
+  const days = daysFromAiPresenceTimeRange(timeRange)
+
+  const activeData = useMemo(() => {
+    const factor = 0.5 + days / 50
+    return channelPerformance.map((c) => ({
+      ...c,
+      impressions: Math.round(parseInt(c.impressions.replace(/[MKK]/g, "")) * (c.impressions.includes("M") ? 1000000 : 1000) * factor).toLocaleString(),
+      clicks: Math.round(parseInt(c.clicks.replace(/[KK]/g, "")) * (c.clicks.includes("K") ? 1000 : 1) * factor).toLocaleString(),
+      conversions: Math.round(c.conversions * factor),
+      revenue: `$${(parseFloat(c.revenue.replace(/[$,K]/g, "")) * factor).toFixed(1)}K`,
+    }))
+  }, [days])
+
+  const pieData = useMemo(() => activeData.map((c, i) => ({
+    name: c.name,
+    value: c.share,
+    fill: i === 0 ? "var(--color-primary)" : i === 1 ? "var(--color-chart-2)" : "var(--color-chart-3)",
+  })), [activeData])
+
+  const barData = useMemo(() => activeData.map((c) => ({
+    name: c.name,
+    revenue: parseFloat(c.revenue.replace(/[$,K]/g, "")) * 1000,
+  })), [activeData])
+
   return (
     <>
       <div className="grid gap-6 md:grid-cols-2 mb-6">
@@ -99,7 +117,7 @@ export function ChannelAttribution() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {channelPerformance.map((channel) => (
+              {activeData.map((channel) => (
                 <TableRow key={channel.name}>
                   <TableCell>
                     <div>

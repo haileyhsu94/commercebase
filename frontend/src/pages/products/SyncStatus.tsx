@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { ArrowLeft, CheckCircle2, AlertCircle, RefreshCw, Clock, ExternalLink } from "lucide-react"
+import { CheckCircle2, AlertCircle, Clock, ExternalLink } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -56,24 +56,6 @@ const recentErrors = [
 export function SyncStatus() {
   return (
     <>
-      <div className="flex items-center gap-4 py-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/products">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Sync Status</h1>
-          <p className="text-sm text-muted-foreground">
-            Monitor product feed health and integrations.
-          </p>
-        </div>
-        <Button>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Sync All
-        </Button>
-      </div>
-
       <div className="grid gap-4 md:grid-cols-4 mb-6">
         <Card>
           <CardHeader className="pb-2">

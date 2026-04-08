@@ -1,5 +1,9 @@
 import { TrendingUp, TrendingDown } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useOutletContext } from "react-router-dom"
+import type { AnalyticsOutletContext } from "./AnalyticsLayout"
+import { useMemo } from "react"
+import { daysFromAiPresenceTimeRange } from "@/lib/home-range-metrics"
 import {
   Table,
   TableBody,
@@ -19,16 +23,27 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const chartData = regionData.map((r) => ({
-  name: r.name.split(" ")[0],
-  revenue: parseFloat(r.revenue.replace(/[$,K]/g, "")) * 1000,
-}))
-
 export function RegionalBreakdown() {
-  const totalRevenue = regionData.reduce(
+  const { timeRange } = useOutletContext<AnalyticsOutletContext>()
+  const days = daysFromAiPresenceTimeRange(timeRange)
+
+  const activeData = useMemo(() => {
+    const factor = 0.6 + days / 60
+    return regionData.map((r) => ({
+      ...r,
+      revenue: `$${(parseFloat(r.revenue.replace(/[$,K]/g, "")) * factor).toFixed(1)}K`,
+    }))
+  }, [days])
+
+  const totalRevenue = useMemo(() => activeData.reduce(
     (sum, r) => sum + parseFloat(r.revenue.replace(/[$,K]/g, "")) * 1000,
     0
-  )
+  ), [activeData])
+
+  const chartData = useMemo(() => activeData.map((r) => ({
+    name: r.name.split(" ")[0],
+    revenue: parseFloat(r.revenue.replace(/[$,K]/g, "")) * 1000,
+  })), [activeData])
 
   return (
     <>
@@ -57,7 +72,7 @@ export function RegionalBreakdown() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {regionData.map((region) => {
+              {activeData.map((region) => {
                 const share = (parseFloat(region.revenue.replace(/[$,K]/g, "")) * 1000 / totalRevenue * 100).toFixed(1)
                 return (
                   <div key={region.name} className="space-y-2">
@@ -105,7 +120,7 @@ export function RegionalBreakdown() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {regionData.map((region) => {
+              {activeData.map((region) => {
                 const share = (parseFloat(region.revenue.replace(/[$,K]/g, "")) * 1000 / totalRevenue * 100).toFixed(1)
                 return (
                   <TableRow key={region.name}>

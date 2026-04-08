@@ -151,54 +151,32 @@ export function AutoAgentPage() {
   return (
     <div className="space-y-6">
 
-      {/* ── 1. Permission tier (read-only) ─────────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                <Shield className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-sm font-medium">Agent access level</CardTitle>
-                <CardDescription>
-                  Managed in Settings — controls how much the agent can do without your sign-off.
-                </CardDescription>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0 gap-1.5 text-xs"
-              render={<Link to="/settings/ai-permissions" />}
-            >
-              <Settings className="size-3.5" />
-              Change in Settings
-              <ArrowRight className="size-3" />
-            </Button>
+      {/* ── 1. Permission tier (compact) ────────────────────────────────────── */}
+      <div className={cn(
+        "flex items-center justify-between gap-4 rounded-xl border px-4 py-2.5",
+        currentTierCfg.borderClass,
+        "bg-primary/[0.02] backdrop-blur-sm"
+      )}>
+        <div className="flex items-center gap-3">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+            <Shield className="size-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className={cn("flex flex-col gap-3 rounded-lg border p-4", currentTierCfg.borderClass, "bg-primary/[0.03]")}>
-            <div className="flex items-center gap-3">
-              <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", currentTierCfg.badgeClass)}>
-                Active
-              </span>
-              <span className="text-sm font-semibold">{currentTierCfg.label}</span>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2 text-xs">
-              <div className="space-y-0.5">
-                <p className="font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Agent does</p>
-                <p className="text-foreground/80 leading-relaxed">{currentTierCfg.agentDoes}</p>
-              </div>
-              <div className="space-y-0.5">
-                <p className="font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Your role</p>
-                <p className="text-foreground/80 leading-relaxed">{currentTierCfg.humanRole}</p>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold text-foreground">{currentTierCfg.label} active</span>
+            <span className="hidden text-muted-foreground md:inline">— {currentTierCfg.agentDoes}</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link 
+            to="/settings/ai-permissions" 
+            className="group flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Settings className="size-3.5 transition-transform group-hover:rotate-45" />
+            Manage permissions
+            <ArrowRight className="size-3" />
+          </Link>
+        </div>
+      </div>
 
       {/* ── 2. Cumulative impact (hero proof) ──────────────────────────────── */}
       <Card>

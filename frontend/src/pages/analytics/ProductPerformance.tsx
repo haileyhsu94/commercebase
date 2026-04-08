@@ -1,6 +1,9 @@
-import { Link } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import type { AnalyticsOutletContext } from "./AnalyticsLayout"
+import { useMemo } from "react"
+import { daysFromAiPresenceTimeRange } from "@/lib/home-range-metrics"
 import {
   Table,
   TableBody,
@@ -20,12 +23,24 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const chartData = topProducts.map((p) => ({
-  name: p.name.split(" ").slice(0, 2).join(" "),
-  revenue: parseFloat(p.revenue.replace(/[$,K]/g, "")) * 1000,
-}))
-
 export function ProductPerformance() {
+  const { timeRange } = useOutletContext<AnalyticsOutletContext>()
+  const days = daysFromAiPresenceTimeRange(timeRange)
+
+  const activeData = useMemo(() => {
+    const factor = 0.7 + days / 40
+    return topProducts.map((p) => ({
+      ...p,
+      sales: Math.round(parseInt(String(p.sales).replace(/,/g, "")) * factor).toLocaleString(),
+      revenue: `$${(parseFloat(String(p.revenue).replace(/[$,K]/g, "")) * factor).toFixed(1)}K`,
+    }))
+  }, [days])
+
+  const chartData = useMemo(() => activeData.map((p) => ({
+    name: p.name.split(" ").slice(0, 2).join(" "),
+    revenue: parseFloat(p.revenue.replace(/[$,K]/g, "")) * 1000,
+  })), [activeData])
+
   return (
     <>
       <Card className="mb-6">
@@ -63,7 +78,7 @@ export function ProductPerformance() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {topProducts.map((product, i) => (
+              {activeData.map((product, i) => (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{i + 1}</TableCell>
                   <TableCell>

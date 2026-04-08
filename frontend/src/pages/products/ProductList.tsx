@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
-import { Upload, Search, Filter, MoreHorizontal, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Search, Filter, MoreHorizontal, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,15 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+
 import { topProducts } from "@/lib/mock-data"
 
 const allProducts = [
@@ -55,7 +47,6 @@ export function ProductList() {
   useEffect(() => {
     setSearchQuery(searchParams.get("q") ?? "")
   }, [searchParams])
-  const [isImportOpen, setIsImportOpen] = useState(false)
 
   const filteredProducts = allProducts.filter((product) => {
     const matchesCategory = categoryFilter === "all" || product.category === categoryFilter
@@ -72,71 +63,6 @@ export function ProductList() {
 
   return (
     <>
-      <div className="flex items-center justify-between py-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your product catalog.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" render={<Link to="/products/sync" />} nativeButton={false}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Sync Status
-          </Button>
-          <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="mr-2 h-4 w-4" />
-                Import Products
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Import Products</DialogTitle>
-                <DialogDescription>
-                  Import products from a file or connect to your e-commerce platform.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="rounded-lg border-2 border-dashed p-8 text-center">
-                  <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <p className="mt-2 text-sm font-medium">Drag and drop your CSV file</p>
-                  <p className="text-xs text-muted-foreground">or click to browse</p>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or connect</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="h-auto py-4">
-                    <div className="text-center">
-                      <p className="font-medium">Shopify</p>
-                      <p className="text-xs text-muted-foreground">Auto-sync products</p>
-                    </div>
-                  </Button>
-                  <Button variant="outline" className="h-auto py-4">
-                    <div className="text-center">
-                      <p className="font-medium">WooCommerce</p>
-                      <p className="text-xs text-muted-foreground">Auto-sync products</p>
-                    </div>
-                  </Button>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsImportOpen(false)}>
-                  Cancel
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
       <div className="grid gap-4 md:grid-cols-4 mb-6">
         <Card>
           <CardHeader className="pb-2">

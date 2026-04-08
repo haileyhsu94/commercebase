@@ -1,4 +1,8 @@
+import { useOutletContext } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import type { AnalyticsOutletContext } from "./AnalyticsLayout"
+import { useMemo } from "react"
+import { daysFromAiPresenceTimeRange } from "@/lib/home-range-metrics"
 import {
   Table,
   TableBody,
@@ -15,13 +19,6 @@ import { FunnelChart, type FunnelStage } from "@/components/shared/FunnelChart"
 import { cn } from "@/lib/utils"
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
-
-const topCards = [
-  { title: "Total Shoppers", value: "2.4M", description: "All identified profiles", icon: Users },
-  { title: "Active (30D)", value: "850K", description: "Visited in last 30 days", icon: Activity },
-  { title: "High-Intent Pool", value: "128K", description: "Ready-to-purchase score >80", icon: Target },
-  { title: "Retarget Pool", value: "45K", description: "Cart abandoned or recent view", icon: RefreshCcw },
-]
 
 const mockSegments = [
   { name: "High-intent shoppers", size: "128K", cvr: "4.2%", avgOrder: "$145", ltv: "$420", growth: "+12%", channel: "Search", color: "bg-blue-500" },
@@ -69,14 +66,59 @@ const strengthConfig: Record<string, string> = {
   "Low": "bg-muted text-muted-foreground ring-border/60",
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Component ─────────────────────────────────────────────────────────────
 
 export function AudiencesPage() {
+  const { timeRange } = useOutletContext<AnalyticsOutletContext>()
+  const days = daysFromAiPresenceTimeRange(timeRange)
+
+  const activeTopCards = useMemo(() => {
+    const factor = 0.8 + days / 60
+    return [
+      { title: "Total Shoppers", value: `${(2.4 * factor).toFixed(1)}M`, description: "All identified profiles", icon: Users },
+      { title: "Active (30D)", value: `${Math.round(850 * factor)}K`, description: "Visited in last 30 days", icon: Activity },
+      { title: "High-Intent Pool", value: `${Math.round(128 * factor)}K`, description: "Ready-to-purchase score >80", icon: Target },
+      { title: "Retarget Pool", value: `${Math.round(45 * factor)}K`, description: "Cart abandoned or recent view", icon: RefreshCcw },
+    ]
+  }, [days])
+
+  const activeSegments = useMemo(() => {
+    const factor = 0.7 + days / 50
+    return mockSegments.map((s) => ({
+      ...s,
+      size: `${Math.round(parseInt(s.size.replace("K", "")) * factor)}K`,
+    }))
+  }, [days])
+
+  const activeFunnelStages = useMemo(() => {
+    const factor = 0.6 + days / 45
+    return funnelStages.map((s) => ({
+      ...s,
+      value: Math.round(s.value * factor),
+    }))
+  }, [days])
+
+  const activeIntentSignals = useMemo(() => {
+    const factor = 0.75 + days / 65
+    return intentSignals.map((s) => ({
+      ...s,
+      shoppers: `${(parseFloat(s.shoppers.replace("K", "")) * factor).toFixed(1)}K`,
+    }))
+  }, [days])
+
+  const activeRetargetingPools = useMemo(() => {
+    const factor = 0.8 + days / 70
+    return retargetingPools.map((p) => ({
+      ...p,
+      size: `${Math.round(parseInt(p.size.replace("K", "")) * factor)}K`,
+    }))
+  }, [days])
+
   return (
     <>
       {/* KPI cards */}
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {topCards.map((card) => {
+        {activeTopCards.map((card) => {
           const Icon = card.icon
           return (
             <Card key={card.title}>
@@ -97,10 +139,10 @@ export function AudiencesPage() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-sm font-medium">New customer funnel</CardTitle>
-          <CardDescription>30-day first-time buyer journey — 4.2 days avg. to first purchase</CardDescription>
+          <CardDescription>First-time buyer journey for the selected period</CardDescription>
         </CardHeader>
         <CardContent>
-          <FunnelChart stages={funnelStages} chartHeight={180} />
+          <FunnelChart stages={activeFunnelStages} chartHeight={180} />
         </CardContent>
       </Card>
 
@@ -124,7 +166,7 @@ export function AudiencesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockSegments.map((row) => (
+                {activeSegments.map((row) => (
                   <TableRow key={row.name}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -195,7 +237,7 @@ export function AudiencesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {intentSignals.map((row) => (
+                {activeIntentSignals.map((row) => (
                   <TableRow key={row.signal}>
                     <TableCell className="font-medium text-sm">{row.signal}</TableCell>
                     <TableCell className="text-right tabular-nums text-sm">{row.shoppers}</TableCell>
@@ -224,7 +266,7 @@ export function AudiencesPage() {
           </CardHeader>
           <CardContent>
             <div className="divide-y divide-border/60">
-              {retargetingPools.map((pool) => (
+              {activeRetargetingPools.map((pool) => (
                 <div key={pool.name} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{pool.name}</p>
