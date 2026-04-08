@@ -1,15 +1,9 @@
-import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { XAxis, YAxis, Area, AreaChart } from "recharts"
 import { statsCards, revenueChartData } from "@/lib/mock-data"
 import { FunnelChart, type FunnelStage } from "@/components/shared/FunnelChart"
-import {
-  AiPresenceTimeRangeControl,
-  defaultAiPresenceTimeRange,
-  type AiPresenceTimeRange,
-} from "@/pages/ai-presence/ai-presence-time-range"
 import { cn } from "@/lib/utils"
 import { ArrowRight } from "lucide-react"
 
@@ -48,13 +42,8 @@ const quickLinks = [
 ]
 
 export function PerformanceOverview() {
-  const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
-
   return (
     <>
-      <div className="flex justify-end mb-6">
-        <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
-      </div>
 
       {/* KPI Cards with large Charts (Campaigns style) */}
       <div className="@container mb-6">
