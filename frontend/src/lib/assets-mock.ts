@@ -93,7 +93,9 @@ export const feedIssues = [
     title: "Missing / Low-res Image",
     count: 312,
     impact: "High",
-    description: "Items missing a primary image or resolution < 800px. High impact on CTR.",
+    revenueAtRisk: "$6.2K",
+    suppressedImpressions: "184K",
+    description: "Items missing a primary image or resolution < 800px. High impact on CTR and AI match eligibility.",
     category: "Media",
   },
   {
@@ -101,7 +103,9 @@ export const feedIssues = [
     title: "Invalid / Missing GTIN",
     count: 145,
     impact: "Medium",
-    description: "Items missing global trade identifiers. Affects visibility in shopping comparison.",
+    revenueAtRisk: "$1.8K",
+    suppressedImpressions: "62K",
+    description: "Items missing global trade identifiers. Affects visibility in shopping comparison and price-match channels.",
     category: "Identifiers",
   },
   {
@@ -109,7 +113,9 @@ export const feedIssues = [
     title: "Missing Brand Attribute",
     count: 25,
     impact: "Low",
-    description: "Items missing brand name. Recommended for better search filtering.",
+    revenueAtRisk: "$400",
+    suppressedImpressions: "11K",
+    description: "Items missing brand name. Required for better AI intent matching and search filtering.",
     category: "Attributes",
   },
 ]
@@ -199,14 +205,37 @@ export const networkSegments = [
 
 export const publishersList = [
   {
+    id: "p0a",
+    name: "Realry Search",
+    type: "Owned",
+    impressions: "2.1M",
+    cvr: "1.45%",
+    revenue: "$32.8K",
+    roas: "8.7x",
+    status: "active",
+    campaigns: 4,
+  },
+  {
+    id: "p0b",
+    name: "StylMatch Creators",
+    type: "Owned",
+    impressions: "1.4M",
+    cvr: "1.64%",
+    revenue: "$21.6K",
+    roas: "11.2x",
+    status: "active",
+    campaigns: 3,
+  },
+  {
     id: "p1",
     name: "DailyClick Network",
-    type: "Owned",
+    type: "Programmatic",
     impressions: "1.2M",
     cvr: "2.1%",
     revenue: "$28.4K",
     roas: "9.2x",
     status: "active",
+    campaigns: 4,
   },
   {
     id: "p2",
@@ -217,6 +246,7 @@ export const publishersList = [
     revenue: "$15.6K",
     roas: "6.4x",
     status: "active",
+    campaigns: 2,
   },
   {
     id: "p3",
@@ -227,6 +257,7 @@ export const publishersList = [
     revenue: "$12.1K",
     roas: "11.8x",
     status: "active",
+    campaigns: 2,
   },
   {
     id: "p4",
@@ -237,6 +268,7 @@ export const publishersList = [
     revenue: "$8.4K",
     roas: "4.2x",
     status: "paused",
+    campaigns: 0,
   },
   {
     id: "p5",
@@ -247,5 +279,6 @@ export const publishersList = [
     revenue: "$7.9K",
     roas: "3.8x",
     status: "active",
+    campaigns: 1,
   },
 ]
