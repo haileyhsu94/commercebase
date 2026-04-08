@@ -52,16 +52,8 @@ export function PerformanceOverview() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-          <p className="text-sm text-muted-foreground">
-            Performance overview and insights.
-          </p>
-        </div>
-        <div className="flex shrink-0">
-          <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
-        </div>
+      <div className="flex justify-end mb-6">
+        <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
       </div>
 
       {/* KPI Cards with large Charts (Campaigns style) */}

@@ -10,7 +10,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ArrowRight, Users, Target, Activity, RefreshCcw, TrendingUp, Zap } from "lucide-react"
+import { Users, Target, Activity, RefreshCcw, TrendingUp, Zap } from "lucide-react"
+import { FunnelChart, type FunnelStage } from "@/components/shared/FunnelChart"
 import { cn } from "@/lib/utils"
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -36,11 +37,11 @@ const categoryAffinity = [
   { name: "Outerwear", index: 85, progress: 40 },
 ]
 
-const funnelStages = [
-  { label: "New visitors", value: "28.4K", sublabel: "this month" },
-  { label: "Engaged", value: "8.4K", sublabel: "2+ page views" },
-  { label: "Intent signal", value: "3.2K", sublabel: "price compare / size guide" },
-  { label: "First purchase", value: "764", sublabel: "2.69% overall CVR" },
+const funnelStages: FunnelStage[] = [
+  { id: "new-visitors", label: "New visitors", value: 28400, pct: 100, change: "this month" },
+  { id: "engaged", label: "Engaged", value: 8400, pct: 29.6, change: "2+ page views" },
+  { id: "intent-signal", label: "Intent signal", value: 3200, pct: 11.3, change: "price / size guide" },
+  { id: "first-purchase", label: "First purchase", value: 764, pct: 2.69, change: "2.69% overall CVR" },
 ]
 
 const intentSignals = [
@@ -73,13 +74,6 @@ const strengthConfig: Record<string, string> = {
 export function AudiencesPage() {
   return (
     <>
-      <div className="py-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Audiences</h1>
-        <p className="text-sm text-muted-foreground">
-          AI-driven audience segments and targeting opportunities.
-        </p>
-      </div>
-
       {/* KPI cards */}
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {topCards.map((card) => {
@@ -106,20 +100,7 @@ export function AudiencesPage() {
           <CardDescription>30-day first-time buyer journey — 4.2 days avg. to first purchase</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {funnelStages.map((stage, i) => (
-              <div key={stage.label} className="flex items-center gap-2">
-                <div className="min-w-0 flex-1 rounded-lg border border-border/60 bg-card p-3">
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{stage.label}</p>
-                  <p className="mt-1 text-xl font-bold tabular-nums">{stage.value}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">{stage.sublabel}</p>
-                </div>
-                {i < funnelStages.length - 1 && (
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground/40 hidden sm:block" aria-hidden />
-                )}
-              </div>
-            ))}
-          </div>
+          <FunnelChart stages={funnelStages} chartHeight={180} />
         </CardContent>
       </Card>
 

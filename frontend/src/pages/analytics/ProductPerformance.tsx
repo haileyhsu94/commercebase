@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom"
-import { ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Table,
@@ -30,20 +28,6 @@ const chartData = topProducts.map((p) => ({
 export function ProductPerformance() {
   return (
     <>
-      <div className="flex items-center gap-4 py-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/analytics">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Product Performance</h1>
-          <p className="text-sm text-muted-foreground">
-            Top performing products by revenue and conversions.
-          </p>
-        </div>
-      </div>
-
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-sm font-medium">Top Products by Revenue</CardTitle>

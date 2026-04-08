@@ -1,8 +1,5 @@
-import { Link } from "react-router-dom"
-import { ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -36,20 +33,6 @@ const barData = channelPerformance.map((c) => ({
 export function ChannelAttribution() {
   return (
     <>
-      <div className="flex items-center gap-4 py-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/analytics">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Channel Attribution</h1>
-          <p className="text-sm text-muted-foreground">
-            Revenue attribution by distribution channel.
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-6 md:grid-cols-2 mb-6">
         <Card>
           <CardHeader>

@@ -1,3 +1,4 @@
+export { AnalyticsLayout } from "./AnalyticsLayout"
 export { PerformanceOverview } from "./PerformanceOverview"
 export { AudiencesPage } from "./Audiences"
 export { ChannelAttribution } from "./ChannelAttribution"

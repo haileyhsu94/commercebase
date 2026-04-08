@@ -1,0 +1,52 @@
+import { ChevronRight } from "lucide-react"
+import { Link, Outlet, useLocation } from "react-router-dom"
+
+const pageInfo: Record<string, { label: string; description: string }> = {
+  "/analytics": {
+    label: "Performance",
+    description: "Performance overview and channel, product, audience, and regional insights.",
+  },
+  "/analytics/channels": {
+    label: "Channels",
+    description: "Revenue attribution by distribution channel.",
+  },
+  "/analytics/products": {
+    label: "Products",
+    description: "Top performing products by revenue and conversions.",
+  },
+  "/analytics/audiences": {
+    label: "Audiences",
+    description: "AI-driven audience segments and targeting opportunities.",
+  },
+  "/analytics/regions": {
+    label: "Regions",
+    description: "Revenue density and performance by geography.",
+  },
+}
+
+export function AnalyticsLayout() {
+  const { pathname } = useLocation()
+  const info = pageInfo[pathname] ?? pageInfo["/analytics"]
+
+  return (
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="shrink-0 border-b border-border/60 pb-4 pt-2">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-sm">
+          <Link
+            to="/analytics"
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Analytics
+          </Link>
+          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" aria-hidden />
+          <span className="font-medium text-foreground">{info.label}</span>
+        </nav>
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight">{info.label}</h1>
+        <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{info.description}</p>
+      </div>
+      <div className="min-h-0 min-w-0 flex-1 pt-6">
+        <Outlet />
+      </div>
+    </div>
+  )
+}

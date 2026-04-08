@@ -1,7 +1,5 @@
-import { Link } from "react-router-dom"
-import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react"
+import { TrendingUp, TrendingDown } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -34,20 +32,6 @@ export function RegionalBreakdown() {
 
   return (
     <>
-      <div className="flex items-center gap-4 py-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/analytics">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Regional Breakdown</h1>
-          <p className="text-sm text-muted-foreground">
-            Performance by geographic region.
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-6 md:grid-cols-2 mb-6">
         <Card>
           <CardHeader>
