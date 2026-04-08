@@ -184,23 +184,17 @@ export function PerformanceOverview() {
       {/* Quick links */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {quickLinks.map(({ href, label, description }) => (
-          <Card key={href} className="group hover:bg-muted/40 transition-colors">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold text-sm">{label}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          <Link key={href} to={href} className="group block">
+            <Card className="h-full transition-colors group-hover:bg-secondary group-hover:border-border">
+              <CardContent className="flex items-start justify-between gap-2 p-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{label}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{description}</p>
                 </div>
-                <Link
-                  to={href}
-                  aria-label={`Go to ${label}`}
-                  className="shrink-0 text-muted-foreground group-hover:text-foreground transition-colors"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+                <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" aria-hidden />
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </>
