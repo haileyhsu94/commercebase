@@ -4,10 +4,10 @@ import {
   LayoutDashboard,
   Megaphone,
   DollarSign,
-  CreditCard,
   Activity,
   BarChart3,
   Bot,
+  ShoppingCart,
 } from "lucide-react"
 
 export interface NavItem {
@@ -41,16 +41,16 @@ export const statsCards: StatCard[] = [
     icon: DollarSign,
   },
   {
-    title: "Total Spend",
-    value: "$11,100",
+    title: "Total Orders",
+    value: "902",
     change: "+12%",
     trend: "up",
-    icon: CreditCard,
+    icon: ShoppingCart,
   },
   {
-    title: "Conversions",
-    value: "902",
-    change: "+0.3%",
+    title: "Average Order Value",
+    value: "$84",
+    change: "+2.1%",
     trend: "up",
     icon: Activity,
   },
@@ -206,6 +206,7 @@ export interface ChannelPerformance {
   cvr: string
   roas: string
   share: number
+  model: string
 }
 
 export const channelPerformance: ChannelPerformance[] = [
@@ -218,7 +219,8 @@ export const channelPerformance: ChannelPerformance[] = [
     revenue: "$32.8K",
     cvr: "1.45%",
     roas: "872%",
-    share: 43,
+    share: 38,
+    model: "CPC + CPS",
   },
   {
     name: "Creator",
@@ -229,7 +231,8 @@ export const channelPerformance: ChannelPerformance[] = [
     revenue: "$21.6K",
     cvr: "1.64%",
     roas: "1120%",
-    share: 29,
+    share: 25,
+    model: "CPS",
   },
   {
     name: "Commerce Network",
@@ -240,9 +243,52 @@ export const channelPerformance: ChannelPerformance[] = [
     revenue: "$21.4K",
     cvr: "1.01%",
     roas: "510%",
-    share: 28,
+    share: 25,
+    model: "CPC",
+  },
+  {
+    name: "Vertical",
+    description: "Sneakers123, Flex Dog",
+    impressions: "650K",
+    clicks: "8.1K",
+    conversions: 85,
+    revenue: "$9.4K",
+    cvr: "1.05%",
+    roas: "410%",
+    share: 12,
+    model: "CPC + CPS",
   },
 ]
+
+export interface RegionRevenue {
+  name: string
+  revenue: number
+}
+
+// Top 20 countries by revenue with mock data
+export const regionRevenueDistribution: RegionRevenue[] = [
+  { name: "United States of America", revenue: 15400 },
+  { name: "United Kingdom", revenue: 12100 },
+  { name: "Germany", revenue: 8500 },
+  { name: "Canada", revenue: 6400 },
+  { name: "France", revenue: 5200 },
+  { name: "Australia", revenue: 4100 },
+  { name: "Japan", revenue: 3800 },
+  { name: "China", revenue: 3500 },
+  { name: "Italy", revenue: 3100 },
+  { name: "Spain", revenue: 2900 },
+  { name: "Brazil", revenue: 2700 },
+  { name: "Netherlands", revenue: 2500 },
+  { name: "Sweden", revenue: 2200 },
+  { name: "Switzerland", revenue: 1900 },
+  { name: "South Korea", revenue: 1700 },
+  { name: "Mexico", revenue: 1500 },
+  { name: "India", revenue: 1400 },
+  { name: "Russia", revenue: 1200 },
+  { name: "Singapore", revenue: 1100 },
+  { name: "United Arab Emirates", revenue: 950 },
+]
+
 
 export interface Product {
   id: string

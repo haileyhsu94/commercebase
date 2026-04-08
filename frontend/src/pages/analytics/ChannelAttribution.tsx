@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -104,13 +105,14 @@ export function ChannelAttribution() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Channel</TableHead>
-                <TableHead className="text-right">Impressions</TableHead>
-                <TableHead className="text-right">Clicks</TableHead>
-                <TableHead className="text-right">Conversions</TableHead>
-                <TableHead className="text-right">Revenue</TableHead>
-                <TableHead className="text-right">CVR</TableHead>
-                <TableHead className="text-right">ROAS</TableHead>
+                <TableHead className="w-[20%]">Channel</TableHead>
+                <TableHead className="w-[11%]">Model</TableHead>
+                <TableHead className="w-[11%] text-right">Impressions</TableHead>
+                <TableHead className="w-[11%] text-right">Clicks</TableHead>
+                <TableHead className="w-[11%] text-right">Conversions</TableHead>
+                <TableHead className="w-[11%] text-right">Revenue</TableHead>
+                <TableHead className="w-[11%] text-right">CVR</TableHead>
+                <TableHead className="w-[11%] text-right">ROAS</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -121,6 +123,9 @@ export function ChannelAttribution() {
                       <p className="font-medium">{channel.name}</p>
                       <p className="text-xs text-muted-foreground">{channel.description}</p>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-normal text-muted-foreground">{channel.model}</Badge>
                   </TableCell>
                   <TableCell className="text-right">{channel.impressions}</TableCell>
                   <TableCell className="text-right">{channel.clicks}</TableCell>
