@@ -2,7 +2,10 @@
 
 export const analyticsSubnav = [
   { href: "/analytics", label: "Performance" },
+  { href: "/analytics/channels", label: "Channels" },
+  { href: "/analytics/products", label: "Products" },
   { href: "/analytics/audiences", label: "Audiences" },
+  { href: "/analytics/regions", label: "Regions" },
 ] as const
 
 export const assetsSubnav = [
@@ -10,19 +13,14 @@ export const assetsSubnav = [
   { href: "/publishers", label: "Publishers" },
 ] as const
 
-/** Performance: all /analytics routes except Audiences. */
+/** Returns true when the given nav href is the active sub-page. */
 export function analyticsSubItemActive(pathname: string, href: string): boolean {
-  if (href === "/analytics/audiences") {
-    return pathname === "/analytics/audiences" || pathname.startsWith("/analytics/audiences/")
-  }
   if (href === "/analytics") {
-    return (
-      pathname.startsWith("/analytics") &&
-      pathname !== "/analytics/audiences" &&
-      !pathname.startsWith("/analytics/audiences/")
-    )
+    // Only active for the exact performance root (not any sub-page)
+    return pathname === "/analytics"
   }
-  return false
+  // All other sub-pages: match exact path or nested paths
+  return pathname === href || pathname.startsWith(href + "/")
 }
 
 /** Catalogs includes product catalog when redirected from /catalogs → /products. */

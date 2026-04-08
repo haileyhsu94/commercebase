@@ -1,25 +1,17 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { XAxis, YAxis, Area, AreaChart } from "recharts"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { statsCards, revenueChartData, channelPerformance, regionRevenueDistribution } from "@/lib/mock-data"
+import { statsCards, revenueChartData } from "@/lib/mock-data"
 import { FunnelChart, type FunnelStage } from "@/components/shared/FunnelChart"
-import { RegionMap } from "@/components/analytics/RegionMap"
 import {
   AiPresenceTimeRangeControl,
   defaultAiPresenceTimeRange,
   type AiPresenceTimeRange,
 } from "@/pages/ai-presence/ai-presence-time-range"
 import { cn } from "@/lib/utils"
+import { ArrowRight } from "lucide-react"
 
 const chartConfig = {
   revenue: {
@@ -46,6 +38,13 @@ const funnelStages: FunnelStage[] = [
   { id: "clicks", label: "Clicks", value: 65600, pct: 1.45, change: "+5%", changeTrend: "up" },
   { id: "carts", label: "Add to Cart", value: 4200, pct: 6.4, change: "-2%", changeTrend: "down" },
   { id: "orders", label: "Orders", value: 902, pct: 21.4, change: "+0.3%", changeTrend: "up" },
+]
+
+const quickLinks = [
+  { href: "/analytics/channels", label: "Channels", description: "Attribution by distribution channel" },
+  { href: "/analytics/products", label: "Products", description: "Revenue and performance by product" },
+  { href: "/analytics/audiences", label: "Audiences", description: "Segment behavior and demographics" },
+  { href: "/analytics/regions", label: "Regions", description: "Revenue density by geography" },
 ]
 
 export function PerformanceOverview() {
@@ -182,111 +181,28 @@ export function PerformanceOverview() {
         </div>
       </div>
 
-      {/* Integrated Channel Attribution */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div className="space-y-1">
-            <CardTitle className="text-base font-semibold">Channel Attribution</CardTitle>
-            <CardDescription>Performance metrics by distribution channel</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-3 w-full overflow-hidden rounded-full my-6">
-            {channelPerformance.map((channel, i) => (
-              <div
-                key={channel.name}
-                style={{ width: `${channel.share}%` }}
-                className={cn(
-                  "h-full",
-                  i === 0 ? "bg-primary" : i === 1 ? "bg-chart-2" : i === 2 ? "bg-chart-3" : "bg-chart-4"
-                )}
-                title={`${channel.name}: ${channel.share}%`}
-              />
-            ))}
-          </div>
-
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[20%]">Channel</TableHead>
-                  <TableHead className="w-[11%]">Model</TableHead>
-                  <TableHead className="w-[11%] text-right">Impressions</TableHead>
-                  <TableHead className="w-[11%] text-right">Clicks</TableHead>
-                  <TableHead className="w-[11%] text-right">Conversions</TableHead>
-                  <TableHead className="w-[11%] text-right">Revenue</TableHead>
-                  <TableHead className="w-[11%] text-right">CVR</TableHead>
-                  <TableHead className="w-[11%] text-right">ROAS</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {channelPerformance.map((channel, i) => (
-                  <TableRow key={channel.name}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "inline-block h-2 w-2 rounded-full",
-                            i === 0 ? "bg-primary" : i === 1 ? "bg-chart-2" : i === 2 ? "bg-chart-3" : "bg-chart-4"
-                          )}
-                        />
-                        <div>
-                          <p className="font-medium">{channel.name}</p>
-                          <p className="text-xs text-muted-foreground">{channel.description}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-normal text-muted-foreground">{channel.model}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{channel.impressions}</TableCell>
-                    <TableCell className="text-right">{channel.clicks}</TableCell>
-                    <TableCell className="text-right">{channel.conversions}</TableCell>
-                    <TableCell className="text-right font-medium">{channel.revenue}</TableCell>
-                    <TableCell className="text-right">{channel.cvr}</TableCell>
-                    <TableCell className="text-right font-medium">{channel.roas}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Region Distribution Map */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Region Distribution</CardTitle>
-          <CardDescription>Revenue density by country</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <RegionMap />
-            </div>
-            <div className="lg:col-span-1">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Country</TableHead>
-                    <TableHead className="text-right">Revenue</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {regionRevenueDistribution.slice(0, 6).map((region) => (
-                    <TableRow key={region.name}>
-                      <TableCell className="font-medium">{region.name}</TableCell>
-                      <TableCell className="text-right font-medium">
-                        ${(region.revenue).toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Quick links */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {quickLinks.map(({ href, label, description }) => (
+          <Card key={href} className="group hover:bg-muted/40 transition-colors">
+            <CardContent className="pt-6">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-semibold text-sm">{label}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                </div>
+                <Link
+                  to={href}
+                  aria-label={`Go to ${label}`}
+                  className="shrink-0 text-muted-foreground group-hover:text-foreground transition-colors"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </>
   )
 }
