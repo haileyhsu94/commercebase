@@ -12,7 +12,7 @@ interface PageHeaderProps {
 }
 
 /**
- * Shared top-of-page header used by standalone pages (Home, Campaigns, Workflows, …).
+ * Shared top-of-page header used by standalone pages (Home, Campaigns, Autopilot, …).
  *
  * Produces `py-4` vertical rhythm — 16 px top padding, 16 px bottom padding — to match
  * the padding applied by the root `<main>` element (`p-4 pt-0`), giving each page a

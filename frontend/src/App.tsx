@@ -20,7 +20,7 @@ import {
   Integrations,
   TeamSettings,
   AnalyticsLayout,
-  WorkflowsPage,
+  AutopilotPage,
   AIPresenceLayout,
   AIPresenceOverview,
   MerchantsPage,
@@ -39,7 +39,7 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <Home /> },
-      { path: "workflows", element: <WorkflowsPage /> },
+      { path: "autopilot", element: <AutopilotPage /> },
       { path: "inbox", element: <Inbox /> },
       { path: "campaigns", element: <CampaignList /> },
       { path: "campaigns/new", element: <Navigate to="/campaigns?create=1" replace /> },

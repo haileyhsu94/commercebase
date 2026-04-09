@@ -40,16 +40,16 @@ const templateWorkflows = [
   },
 ]
 
-export function WorkflowsPage() {
+export function AutopilotPage() {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <PageHeader
-        title="Workflows"
+        title="Autopilot"
         description="Build automated pipelines that connect your catalog, campaigns, audiences, and AI agents — no manual monitoring required."
         actions={
           <Button className="gap-1.5" disabled>
             <Plus className="size-4" />
-            New workflow
+            New pilot
           </Button>
         }
       />
@@ -61,9 +61,9 @@ export function WorkflowsPage() {
           <div className="flex size-14 items-center justify-center rounded-2xl bg-secondary shadow-sm">
             <GitBranch className="size-7 text-muted-foreground" />
           </div>
-          <h2 className="mt-4 text-base font-semibold">No workflows yet</h2>
+          <h2 className="mt-4 text-base font-semibold">No autopilot pipelines yet</h2>
           <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
-            Workflows let you connect triggers, conditions, and actions into visual pipelines — like n8n, but built for commerce.
+            Autopilot lets you connect triggers, conditions, and actions into visual pipelines — like n8n, but built for commerce.
           </p>
           <div className="mt-5 flex items-center gap-3">
             <Button className="gap-1.5" disabled>
@@ -79,7 +79,7 @@ export function WorkflowsPage() {
 
         {/* Template workflows */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-foreground">Workflow templates</h2>
+          <h2 className="text-sm font-semibold text-foreground">Autopilot templates</h2>
           <span className="text-xs text-muted-foreground">Preview only — full builder coming soon</span>
         </div>
 

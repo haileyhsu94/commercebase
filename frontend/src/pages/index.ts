@@ -1,5 +1,5 @@
 export { Home } from "./Home"
-export { WorkflowsPage } from "./Workflows"
+export { AutopilotPage } from "./Autopilot"
 export { Inbox } from "./Inbox"
 export * from "./campaigns"
 export * from "./ai-presence"

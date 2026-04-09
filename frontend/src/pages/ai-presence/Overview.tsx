@@ -97,68 +97,83 @@ export function AIPresenceOverview() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Shopping Queries</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold">{shoppingQueries.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">{volumePeriodLabel}</p>
-              </div>
-              <div className="flex flex-col items-end gap-0.5 text-green-600">
-                <div className="flex items-center">
-                  <TrendingUp className="mr-1 h-4 w-4" />
-                  <span className="text-sm">+12%</span>
+        <Link to="/ai-presence/shopping-journey" className="block group/card h-full">
+          <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center justify-between">
+                Shopping Queries
+                <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold">{shoppingQueries.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">{volumePeriodLabel}</p>
                 </div>
-                <span className="text-[10px] font-normal text-muted-foreground leading-none">
-                  {trendVsPriorLabel}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Your Mentions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold">
-                  {Math.round(shoppingQueries * (overallScore / 100)).toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground">{volumePeriodLabel}</p>
-              </div>
-              <div className="flex flex-col items-end gap-0.5 text-green-600">
-                <div className="flex items-center">
-                  <TrendingUp className="mr-1 h-4 w-4" />
-                  <span className="text-sm">+8%</span>
+                <div className="flex flex-col items-end gap-0.5 text-green-600">
+                  <div className="flex items-center">
+                    <TrendingUp className="mr-1 h-4 w-4" />
+                    <span className="text-sm">+12%</span>
+                  </div>
+                  <span className="text-[10px] font-normal text-muted-foreground leading-none">
+                    {trendVsPriorLabel}
+                  </span>
                 </div>
-                <span className="text-[10px] font-normal text-muted-foreground leading-none">
-                  {trendVsPriorLabel}
-                </span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Missed Opportunities</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-amber-600">{missedOpportunities}</p>
-                <p className="text-xs text-muted-foreground">high-value queries</p>
+        <Link to="/ai-presence/merchants" className="block group/card h-full">
+          <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center justify-between">
+                Your Mentions
+                <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold">
+                    {Math.round(shoppingQueries * (overallScore / 100)).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{volumePeriodLabel}</p>
+                </div>
+                <div className="flex flex-col items-end gap-0.5 text-green-600">
+                  <div className="flex items-center">
+                    <TrendingUp className="mr-1 h-4 w-4" />
+                    <span className="text-sm">+8%</span>
+                  </div>
+                  <span className="text-[10px] font-normal text-muted-foreground leading-none">
+                    {trendVsPriorLabel}
+                  </span>
+                </div>
               </div>
-              <AlertCircle className="h-5 w-5 text-amber-600" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/ai-presence/opportunities" className="block group/card h-full">
+          <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm cursor-pointer border-amber-500/20">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center justify-between">
+                Missed Opportunities
+                <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xl font-bold text-amber-600">{missedOpportunities}</p>
+                  <p className="text-xs text-muted-foreground">high-value queries</p>
+                </div>
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

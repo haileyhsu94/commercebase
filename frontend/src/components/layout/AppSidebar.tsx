@@ -269,15 +269,15 @@ export function AppSidebar() {
                 </Accordion.Root>
               </SidebarMenuItem>
 
-              {/* Workflows — top-level standalone */}
+              {/* Autopilot — top-level standalone */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive={isActive("/workflows")}
-                  tooltip="Workflows"
-                  render={<Link to="/workflows" />}
+                  isActive={isActive("/autopilot")}
+                  tooltip="Autopilot"
+                  render={<Link to="/autopilot" />}
                 >
                   <Workflow />
-                  <span>Workflows</span>
+                  <span>Autopilot</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
