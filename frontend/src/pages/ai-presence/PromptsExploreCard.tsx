@@ -7,9 +7,12 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
+  MessageSquare,
   Minus,
+  Sparkles,
   TrendingDown,
   TrendingUp,
+  Wrench,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -39,6 +42,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import {
   loadExploreVisibleCols,
@@ -200,7 +212,7 @@ export function PromptsExploreCard({
   const [presets, setPresets] = useState<PromptFilterPreset[]>(() => loadFilterPresets())
   const [saveOpen, setSaveOpen] = useState(false)
   const [saveName, setSaveName] = useState("")
-  const [activePreset, setActivePreset] = useState<string>("__none__")
+  const [activePreset, setActivePreset] = useState<string>("")
 
   useEffect(() => {
     saveExploreVisibleCols(visibleCols)
@@ -294,7 +306,7 @@ export function PromptsExploreCard({
   const showingTo = Math.min(start + PAGE_SIZE, total)
 
   return (
-    <Card className="min-w-0">
+    <Card className="min-w-0 bg-muted/60 dark:bg-muted/20">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Prompts &amp; results</CardTitle>
         <CardDescription>
@@ -378,9 +390,10 @@ export function PromptsExploreCard({
           <Select
             value={activePreset}
             onValueChange={(v) => {
-              setActivePreset(v ?? "__none__")
-              if (!v || v === "__none__") return
-              const p = presets.find((x) => x.id === v)
+              const val = v ?? ""
+              setActivePreset(val)
+              if (!val) return
+              const p = presets.find((x) => x.id === val)
               if (p) onApplyPreset(p)
             }}
           >
@@ -388,7 +401,7 @@ export function PromptsExploreCard({
               <SelectValue placeholder="Saved presets" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">Preset…</SelectItem>
+              <SelectItem value="">Preset…</SelectItem>
               {presets.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}
@@ -396,31 +409,6 @@ export function PromptsExploreCard({
               ))}
             </SelectContent>
           </Select>
-
-          <span className="text-xs text-muted-foreground tabular-nums sm:ml-auto">
-            Showing {showingFrom}–{showingTo} of {total} prompts
-          </span>
-
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={safePage <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Prev
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={safePage >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Next
-            </Button>
-          </div>
         </div>
 
         <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
@@ -484,7 +472,13 @@ export function PromptsExploreCard({
           <TableBody>
             {pageRows.map((row) => (
               <Fragment key={row.id}>
-                <TableRow className={cn(expandedId === row.id && "border-b-0")}>
+                <TableRow
+                  className={cn(
+                    "cursor-pointer transition-colors hover:bg-muted/5 select-none",
+                    expandedId === row.id && "border-b-0 bg-muted/40"
+                  )}
+                  onClick={() => setExpandedId((id) => (id === row.id ? null : row.id))}
+                >
                   {visibleCols.has("prompt") ? (
                     <TableCell className="max-w-[240px] align-top font-medium">{row.prompt}</TableCell>
                   ) : null}
@@ -567,7 +561,10 @@ export function PromptsExploreCard({
                         className="size-8 min-h-11 min-w-11"
                         aria-expanded={expandedId === row.id}
                         aria-label={expandedId === row.id ? "Collapse details" : "Expand details"}
-                        onClick={() => setExpandedId((id) => (id === row.id ? null : row.id))}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setExpandedId((id) => (id === row.id ? null : row.id))
+                        }}
                       >
                         <ChevronDown
                           className={cn("size-4 transition-transform", expandedId === row.id && "rotate-180")}
@@ -578,103 +575,125 @@ export function PromptsExploreCard({
                 </TableRow>
                 {expandedId === row.id ? (
                   <TableRow key={`${row.id}-detail`} className="border-t-0 bg-muted/30 hover:bg-muted/30">
-                    <TableCell colSpan={colSpan} className="p-4">
-                      <div className="grid gap-4 lg:grid-cols-2">
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              SoV by engine
-                            </p>
-                            <div className="mt-2 flex flex-wrap gap-3 text-sm">
-                              <span>
-                                ChatGPT <strong className="tabular-nums">{row.sovChatgpt}%</strong>
-                              </span>
-                              <span>
-                                Perplexity <strong className="tabular-nums">{row.sovPerplexity}%</strong>
-                              </span>
-                              <span>
-                                Google AI <strong className="tabular-nums">{row.sovGoogleAi}%</strong>
-                              </span>
+                    <TableCell colSpan={colSpan} className="p-6">
+                      <div className="grid gap-8 lg:grid-cols-2">
+                        <div className="space-y-6">
+                          <div className="grid gap-6 sm:grid-cols-2">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                                SoV by engine
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                <span className="flex items-center gap-1.5">
+                                  <span className="text-muted-foreground">ChatGPT</span>
+                                  <strong className="tabular-nums">{row.sovChatgpt}%</strong>
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                  <span className="text-muted-foreground">Perplexity</span>
+                                  <strong className="tabular-nums">{row.sovPerplexity}%</strong>
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                  <span className="text-muted-foreground">Google AI</span>
+                                  <strong className="tabular-nums">{row.sovGoogleAi}%</strong>
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                                Answer placement
+                              </p>
+                              <p className="mt-1.5 text-sm font-medium">{PLACEMENT_LABEL[row.placement]}</p>
                             </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Answer placement
-                            </p>
-                            <p className="mt-1 text-sm">{PLACEMENT_LABEL[row.placement]}</p>
+
+                          <div className="grid gap-6 sm:grid-cols-2">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                                Shopping journey
+                              </p>
+                              <p className="mt-1.5 text-sm font-medium">{journeyLabel(row.shoppingJourneyStage)}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                                Data as of
+                              </p>
+                              <p className="mt-1.5 text-sm font-medium tabular-nums">{row.lastUpdated}</p>
+                            </div>
                           </div>
+
                           <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Shopping journey
-                            </p>
-                            <p className="mt-1 text-sm">{journeyLabel(row.shoppingJourneyStage)}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
                               Sample answer (illustrative)
                             </p>
-                            <blockquote className="mt-1 border-l-2 border-primary/30 pl-3 text-sm italic text-foreground/90">
-                              {row.sampleAnswerLine}
+                            <blockquote className="mt-2 border-l-2 border-primary/20 pl-4 text-sm italic leading-relaxed text-foreground/80">
+                              "{row.sampleAnswerLine}"
                             </blockquote>
                           </div>
-                        </div>
-                        <div className="space-y-3">
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Recommended fix
-                              </p>
-                              <p className="mt-1 text-sm">{row.recommendedFix}</p>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="mt-2"
-                                onClick={() =>
-                                  openPanelWithComposerText(
-                                    `Explain this prompt and fix: "${row.prompt}". Recommended fix: ${row.recommendedFix}`
-                                  )
-                                }
-                              >
-                                Ask Aeris about this prompt
-                              </Button>
-                            </div>
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Affected catalog (est.)
-                            </p>
-                            <p className="mt-1 text-sm">
-                              {row.affectedSkusApprox > 0
-                                ? `~${row.affectedSkusApprox} SKUs`
-                                : "Primarily content / help — not SKU-specific"}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Data as of
-                            </p>
-                            <p className="mt-1 text-sm tabular-nums">{row.lastUpdated}</p>
-                          </div>
-                          <div className="flex flex-wrap gap-2 pt-1">
+
+                          <div className="flex flex-wrap gap-2 pt-2">
                             <Link
                               to="/products"
-                              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex gap-1")}
+                              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex h-8 gap-1.5")}
                             >
                               View products
                               <ChevronRight className="size-3.5" />
                             </Link>
                             <Link
                               to="/ai-presence/optimize"
-                              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex gap-1")}
+                              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex h-8 gap-1.5")}
                             >
                               Open SEO / GEO
                               <ExternalLink className="size-3.5" />
                             </Link>
-                            <Link
-                              to="/ai-presence/auto-agent"
-                              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                            >
-                              Queue in agent
-                            </Link>
+                          </div>
+                        </div>
+
+                        <div className="space-y-6">
+                          <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 shadow-sm">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Sparkles className="size-4 text-primary" />
+                              <p className="text-[10px] font-extrabold uppercase tracking-widest text-primary">
+                                Aeris Recommendation
+                              </p>
+                            </div>
+                            <p className="text-sm font-semibold leading-relaxed text-foreground">
+                              {row.recommendedFix}
+                            </p>
+                            
+                            <div className="mt-5 flex flex-wrap gap-3">
+                              <Link
+                                to="/ai-presence/auto-agent"
+                                className={cn(buttonVariants({ variant: "default", size: "sm" }), "h-9 gap-2 shadow-sm")}
+                              >
+                                <Wrench className="size-4" />
+                                Fix with Aeris
+                              </Link>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-9 gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-colors"
+                                onClick={() =>
+                                  openPanelWithComposerText(
+                                    `Explain this prompt and fix: "${row.prompt}". Recommended fix: ${row.recommendedFix}`
+                                  )
+                                }
+                              >
+                                <MessageSquare className="size-4 text-primary" />
+                                Ask Aeris about this prompt
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                              Affected catalog (est.)
+                            </p>
+                            <p className="mt-1.5 text-sm font-medium">
+                              {row.affectedSkusApprox > 0
+                                ? `~${row.affectedSkusApprox.toLocaleString()} SKUs potentially impacted`
+                                : "General content optimization — not SKU-specific"}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -688,6 +707,69 @@ export function PromptsExploreCard({
         {total === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">No prompts match these filters.</p>
         ) : null}
+
+        <div className="border-t bg-muted/10 px-6 py-4">
+          <Pagination className="justify-center sm:justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (safePage > 1) setPage(safePage - 1)
+                  }}
+                  className={cn("cursor-pointer", safePage <= 1 && "pointer-events-none opacity-50")}
+                />
+              </PaginationItem>
+
+              {totalPages > 1 && Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                const isNear = Math.abs(p - safePage) <= 1
+                const isFirstOrLast = p === 1 || p === totalPages
+                if (!isNear && !isFirstOrLast) {
+                  if (p === 2 || p === totalPages - 1) {
+                     return (
+                       <PaginationItem key={`ellipsis-${p}`}>
+                         <PaginationEllipsis />
+                       </PaginationItem>
+                     )
+                  }
+                  return null
+                }
+                return (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      href="#"
+                      isActive={p === safePage}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setPage(p)
+                      }}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              })}
+              
+              {totalPages <= 1 && (
+                <PaginationItem>
+                  <PaginationLink href="#" isActive>1</PaginationLink>
+                </PaginationItem>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (safePage < totalPages) setPage(safePage + 1)
+                  }}
+                  className={cn("cursor-pointer", safePage >= totalPages && "pointer-events-none opacity-50")}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </CardContent>
     </Card>
   )

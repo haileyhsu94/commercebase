@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useOutletContext, useSearchParams, Link } from "react-router-dom"
-import { AlertCircle, Bot, CheckCircle2, Lightbulb, TrendingUp, Trophy } from "lucide-react"
+import { AlertCircle, Bot, CheckCircle2, Filter, Lightbulb, TrendingUp, Trophy } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -115,6 +115,16 @@ const opportunities = [
     impact: "low" as const,
     status: "optimized" as const,
   },
+  {
+    id: 6,
+    query: "premium watches for men",
+    volume: "9.4K",
+    yourVisibility: 15,
+    topCompetitor: { name: "Rolex", visibility: 62 },
+    recommendation: "Highlight movement specifications and investment value",
+    impact: "high" as const,
+    status: "new" as const,
+  },
 ]
 
 const statusConfig = {
@@ -166,6 +176,20 @@ export function CompetitorInsightsPage() {
     if (filterStatus !== "all" && o.status !== filterStatus) return false
     return true
   })
+
+  const impactCounts = {
+    all: opportunities.length,
+    high: opportunities.filter((o) => o.impact === "high").length,
+    medium: opportunities.filter((o) => o.impact === "medium").length,
+    low: opportunities.filter((o) => o.impact === "low").length,
+  }
+
+  const statusCounts = {
+    all: opportunities.length,
+    new: opportunities.filter((o) => o.status === "new").length,
+    in_progress: opportunities.filter((o) => o.status === "in_progress").length,
+    optimized: opportunities.filter((o) => o.status === "optimized").length,
+  }
 
   const handleTabChange = (value: string) => {
     if (value === "competitors") {
@@ -461,165 +485,182 @@ export function CompetitorInsightsPage() {
           </Card>
         </div>
 
-        {/* Filter bar */}
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <Select value={filterImpact} onValueChange={(value) => setFilterImpact(value ?? "all")}>
-            <SelectTrigger className="h-8 w-[140px] text-xs">
-              <SelectValue placeholder="All impact" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All impact</SelectItem>
-              <SelectItem value="high">High impact</SelectItem>
-              <SelectItem value="medium">Medium impact</SelectItem>
-              <SelectItem value="low">Low impact</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value ?? "all")}>
-            <SelectTrigger className="h-8 w-[148px] text-xs">
-              <SelectValue placeholder="All status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="in_progress">In progress</SelectItem>
-              <SelectItem value="optimized">Optimized</SelectItem>
-            </SelectContent>
-          </Select>
-          {(filterImpact !== "all" || filterStatus !== "all") && (
-            <span className="text-xs text-muted-foreground">
-              {filteredOpportunities.length} result{filteredOpportunities.length !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
-
-        {/* Opportunity list — accordion: collapsed row is scannable, expand for detail */}
-        {filteredOpportunities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-card py-12 text-center">
-            <p className="text-sm font-medium text-foreground">No opportunities match</p>
-            <p className="mt-1 text-xs text-muted-foreground">Try adjusting the filters above</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-3 text-xs"
-              onClick={() => { setFilterImpact("all"); setFilterStatus("all") }}
-            >
-              Clear filters
-            </Button>
-          </div>
-        ) : (
-        <Accordion
-          type="single"
-          collapsible
-          className="rounded-lg border border-border/60 bg-card"
-        >
-          {filteredOpportunities.map((opp, i) => {
-            const status = statusConfig[opp.status]
-            const impact = impactConfig[opp.impact]
-            const StatusIcon = status.icon
-            const gap = opp.topCompetitor.visibility - opp.yourVisibility
-            return (
-              <AccordionItem key={opp.id} value={String(opp.id)}>
-                <AccordionTrigger className="px-4 hover:no-underline hover:bg-muted/40">
-                  {/* Rank */}
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-bold tabular-nums text-muted-foreground">
-                    {i + 1}
+        {/* Opportunity list — wrapped in Card to hold the header filters */}
+        <Card>
+          <CardHeader className="space-y-4">
+            <CardTitle className="text-base font-medium">Market Opportunities</CardTitle>
+            
+            {/* Filter bar inside header */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">
+              <div className="flex min-w-0 flex-1 flex-col gap-2 sm:max-w-[180px]">
+                <label htmlFor="opp-impact-filter" className="text-xs font-medium text-muted-foreground">
+                  Impact
+                </label>
+                <Select value={filterImpact} onValueChange={(value) => setFilterImpact(value ?? "all")}>
+                  <SelectTrigger id="opp-impact-filter" size="sm" className="w-full">
+                    <Filter className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                    <SelectValue placeholder="All impact" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All ({impactCounts.all})</SelectItem>
+                    <SelectItem value="high">High ({impactCounts.high})</SelectItem>
+                    <SelectItem value="medium">Medium ({impactCounts.medium})</SelectItem>
+                    <SelectItem value="low">Low ({impactCounts.low})</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-2 sm:max-w-[180px]">
+                <label htmlFor="opp-status-filter" className="text-xs font-medium text-muted-foreground">
+                  Status
+                </label>
+                <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value ?? "all")}>
+                  <SelectTrigger id="opp-status-filter" size="sm" className="w-full">
+                    <SelectValue placeholder="All status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All ({statusCounts.all})</SelectItem>
+                    <SelectItem value="new">New ({statusCounts.new})</SelectItem>
+                    <SelectItem value="in_progress">In progress ({statusCounts.in_progress})</SelectItem>
+                    <SelectItem value="optimized">Optimized ({statusCounts.optimized})</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {(filterImpact !== "all" || filterStatus !== "all") && (
+                <div className="pb-2">
+                  <span className="text-xs text-muted-foreground">
+                    {filteredOpportunities.length} result{filteredOpportunities.length !== 1 ? "s" : ""}
                   </span>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          
+          <CardContent className="p-0 border-t border-border/60">
+            {filteredOpportunities.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-sm font-medium text-foreground">No opportunities match</p>
+                <p className="mt-1 text-xs text-muted-foreground">Try adjusting the filters above</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 text-xs"
+                  onClick={() => { setFilterImpact("all"); setFilterStatus("all") }}
+                >
+                  Clear filters
+                </Button>
+              </div>
+            ) : (
+              <Accordion type="single" collapsible className="divide-y divide-border/60">
+                {filteredOpportunities.map((opp, i) => {
+                  const status = statusConfig[opp.status]
+                  const impact = impactConfig[opp.impact]
+                  const StatusIcon = status.icon
+                  const gap = opp.topCompetitor.visibility - opp.yourVisibility
+                  return (
+                    <AccordionItem key={opp.id} value={String(opp.id)} className="border-0">
+                      <AccordionTrigger className="px-4 hover:no-underline hover:bg-muted/40">
+                        {/* Rank */}
+                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-bold tabular-nums text-muted-foreground">
+                          {i + 1}
+                        </span>
 
-                  {/* Query + volume */}
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-foreground">
-                      "{opp.query}"
-                    </span>
-                    <span className="text-xs text-muted-foreground">{opp.volume}/wk</span>
-                  </span>
+                        {/* Query + volume */}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-foreground text-left">
+                            "{opp.query}"
+                          </span>
+                          <span className="text-xs text-muted-foreground block text-left">{opp.volume}/wk</span>
+                        </span>
 
-                  {/* Gap summary */}
-                  <span className="hidden shrink-0 items-center gap-1 tabular-nums sm:flex">
-                    <span className="text-xs font-semibold text-primary">{opp.yourVisibility}%</span>
-                    <span className="text-xs text-muted-foreground">you</span>
-                    <span className="text-xs text-muted-foreground">·</span>
-                    <span className="text-xs font-semibold text-red-500">{opp.topCompetitor.visibility}%</span>
-                    <span className="text-xs text-muted-foreground">{opp.topCompetitor.name}</span>
-                    {gap > 0 && (
-                      <span className="ml-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 ring-1 ring-red-200/60 dark:bg-red-950/30 dark:text-red-400">
-                        −{gap} pts
-                      </span>
-                    )}
-                  </span>
+                        {/* Gap summary */}
+                        <span className="hidden shrink-0 items-center gap-1 tabular-nums sm:flex">
+                          <span className="text-xs font-semibold text-primary">{opp.yourVisibility}%</span>
+                          <span className="text-xs text-muted-foreground">you</span>
+                          <span className="text-xs text-muted-foreground">·</span>
+                          <span className="text-xs font-semibold text-red-500">{opp.topCompetitor.visibility}%</span>
+                          <span className="text-xs text-muted-foreground">{opp.topCompetitor.name}</span>
+                          {gap > 0 && (
+                            <span className="ml-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 ring-1 ring-red-200/60 dark:bg-red-950/30 dark:text-red-400">
+                              −{gap} pts
+                            </span>
+                          )}
+                        </span>
 
-                  {/* Badges */}
-                  <span className="ml-2 hidden shrink-0 items-center gap-1.5 sm:flex">
-                    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1", impact.badgeClass)}>
-                      {impact.label}
-                    </span>
-                    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ring-1", status.badgeClass)}>
-                      <StatusIcon className="size-2.5 shrink-0" aria-hidden />
-                      {status.label}
-                    </span>
-                  </span>
-                </AccordionTrigger>
+                        {/* Badges */}
+                        <span className="ml-2 hidden shrink-0 items-center gap-1.5 sm:flex">
+                          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1", impact.badgeClass)}>
+                            {impact.label}
+                          </span>
+                          <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ring-1", status.badgeClass)}>
+                            <StatusIcon className="size-2.5 shrink-0" aria-hidden />
+                            {status.label}
+                          </span>
+                        </span>
+                      </AccordionTrigger>
 
-                <AccordionContent className="px-4">
-                  {/* Mobile-only badges */}
-                  <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:hidden">
-                    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1", impact.badgeClass)}>
-                      {impact.label}
-                    </span>
-                    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1", status.badgeClass)}>
-                      <StatusIcon className="size-3 shrink-0" aria-hidden />
-                      {status.label}
-                    </span>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {/* SoV bars */}
-                    <div className="space-y-2.5">
-                      <div>
-                        <div className="mb-1 flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">Your SoV</p>
-                          <span className="text-xs font-semibold tabular-nums text-primary">{opp.yourVisibility}%</span>
+                      <AccordionContent className="px-4">
+                        {/* Mobile-only badges */}
+                        <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:hidden">
+                          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1", impact.badgeClass)}>
+                            {impact.label}
+                          </span>
+                          <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1", status.badgeClass)}>
+                            <StatusIcon className="size-3 shrink-0" aria-hidden />
+                            {status.label}
+                          </span>
                         </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                          <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${opp.yourVisibility}%` }} />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="mb-1 flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">{opp.topCompetitor.name}</p>
-                          <span className="text-xs font-semibold tabular-nums text-red-500">{opp.topCompetitor.visibility}%</span>
-                        </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                          <div className="h-full rounded-full bg-red-400 transition-[width]" style={{ width: `${opp.topCompetitor.visibility}%` }} />
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Recommendation */}
-                    <div className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-background p-3">
-                      <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-amber-500" aria-hidden />
-                      <p className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground">
-                        {opp.recommendation}
-                      </p>
-                    </div>
-                  </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {/* SoV bars */}
+                          <div className="space-y-2.5">
+                            <div>
+                              <div className="mb-1 flex items-center justify-between">
+                                <p className="text-xs text-muted-foreground text-left">Your SoV</p>
+                                <span className="text-xs font-semibold tabular-nums text-primary">{opp.yourVisibility}%</span>
+                              </div>
+                              <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                                <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${opp.yourVisibility}%` }} />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="mb-1 flex items-center justify-between">
+                                <p className="text-xs text-muted-foreground text-left">{opp.topCompetitor.name}</p>
+                                <span className="text-xs font-semibold tabular-nums text-red-500">{opp.topCompetitor.visibility}%</span>
+                              </div>
+                              <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                                <div className="h-full rounded-full bg-red-400 transition-[width]" style={{ width: `${opp.topCompetitor.visibility}%` }} />
+                              </div>
+                            </div>
+                          </div>
 
-                  {/* Action */}
-                  {opp.status === "new" && (
-                    <div className="mt-3">
-                      <Button size="sm" asChild>
-                        <Link to="/ai-presence/auto-agent" className="inline-flex items-center gap-1.5">
-                          <Bot className="size-3.5 shrink-0" aria-hidden />
-                          Check in Auto Agent
-                        </Link>
-                      </Button>
-                    </div>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            )
-          })}
-        </Accordion>
-        )}
+                          {/* Recommendation */}
+                          <div className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-background p-3">
+                            <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-amber-500" aria-hidden />
+                            <p className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground text-left">
+                              {opp.recommendation}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Action */}
+                        {opp.status === "new" && (
+                          <div className="mt-3 text-left">
+                            <Button size="sm" asChild>
+                              <Link to="/ai-presence/auto-agent" className="inline-flex items-center gap-1.5">
+                                <Bot className="size-3.5 shrink-0" aria-hidden />
+                                Check in Auto Agent
+                              </Link>
+                            </Button>
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  )
+                })}
+              </Accordion>
+            )}
+          </CardContent>
+        </Card>
 
       </TabsContent>
     </Tabs>

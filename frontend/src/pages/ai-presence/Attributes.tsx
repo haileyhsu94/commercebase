@@ -215,15 +215,15 @@ export function AttributesPage() {
             {/* ── KPI 2: High-impact gaps ── */}
             <Dialog>
               <DialogTrigger asChild>
-                <div className="group relative cursor-pointer space-y-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3 ring-1 ring-transparent transition-all hover:bg-destructive/10 hover:ring-destructive/30">
+                <div className="group relative cursor-pointer space-y-2 rounded-lg bg-muted/50 p-3 ring-1 ring-transparent transition-all hover:bg-muted hover:ring-border">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
                       <Zap className="size-3.5 shrink-0 text-destructive" />
                       High-impact gaps
                     </div>
                     <ChevronRight className="size-3.5 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
                   </div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.highImpactGaps}</p>
+                  <p className="text-2xl font-bold tabular-nums text-destructive">{stats.highImpactGaps}</p>
                   <p className="text-[11px] leading-snug text-muted-foreground">
                     attributes directly hurting AI citations
                   </p>

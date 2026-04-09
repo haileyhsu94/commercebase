@@ -20,6 +20,7 @@ import {
 import { promptInsights, type PromptInsightRow, type PromptIntent } from "@/lib/ai-presence-mock"
 import type { PromptFilterPreset } from "@/lib/prompts-explore-prefs"
 import { PromptsExploreCard } from "@/pages/ai-presence/PromptsExploreCard"
+import { Wrench } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type SortKey = "volume" | "visibility" | "gap" | "opportunity" | "leader"
@@ -46,6 +47,7 @@ function sortValue(row: PromptInsightRow, key: SortKey): number {
 export function PromptsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const actionsRef = useRef<HTMLDivElement>(null)
+  const exploreRef = useRef<HTMLDivElement>(null)
   const shouldHighlight = searchParams.get("highlight") === "actions"
 
   useEffect(() => {
@@ -161,15 +163,19 @@ export function PromptsPage() {
                     <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
                       <Link
                         to="/ai-presence/auto-agent"
-                        className={cn(buttonVariants({ variant: "default", size: "sm" }))}
+                        className={cn(buttonVariants({ variant: "default", size: "sm" }), "gap-1.5")}
                       >
-                        Fix with Auto Agent
+                        <Wrench className="size-3.5" />
+                        Fix with Aeris
                       </Link>
                       <Button
                         variant="outline"
                         size="sm"
                         type="button"
-                        onClick={() => setExpandedId(row.id)}
+                        onClick={() => {
+                          setExpandedId(row.id)
+                          exploreRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                        }}
                       >
                         View detail
                       </Button>
@@ -183,7 +189,7 @@ export function PromptsPage() {
       </Card>
 
       {/* Explore */}
-      <Card className="min-w-0">
+      <Card ref={exploreRef} className="min-w-0">
         <CardHeader>
           <CardTitle className="text-base">Explore</CardTitle>
           <CardDescription>

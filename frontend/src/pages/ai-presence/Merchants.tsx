@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react"
 import { Link, useOutletContext, useSearchParams } from "react-router-dom"
 import { TrendingDown, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { PlatformLogo } from "@/components/shared/PlatformLogo"
 import {
   merchantCheckoutShare,
@@ -37,6 +38,76 @@ export function MerchantsPage() {
 
   return (
     <>
+      {/* AI Mentions & sentiment — Top of funnel detail */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">AI Mentions & sentiment</CardTitle>
+            <Badge variant="outline" className="font-semibold text-emerald-600 bg-emerald-50 ring-emerald-200/60">
+              Positive Sentiment: 82%
+            </Badge>
+          </div>
+          <CardDescription>
+            Individual brand occurrences in AI shopping advice · {period}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground uppercase font-semibold">Total Mentions</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold tabular-nums">12,402</span>
+                <span className="text-xs font-medium text-emerald-600">+8.2%</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground uppercase font-semibold">Unique Queries</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold tabular-nums">1,840</span>
+                <span className="text-xs font-medium text-emerald-600">+12%</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground uppercase font-semibold">Engagement Rate</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold tabular-nums">4.2%</span>
+                <span className="text-xs font-medium text-red-600">-0.5%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <p className="text-sm font-medium">Top products by AI mentions</p>
+            <div className="space-y-3">
+              {[
+                { name: "Nike Air Max 97 Silver Bullet", mentions: 2405, sentiment: 88 },
+                { name: "Gucci GG Marmont Mini Bag", mentions: 1840, sentiment: 92 },
+                { name: "Adidas Samba OG White", mentions: 1250, sentiment: 84 },
+              ].map((p) => (
+                <div key={p.name} className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-medium truncate">{p.name}</p>
+                      <span className="text-xs text-muted-foreground tabular-nums">{p.mentions} mentions</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div 
+                        className="h-full rounded-full bg-primary" 
+                        style={{ width: `${(p.mentions / 2500) * 100}%` }} 
+                      />
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right w-12">
+                     <p className="text-xs font-bold text-emerald-600">{p.sentiment}%</p>
+                     <p className="text-[10px] text-muted-foreground">Pos.</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Merchant checkout share — horizontal bar chart */}
       <Card
         ref={shareRef}
