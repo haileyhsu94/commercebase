@@ -302,9 +302,6 @@ export function PromptsExploreCard({
     )
   }
 
-  const showingFrom = total === 0 ? 0 : start + 1
-  const showingTo = Math.min(start + PAGE_SIZE, total)
-
   return (
     <Card className="min-w-0 bg-muted/60 dark:bg-muted/20">
       <CardHeader className="pb-2">
