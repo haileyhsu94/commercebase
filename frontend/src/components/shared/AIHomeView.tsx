@@ -33,7 +33,7 @@ export function AIHomeView() {
         ? "Afternoon"
         : hour >= 18 && hour < 21
           ? "Evening"
-          : "Evening"
+          : "Night"
 
   const firstName = currentUser.name.split(" ")[0]
 
