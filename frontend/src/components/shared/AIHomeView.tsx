@@ -779,9 +779,10 @@ export function AIHomeView() {
                                   ? Math.min(Math.max(Number(answers.budget), BUDGET_MIN), BUDGET_MAX)
                                   : BUDGET_MIN,
                               ]}
-                              onValueChange={(val: number[]) =>
-                                setAnswers({ ...answers, budget: String(val[0]) })
-                              }
+                              onValueChange={(val) => {
+                                const v = Array.isArray(val) ? val[0] : val
+                                setAnswers({ ...answers, budget: String(v) })
+                              }}
                             />
                             <span className="text-[10px] text-muted-foreground">${BUDGET_MAX}</span>
                           </div>
@@ -909,9 +910,10 @@ export function AIHomeView() {
                                   ? Math.min(Math.max(Number(answers.maxCpc), CPC_MIN), CPC_MAX)
                                   : CPC_MIN,
                               ]}
-                              onValueChange={(val: number[]) =>
-                                setAnswers({ ...answers, maxCpc: String(val[0]) })
-                              }
+                              onValueChange={(val) => {
+                                const v = Array.isArray(val) ? val[0] : val
+                                setAnswers({ ...answers, maxCpc: String(v) })
+                              }}
                             />
                             <span className="text-[10px] text-muted-foreground">${CPC_MAX}</span>
                           </div>
