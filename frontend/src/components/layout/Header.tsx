@@ -1,18 +1,51 @@
-import { Search, Sparkles } from "lucide-react"
+import { LayoutDashboard, Search, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { useGlobalSearch } from "@/contexts/GlobalSearchContext"
+import { useHomeMode } from "@/contexts/HomeModeContext"
 import { cn } from "@/lib/utils"
 
 export function Header() {
   const { toggleOpen } = useAIAssistant()
   const { openSearch } = useGlobalSearch()
+  const { mode, setMode } = useHomeMode()
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />
+
+      {/* Mode toggle */}
+      <div className="inline-flex h-8 shrink-0 items-center rounded-lg bg-secondary p-0.5">
+        <button
+          type="button"
+          onClick={() => setMode("dashboard")}
+          className={cn(
+            "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-all",
+            mode === "dashboard"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <LayoutDashboard className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Dashboard</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("ai")}
+          className={cn(
+            "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-all",
+            mode === "ai"
+              ? "bg-indigo-100 text-indigo-900 shadow-sm dark:bg-indigo-950/60 dark:text-indigo-100"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">AI Mode</span>
+        </button>
+      </div>
+
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <button
           type="button"

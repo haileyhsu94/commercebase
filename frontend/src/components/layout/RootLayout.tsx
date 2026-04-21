@@ -3,6 +3,7 @@ import { Toaster } from "sonner"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AIAssistantProvider, useAIAssistant } from "@/contexts/AIAssistantContext"
 import { GlobalSearchProvider } from "@/contexts/GlobalSearchContext"
+import { HomeModeProvider } from "@/contexts/HomeModeContext"
 import { AppSidebar } from "./AppSidebar"
 import { Header } from "./Header"
 import { AIAssistantPanel } from "./AIAssistantPanel"
@@ -31,13 +32,15 @@ export function RootLayout() {
   return (
     <AIAssistantProvider>
       <GlobalSearchProvider>
-        <SidebarProvider>
-          <AppSidebar />
-          <MainContent />
-          <AIAssistantPanel />
-          <GlobalSearchDialog />
-          <Toaster richColors position="bottom-right" />
-        </SidebarProvider>
+        <HomeModeProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <MainContent />
+            <AIAssistantPanel />
+            <GlobalSearchDialog />
+            <Toaster richColors position="bottom-right" />
+          </SidebarProvider>
+        </HomeModeProvider>
       </GlobalSearchProvider>
     </AIAssistantProvider>
   )

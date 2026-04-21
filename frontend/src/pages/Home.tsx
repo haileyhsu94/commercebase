@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { GripVertical, LayoutDashboard, Pencil, Sparkles } from "lucide-react"
+import { GripVertical, Pencil } from "lucide-react"
 import { currentUser } from "@/lib/mock-data"
 import {
   getHomeLayout,
@@ -35,6 +35,7 @@ import {
   formatAiPresencePeriodShort,
   type AiPresenceTimeRange,
 } from "@/pages/ai-presence/ai-presence-time-range"
+import { useHomeMode } from "@/contexts/HomeModeContext"
 
 const DND_TYPE = "application/x-commercebase-home-widget"
 
@@ -46,10 +47,8 @@ function reorderWidgets(order: HomeWidgetId[], fromIndex: number, toIndex: numbe
   return next
 }
 
-type HomeMode = "dashboard" | "ai"
-
 export function Home() {
-  const [mode, setMode] = useState<HomeMode>("dashboard")
+  const { mode } = useHomeMode()
   const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
   const [layout, setLayout] = useState<HomeLayoutState>(() => getHomeLayout())
   const [customizeOpen, setCustomizeOpen] = useState(false)
@@ -102,62 +101,26 @@ export function Home() {
 
   return (
     <>
-      <PageHeader
-        title={`${greeting}, ${currentUser.name.split(" ")[0]}`}
-        description={
-          mode === "dashboard"
-            ? `Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`
-            : "Let Aeris help you manage campaigns, analyze performance, and more."
-        }
-        actions={
-          <>
-            {/* Mode toggle */}
-            <div className="inline-flex h-9 items-center rounded-lg bg-secondary p-1">
-              <button
+      {mode === "dashboard" && (
+        <PageHeader
+          title={`${greeting}, ${currentUser.name.split(" ")[0]}`}
+          description={`Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`}
+          actions={
+            <>
+              <Button
                 type="button"
-                onClick={() => setMode("dashboard")}
-                className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-all",
-                  mode === "dashboard"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setCustomizeOpen(true)}
+                aria-label="Customize home"
               >
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                Dashboard
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("ai")}
-                className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-all",
-                  mode === "ai"
-                    ? "bg-indigo-100 text-indigo-900 shadow-sm dark:bg-indigo-950/60 dark:text-indigo-100"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                AI Mode
-              </button>
-            </div>
-
-            {mode === "dashboard" && (
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setCustomizeOpen(true)}
-                  aria-label="Customize home"
-                >
-                  <Pencil className="size-4" />
-                </Button>
-                <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
-              </>
-            )}
-          </>
-        }
-      />
+                <Pencil className="size-4" />
+              </Button>
+              <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
+            </>
+          }
+        />
+      )}
 
       {mode === "ai" ? (
         <AIHomeView />

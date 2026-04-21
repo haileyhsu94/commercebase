@@ -1,156 +1,129 @@
+import { useState } from "react"
 import {
   Sparkles,
+  Plus,
   Wand2,
-  TrendingUp,
+  BarChart3,
   Eye,
-  Lightbulb,
-  ArrowRight,
-  MessageSquare,
+  FileText,
+  Package,
+  Send,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
-import { AERIS_EXAMPLE_PROMPT_GROUPS } from "@/lib/aeris-example-prompts"
+import { currentUser } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
-const aiActions = [
-  {
-    title: "Create Campaign with AI",
-    description: "Describe your goals and let Aeris draft a campaign for you",
-    icon: Wand2,
-    prompt: "Help me create a new campaign targeting high-intent shoppers",
-    accent: "indigo" as const,
-  },
-  {
-    title: "Analyze Performance",
-    description: "Get AI-powered insights on your campaign metrics",
-    icon: TrendingUp,
-    prompt: "Summarize spend and revenue for active campaigns.",
-    accent: "emerald" as const,
-  },
-  {
-    title: "Optimize AI Visibility",
-    description: "Find gaps in your AI search presence and fix them",
-    icon: Eye,
-    prompt: "Where am I losing to competitors in AI search?",
-    accent: "violet" as const,
-  },
-  {
-    title: "Get Recommendations",
-    description: "Let Aeris suggest what to do next based on your data",
-    icon: Lightbulb,
-    prompt: "What should I pause or scale this week?",
-    accent: "amber" as const,
-  },
+const quickActions = [
+  { label: "Create Campaign", icon: Wand2 },
+  { label: "Analyze", icon: BarChart3 },
+  { label: "AI Visibility", icon: Eye },
+  { label: "Reports", icon: FileText },
+  { label: "Catalog", icon: Package },
 ]
 
-const accentStyles = {
-  indigo: {
-    card: "border-indigo-200/70 bg-indigo-50/50 hover:border-indigo-300 hover:bg-indigo-50 dark:border-indigo-800/50 dark:bg-indigo-950/30 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/50",
-    icon: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300",
-  },
-  emerald: {
-    card: "border-emerald-200/70 bg-emerald-50/50 hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/50",
-    icon: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
-  },
-  violet: {
-    card: "border-violet-200/70 bg-violet-50/50 hover:border-violet-300 hover:bg-violet-50 dark:border-violet-800/50 dark:bg-violet-950/30 dark:hover:border-violet-700 dark:hover:bg-violet-950/50",
-    icon: "bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300",
-  },
-  amber: {
-    card: "border-amber-200/70 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/30 dark:hover:border-amber-700 dark:hover:bg-amber-950/50",
-    icon: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
-  },
-}
-
 export function AIHomeView() {
-  const { openPanelWithComposerText, sendAssistantQuery } = useAIAssistant()
+  const { sendAssistantQuery, setIsOpen } = useAIAssistant()
+  const [input, setInput] = useState("")
+
+  const hour = new Date().getHours()
+  const greeting =
+    hour >= 5 && hour < 12
+      ? "Morning"
+      : hour >= 12 && hour < 18
+        ? "Afternoon"
+        : hour >= 18 && hour < 21
+          ? "Evening"
+          : "Evening"
+
+  const firstName = currentUser.name.split(" ")[0]
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim()) return
+    const query = input.trim()
+    setInput("")
+    setIsOpen(true)
+    await sendAssistantQuery(query)
+  }
+
+  const handleQuickAction = (label: string) => {
+    const prompts: Record<string, string> = {
+      "Create Campaign": "Help me create a new campaign",
+      Analyze: "How are my campaigns performing?",
+      "AI Visibility": "Where am I losing to competitors in AI search?",
+      Reports: "Show me revenue trends for the last 28 days",
+      Catalog: "Which product attributes are weakest for AI answers?",
+    }
+    const prompt = prompts[label] ?? `Help me with ${label}`
+    setInput("")
+    setIsOpen(true)
+    sendAssistantQuery(prompt)
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Hero */}
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-indigo-200/60 bg-gradient-to-b from-indigo-50/80 to-white px-6 py-8 text-center dark:border-indigo-800/40 dark:from-indigo-950/40 dark:to-background">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
-          <Sparkles className="h-6 w-6" />
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-4">
+      <div className="flex w-full max-w-2xl flex-col items-center gap-8">
+        {/* Greeting */}
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-8 w-8 text-indigo-500" />
+          <h1 className="text-4xl font-semibold tracking-tight">
+            {greeting}, {firstName}
+          </h1>
         </div>
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">
-            What can Aeris help you with?
-          </h2>
-          <p className="mt-1 max-w-md text-sm text-muted-foreground">
-            Your AI assistant can create campaigns, analyze performance, and
-            optimize your commerce media strategy.
-          </p>
-        </div>
-      </div>
 
-      {/* AI Action Cards */}
-      <div>
-        <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-          Quick AI Actions
-        </h3>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {aiActions.map((action) => {
-            const styles = accentStyles[action.accent]
-            return (
-              <button
-                key={action.title}
-                type="button"
-                onClick={() => openPanelWithComposerText(action.prompt)}
-                className={cn(
-                  "group flex items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-                  styles.card
-                )}
-              >
-                <div
-                  className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                    styles.icon
-                  )}
-                >
-                  <action.icon className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{action.title}</span>
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {action.description}
-                  </p>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+        {/* Chat input */}
+        <form
+          onSubmit={handleSubmit}
+          className="w-full rounded-2xl border border-border bg-muted/30 shadow-sm transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-200/50 dark:focus-within:border-indigo-700 dark:focus-within:ring-indigo-800/50"
+        >
+          <div className="px-4 pt-4 pb-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="How can I help you today?"
+              className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center justify-between px-3 pb-3">
+            <button
+              type="button"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label="Attach file"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                input.trim()
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                  : "text-muted-foreground/50"
+              )}
+              aria-label="Send message"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        </form>
 
-      {/* Example Prompts by Category */}
-      <div>
-        <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-          Try asking Aeris
-        </h3>
-        <div className="space-y-4">
-          {AERIS_EXAMPLE_PROMPT_GROUPS.map((group) => (
-            <div key={group.category}>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                {group.category}
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {group.prompts.map((prompt) => (
-                  <Button
-                    key={prompt}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-auto gap-1.5 whitespace-normal py-1.5 text-left text-xs"
-                    onClick={() => sendAssistantQuery(prompt)}
-                  >
-                    <MessageSquare className="h-3 w-3 shrink-0 opacity-50" />
-                    {prompt}
-                  </Button>
-                ))}
-              </div>
-            </div>
+        {/* Quick action buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {quickActions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              onClick={() => handleQuickAction(action.label)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors",
+                "hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <action.icon className="h-4 w-4 text-muted-foreground" />
+              {action.label}
+            </button>
           ))}
         </div>
       </div>
