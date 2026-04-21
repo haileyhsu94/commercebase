@@ -322,9 +322,8 @@ export function AIHomeView() {
     setInput("")
 
     if (conversationStep === "idle") {
-      addChatMessage("user", query)
-
       if (isCampaignIntent(query)) {
+        addChatMessage("user", query)
         setConversationStep("thinking")
         await new Promise((r) => setTimeout(r, 1500))
         addChatMessage(
