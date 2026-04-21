@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Search, Sparkles } from "lucide-react"
+import { LayoutDashboard, MessageSquare, Search, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,7 @@ export function Header() {
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Home className="h-3.5 w-3.5" />
+          <LayoutDashboard className="h-3.5 w-3.5" />
           {mode === "dashboard" && <span className="hidden sm:inline">Dashboard</span>}
         </button>
         <button
@@ -63,27 +63,29 @@ export function Header() {
           </kbd>
         </button>
       </div>
-      <Button
-        onClick={toggleOpen}
-        variant="outline"
-        size="sm"
-        className={cn(
-          "gap-1.5 border-indigo-500/45 bg-indigo-500/15 text-indigo-950 shadow-none",
-          "hover:bg-indigo-500/28 hover:text-indigo-950",
-          "focus-visible:ring-indigo-500/45 [&_svg]:text-indigo-600",
-          "dark:border-indigo-400/50 dark:bg-indigo-500/22 dark:text-indigo-50",
-          "dark:hover:bg-indigo-500/32 dark:hover:text-indigo-50 dark:[&_svg]:text-indigo-300"
-        )}
-      >
-        <Sparkles className="h-4 w-4 shrink-0" />
-        Ask Aeris
-        <Badge
-          variant="secondary"
-          className="h-5 border border-violet-300/90 bg-violet-100 px-1.5 text-[10px] font-semibold text-violet-900 dark:border-violet-500/40 dark:bg-violet-950/60 dark:text-violet-200"
+      {mode !== "ai" && (
+        <Button
+          onClick={toggleOpen}
+          variant="outline"
+          size="sm"
+          className={cn(
+            "gap-1.5 border-indigo-500/45 bg-indigo-500/15 text-indigo-950 shadow-none",
+            "hover:bg-indigo-500/28 hover:text-indigo-950",
+            "focus-visible:ring-indigo-500/45 [&_svg]:text-indigo-600",
+            "dark:border-indigo-400/50 dark:bg-indigo-500/22 dark:text-indigo-50",
+            "dark:hover:bg-indigo-500/32 dark:hover:text-indigo-50 dark:[&_svg]:text-indigo-300"
+          )}
         >
-          Beta
-        </Badge>
-      </Button>
+          <Sparkles className="h-4 w-4 shrink-0" />
+          Ask Aeris
+          <Badge
+            variant="secondary"
+            className="h-5 border border-violet-300/90 bg-violet-100 px-1.5 text-[10px] font-semibold text-violet-900 dark:border-violet-500/40 dark:bg-violet-950/60 dark:text-violet-200"
+          >
+            Beta
+          </Badge>
+        </Button>
+      )}
     </header>
   )
 }
