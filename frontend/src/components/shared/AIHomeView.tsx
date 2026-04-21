@@ -61,7 +61,7 @@ export function AIHomeView() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-4">
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center bg-gradient-to-b from-indigo-50/60 via-white to-white px-4 dark:from-indigo-950/20 dark:via-background dark:to-background">
       <div className="flex w-full max-w-2xl flex-col items-center gap-8">
         {/* Greeting */}
         <div className="flex items-center gap-3">
