@@ -29,7 +29,7 @@ export function Header() {
           )}
         >
           <LayoutDashboard className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Dashboard</span>
+          {mode === "dashboard" && <span className="hidden sm:inline">Dashboard</span>}
         </button>
         <button
           type="button"
@@ -42,7 +42,7 @@ export function Header() {
           )}
         >
           <Sparkles className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">AI Mode</span>
+          {mode === "ai" && <span className="hidden sm:inline">AI Mode</span>}
         </button>
       </div>
 
