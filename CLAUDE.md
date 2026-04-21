@@ -20,16 +20,36 @@ npm run lint         # ESLint
 
 ## Tech stack
 
-### Backend
+### Backend (`backend/` — to be created)
 
-| Layer | Choice |
-|-------|--------|
-| Framework | PHP / Laravel |
-| Database | MongoDB (via Eloquent-compatible driver) |
-| Auth | OAuth (Laravel Passport or Sanctum) |
-| Deployment | AWS ECS (containerized) |
-| AI proxy | Laravel backend proxies Claude API calls for Aeris |
-| Real-time | Polling for v1 (no WebSockets/SSE) |
+| Layer | Choice | Notes |
+|-------|--------|-------|
+| Framework | Laravel 13 / PHP 8.4 | New project, REST API only (no Blade) |
+| Database | MongoDB (`realry` DB shared) | `mongodb/laravel-mongodb` v5.4, same DB as realry + dsp |
+| Auth | Laravel Passport | `users` collection reused from realry (add `advertiser_at` field) |
+| Multi-tenancy | `Organization` model reused | Same pattern as dsp/ — `AdvertiserScope` middleware |
+| DailyClicks | HTTP client → existing `/adv/*` API | Single advertiser account for v1, Partner API later |
+| Deployment | AWS ECS (containerized) | Same infra as realry |
+| AI proxy | Laravel backend proxies Claude API calls for Aeris | Deferred to later phase |
+| Real-time | Polling for v1 (no WebSockets/SSE) | |
+
+### Architecture Decisions (2026-04-15)
+
+- **New project, not dsp/ extension.** dsp/ serves sellers/creators at partner.stylmatch.com. CommerceBase serves advertisers. Long-term: dsp/ features migrate into CommerceBase.
+- **Shared MongoDB `realry` DB.** New collections use `cb_` prefix (`cb_campaigns`, `cb_campaign_executions`, `cb_analytics_cache`, `ai_visibility_probes`, `cb_notifications`). Shared collections (products, orders, users, organizations) are accessed directly.
+- **realry `users` collection reused.** Add `advertiser_at` field (same pattern as dsp/'s `seller_at`). No separate `advertiser_accounts` collection.
+- **DailyClicks via existing API.** Single "CommerceBase" advertiser account on v2.dailyclicks.net, campaigns created via `POST /adv/campaign`. Partner API (multi-advertiser, richer stats) planned for later with Denis's team.
+- **Performance Max model.** Advertisers set goals + budget, CommerceBase allocates across channels. Advertisers don't see or choose "DailyClicks" directly.
+
+### Implementation Priority
+
+1. Auth + multi-tenancy + plan gating
+2. **DailyClicks campaign CRUD + reporting** (highest priority)
+3. Products / Catalogs / Publishers (read from realry DB)
+4. AI Visibility MVP (LLM probing for brand SoV)
+5. Additional channel adapters (Shopping/Creator/Vertical)
+
+See `DAILYCLICKS_PARTNER_API_REQUIREMENTS.md` for the DailyClicks integration brief sent to Denis.
 
 ### Frontend
 

@@ -45,12 +45,15 @@ import {
 import { cn } from "@/lib/utils"
 import { defaultCompanyProfile } from "@/lib/mock-data"
 import { getCompanyProfile, siteHostname } from "@/lib/company-profile"
+import { wizardFormFromCampaign } from "@/lib/campaign-storage"
+import { campaigns as seedCampaigns } from "@/lib/mock-data"
 import {
-  addLaunchedCampaign,
-  getMergedCampaigns,
-  makeNewCampaignRow,
-  wizardFormFromCampaign,
-} from "@/lib/campaign-storage"
+  useCampaignsQuery,
+  useCreateCampaignMutation,
+  useLaunchCampaignMutation,
+} from "@/hooks/api/useCampaigns"
+import { extractApiError } from "@/lib/api/client"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 import { CAMPAIGN_WIZARD_AI_DRAFT_KEY } from "@/lib/campaign-ai-copy-mock"
 import { regionFlag } from "@/lib/region-flags"
 import { AdPreview } from "@/components/campaigns/AdPreview"
@@ -275,11 +278,22 @@ export function CampaignCreate({
     () => duplicateSourceId ?? "__none__"
   )
   const [showAiDraftBanner, setShowAiDraftBanner] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const { data: apiCampaigns } = useCampaignsQuery()
+  const availableCampaigns = useMemo(() => {
+    const api = apiCampaigns ?? []
+    const ids = new Set(api.map((c) => c.id))
+    return [...api, ...seedCampaigns.filter((c) => !ids.has(c.id))]
+  }, [apiCampaigns])
+
+  const createMutation = useCreateCampaignMutation()
+  const launchMutation = useLaunchCampaignMutation()
 
   const duplicateSourceCampaign = useMemo(() => {
     if (!duplicateSourceId) return null
-    return getMergedCampaigns().find((c) => c.id === duplicateSourceId) ?? null
-  }, [duplicateSourceId])
+    return availableCampaigns.find((c) => c.id === duplicateSourceId) ?? null
+  }, [duplicateSourceId, availableCampaigns])
 
   useEffect(() => {
     return () => {
@@ -305,7 +319,7 @@ export function CampaignCreate({
   useEffect(() => {
     if (!duplicateSourceId) return
     if (skipDupEffectRef.current) return
-    const c = getMergedCampaigns().find((x) => x.id === duplicateSourceId)
+    const c = availableCampaigns.find((x) => x.id === duplicateSourceId)
     if (!c) return
     if (uploadObjectUrlRef.current) {
       URL.revokeObjectURL(uploadObjectUrlRef.current)
@@ -315,7 +329,7 @@ export function CampaignCreate({
     setFormData(wizardFormFromCampaign(c))
     setCurrentStep(1)
     setStepError("")
-  }, [duplicateSourceId])
+  }, [duplicateSourceId, availableCampaigns])
 
   // Precedence: parent duplicateSourceId wins over Aeris draft (same sessionStorage key discarded unread).
   useEffect(() => {
@@ -356,18 +370,34 @@ export function CampaignCreate({
     }
   }
 
-  const handleSaveDraft = () => {
-    exitToCampaigns()
+  const handleSaveDraft = async () => {
+    setSubmitError(null)
+    try {
+      await createMutation.mutateAsync({
+        ...formData,
+        name: formData.name.trim() || "Untitled campaign",
+      })
+      exitToCampaigns()
+    } catch (err) {
+      setSubmitError(extractApiError(err))
+    }
   }
 
-  const handleLaunch = () => {
-    const sym =
-      CURRENCY_OPTIONS.find((c) => c.value === formData.currency)?.symbol ?? "$"
-    addLaunchedCampaign(
-      makeNewCampaignRow(formData.name.trim() || "Untitled campaign", sym, { ...formData })
-    )
-    exitToCampaigns()
+  const handleLaunch = async () => {
+    setSubmitError(null)
+    try {
+      const created = await createMutation.mutateAsync({
+        ...formData,
+        name: formData.name.trim() || "Untitled campaign",
+      })
+      await launchMutation.mutateAsync(created.id)
+      exitToCampaigns()
+    } catch (err) {
+      setSubmitError(extractApiError(err))
+    }
   }
+
+  const isSubmitting = createMutation.isPending || launchMutation.isPending
 
   const handleNext = () => {
     if (currentStep === 1) {
@@ -447,7 +477,7 @@ export function CampaignCreate({
       return
     }
     skipDupEffectRef.current = false
-    const c = getMergedCampaigns().find((x) => x.id === value)
+    const c = availableCampaigns.find((x) => x.id === value)
     if (!c) return
     clearCreativeUpload()
     setFormData(wizardFormFromCampaign(c))
@@ -546,6 +576,7 @@ export function CampaignCreate({
               >
                 Create Campaign
               </h1>
+              <PageStatusBadge status="working" />
               {duplicateSourceId && duplicateSourceCampaign && (
                 <span className="inline-flex items-center rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-foreground">
                   <Copy className="mr-1 h-3 w-3" aria-hidden />
@@ -671,7 +702,7 @@ export function CampaignCreate({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">Don't copy — start blank</SelectItem>
-                  {getMergedCampaigns().map((c) => (
+                  {availableCampaigns.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name}
                     </SelectItem>
@@ -1642,6 +1673,12 @@ export function CampaignCreate({
         </CardContent>
       </Card>
 
+      {submitError && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {submitError}
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -1649,9 +1686,9 @@ export function CampaignCreate({
         </Button>
         <div className="flex flex-wrap gap-2 sm:justify-end">
           {currentStep === STEP_COUNT && (
-            <Button variant="outline" onClick={handleSaveDraft}>
+            <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>
               <Save className="mr-2 h-4 w-4" />
-              Save draft
+              {isSubmitting ? "Saving..." : "Save draft"}
             </Button>
           )}
           {currentStep < STEP_COUNT ? (
@@ -1660,9 +1697,9 @@ export function CampaignCreate({
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleLaunch}>
+            <Button onClick={handleLaunch} disabled={isSubmitting}>
               <Rocket className="mr-2 h-4 w-4" />
-              Launch campaign
+              {isSubmitting ? "Launching..." : "Launch campaign"}
             </Button>
           )}
         </div>

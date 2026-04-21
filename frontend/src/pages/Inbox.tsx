@@ -12,6 +12,7 @@ import {
   type InboxNotification,
 } from "@/lib/inbox-mock"
 import { cn } from "@/lib/utils"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 
 function InboxRow({
   item,
@@ -84,7 +85,10 @@ export function Inbox() {
             <InboxIcon className="size-5 text-muted-foreground" aria-hidden />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
+              <PageStatusBadge status="demo" />
+            </div>
             <p className="text-sm text-muted-foreground">
               Notifications and updates sent to you. Unread items are highlighted.
             </p>

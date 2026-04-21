@@ -1,5 +1,6 @@
 import { type ReactNode } from "react"
 import { cn } from "@/lib/utils"
+import { PageStatusBadge, type PageStatus } from "./PageStatusBadge"
 
 interface PageHeaderProps {
   /** Main page title rendered as an h1. */
@@ -8,6 +9,8 @@ interface PageHeaderProps {
   description?: ReactNode
   /** Action controls placed on the trailing side (buttons, date-range picker, etc.). */
   actions?: ReactNode
+  /** Data-source status badge shown next to the title. demo | working | live */
+  status?: PageStatus
   className?: string
 }
 
@@ -18,7 +21,7 @@ interface PageHeaderProps {
  * the padding applied by the root `<main>` element (`p-4 pt-0`), giving each page a
  * consistent 16 px gap between the global header and the page title.
  */
-export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
+export function PageHeader({ title, description, actions, status, className }: PageHeaderProps) {
   return (
     <div
       className={cn(
@@ -27,7 +30,10 @@ export function PageHeader({ title, description, actions, className }: PageHeade
       )}
     >
       <div className="min-w-0 flex-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          {status && <PageStatusBadge status={status} />}
+        </div>
         {description && (
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
         )}

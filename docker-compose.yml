@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Backend API (PHP-FPM, local dev — no nginx, use artisan serve)
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: container-service
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www
+      - ./frontend/dist:/var/www/public/app
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DATABASE=realry
+    depends_on:
+      - mongo
+
+  # MongoDB (local dev only — prod uses realry's MongoDB)
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

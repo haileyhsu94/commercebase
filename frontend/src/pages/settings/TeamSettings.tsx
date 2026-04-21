@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Mail, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 import {
   Dialog,
   DialogContent,
@@ -99,7 +100,10 @@ export function TeamSettings() {
   return (
     <>
       <div className="py-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+          <PageStatusBadge status="demo" />
+        </div>
         <p className="text-sm text-muted-foreground">
           Manage your account, billing, API keys, and integrations.
         </p>

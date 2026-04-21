@@ -1,5 +1,7 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import { RootLayout } from "@/components/layout"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
+import Login from "@/pages/auth/Login"
 import {
   Home,
   CampaignList,
@@ -34,11 +36,15 @@ import {
 } from "@/pages"
 
 const router = createBrowserRouter([
+  { path: "/login", element: <Login /> },
   {
-    path: "/",
-    element: <RootLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { index: true, element: <Home /> },
+      {
+        path: "/",
+        element: <RootLayout />,
+        children: [
+          { index: true, element: <Home /> },
       { path: "autopilot", element: <AutopilotPage /> },
       { path: "inbox", element: <Inbox /> },
       { path: "campaigns", element: <CampaignList /> },
@@ -95,6 +101,8 @@ const router = createBrowserRouter([
       { path: "settings/team", element: <TeamSettings /> },
       { path: "settings/ai-permissions", element: <AIPermissions /> },
       { path: "settings/integrations", element: <Integrations /> },
+        ],
+      },
     ],
   },
 ])

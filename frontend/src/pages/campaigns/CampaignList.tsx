@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react"
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import {
   ArrowUpDown,
   ChevronRight,
@@ -50,7 +50,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { PageHeader } from "@/components/shared/PageHeader"
-import { getMergedCampaigns } from "@/lib/campaign-storage"
+import { campaigns as seedCampaigns } from "@/lib/mock-data"
+import { useCampaignsQuery } from "@/hooks/api/useCampaigns"
 import { useCampaignPlanAllowance } from "@/hooks/use-campaign-plan-allowance"
 import {
   AiPresenceTimeRangeControl,
@@ -177,7 +178,6 @@ function SortableHead({
 }
 
 export function CampaignList() {
-  const location = useLocation()
   const navigate = useNavigate()
   const { openPanelWithComposerText } = useAIAssistant()
   const allowance = useCampaignPlanAllowance()
@@ -275,7 +275,12 @@ export function CampaignList() {
 
   const [sort, setSort] = useState<{ col: SortColumn; dir: SortDir } | null>(null)
 
-  const campaigns = useMemo(() => getMergedCampaigns(), [location.key, location.pathname])
+  const { data: apiCampaigns } = useCampaignsQuery()
+  const campaigns = useMemo(() => {
+    const api = apiCampaigns ?? []
+    const ids = new Set(api.map((c) => c.id))
+    return [...api, ...seedCampaigns.filter((c) => !ids.has(c.id))]
+  }, [apiCampaigns])
 
   const points = pointsForRange(timeRange)
   const spendTrend = useMemo(() => fullSpendData.slice(-points), [points])
@@ -450,6 +455,7 @@ export function CampaignList() {
       <PageHeader
         title="Campaigns"
         description="Manage and monitor your advertising campaigns."
+        status="working"
         actions={
           <>
             <Button

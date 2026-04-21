@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { ChevronRight } from "lucide-react"
 import { Link, Outlet, useLocation } from "react-router-dom"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 import {
   aiVisibilityPageDescription,
   aiVisibilitySectionLabel,
@@ -35,7 +36,10 @@ export function AIPresenceLayout() {
               />
               <span className="font-medium text-foreground">{section}</span>
             </nav>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight">{section}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight">{section}</h1>
+              <PageStatusBadge status="demo" />
+            </div>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
           </div>
           {!pathname.includes("/auto-agent") && (

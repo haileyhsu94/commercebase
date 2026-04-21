@@ -46,6 +46,7 @@ export function AutopilotPage() {
       <PageHeader
         title="Autopilot"
         description="Build automated pipelines that connect your catalog, campaigns, audiences, and AI agents — no manual monitoring required."
+        status="demo"
         actions={
           <Button className="gap-1.5" disabled>
             <Plus className="size-4" />

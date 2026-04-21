@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Line, LineChart, XAxis, YAxis } from "recharts"
 import { topProducts } from "@/lib/mock-data"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 
 const chartConfig = {
   sales: {
@@ -47,6 +48,7 @@ export function ProductDetail() {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
+            <PageStatusBadge status="demo" />
             <Badge variant="secondary">{product.category}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">Product ID: {product.id}</p>
