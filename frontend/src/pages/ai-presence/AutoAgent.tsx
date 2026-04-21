@@ -329,12 +329,7 @@ export function AutoAgentPage() {
 
                         <textarea
                           aria-label={`Edit AI draft for ${change.product}`}
-                          className={cn(
-                            "mt-1.5 block w-full resize-none rounded-sm border-0 bg-transparent p-0 text-xs leading-relaxed outline-none ring-0 focus:outline-none focus:ring-0",
-                            hasBeenEdited
-                              ? "text-emerald-900/90 dark:text-emerald-100/80"
-                              : "text-emerald-900/90 dark:text-emerald-100/80"
-                          )}
+                          className="mt-1.5 block w-full resize-none rounded-sm border-0 bg-transparent p-0 text-xs leading-relaxed text-emerald-900/90 outline-none ring-0 focus:outline-none focus:ring-0 dark:text-emerald-100/80"
                           value={displayAfter}
                           onChange={(e) => updateText(change.id, e.target.value, change.after)}
                           rows={Math.max(2, displayAfter.split("\n").length + Math.ceil(displayAfter.length / 80))}
