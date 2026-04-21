@@ -147,11 +147,13 @@ function CampaignDetailPanel({
   onClose,
   onSave,
   onPublish,
+  onFieldChange,
 }: {
   plan: CampaignPlan
   onClose: () => void
   onSave: () => void
   onPublish: () => void
+  onFieldChange: (field: keyof CampaignPlan, value: string) => void
 }) {
   const [editField, setEditField] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, string>>({})
@@ -161,7 +163,11 @@ function CampaignDetailPanel({
     setEditValues({ ...editValues, [field]: currentValue })
   }
 
-  const saveEdit = () => {
+  const saveEdit = (field: keyof CampaignPlan) => {
+    const newValue = editValues[field]
+    if (newValue != null) {
+      onFieldChange(field, newValue)
+    }
     setEditField(null)
   }
 
@@ -180,7 +186,7 @@ function CampaignDetailPanel({
               className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
               autoFocus
             />
-            <button type="button" onClick={() => saveEdit()} className="text-green-600 hover:text-green-700">
+            <button type="button" onClick={() => saveEdit(field)} className="text-green-600 hover:text-green-700">
               <Check className="h-3.5 w-3.5" />
             </button>
             <button type="button" onClick={cancelEdit} className="text-muted-foreground hover:text-foreground">
@@ -902,6 +908,11 @@ export function AIHomeView() {
             onClose={() => setShowDetailPanel(false)}
             onSave={handleSaveDraft}
             onPublish={handlePublish}
+            onFieldChange={(field, value) => {
+              setCampaignPlan((prev) =>
+                prev ? { ...prev, [field]: value } : prev
+              )
+            }}
           />
         </div>
       )}
