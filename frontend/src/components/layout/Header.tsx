@@ -44,7 +44,7 @@ export function Header() {
           )}
         >
           <MessageSquare className="h-3.5 w-3.5" />
-          {mode === "ai" && <span className="hidden sm:inline">AI Mode</span>}
+          {mode === "ai" && <span className="hidden sm:inline">Agent</span>}
         </button>
       </div>
 
