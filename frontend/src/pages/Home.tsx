@@ -123,7 +123,9 @@ export function Home() {
       )}
 
       {mode === "ai" ? (
-        <AIHomeView />
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <AIHomeView />
+        </div>
       ) : (
         <div className="space-y-6">
           {visibleOrdered.length === 0 ? (

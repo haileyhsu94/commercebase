@@ -13,7 +13,8 @@ import {
   X,
   Rocket,
   Save,
-  ExternalLink,
+  ChevronRight,
+  Target,
 } from "lucide-react"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { currentUser } from "@/lib/mock-data"
@@ -476,7 +477,7 @@ export function AIHomeView() {
   const isConversationActive = conversationStep !== "idle"
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       {/* Main chat area */}
       <div className="relative flex min-w-0 flex-1 flex-col bg-gradient-to-b from-indigo-50/60 via-white to-white dark:from-indigo-950/20 dark:via-background dark:to-background">
         {/* Saved notification toast */}
@@ -836,19 +837,45 @@ export function AIHomeView() {
                   </div>
                 )}
 
-                {/* Done: view campaign button */}
-                {conversationStep === "done" && !showDetailPanel && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => setShowDetailPanel(true)}
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      View Campaign Details
-                    </Button>
-                  </div>
+                {/* Done: campaign card */}
+                {conversationStep === "done" && campaignPlan && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDetailPanel(true)}
+                    className={cn(
+                      "w-full max-w-sm rounded-xl border bg-background p-4 text-left shadow-sm transition-all",
+                      showDetailPanel
+                        ? "border-indigo-200 ring-1 ring-indigo-200 dark:border-indigo-800 dark:ring-indigo-800"
+                        : "border-border hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:hover:border-indigo-800"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/40">
+                        <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{campaignPlan.name}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {campaignPlan.budget} · {campaignPlan.targetMarket} · {campaignPlan.campaignType}
+                        </p>
+                      </div>
+                      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+                        <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedReach}</p>
+                        <p className="text-[10px] text-muted-foreground">Reach</p>
+                      </div>
+                      <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+                        <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedClicks}</p>
+                        <p className="text-[10px] text-muted-foreground">Clicks</p>
+                      </div>
+                      <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+                        <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedConversions}</p>
+                        <p className="text-[10px] text-muted-foreground">Conv.</p>
+                      </div>
+                    </div>
+                  </button>
                 )}
 
                 <div ref={messagesEndRef} />
@@ -901,7 +928,7 @@ export function AIHomeView() {
 
       {/* Right panel: Campaign details */}
       {showDetailPanel && campaignPlan && (
-        <div className="w-[380px] shrink-0">
+        <div className="w-[380px] shrink-0 overflow-hidden">
           <CampaignDetailPanel
             plan={campaignPlan}
             onClose={() => setShowDetailPanel(false)}
