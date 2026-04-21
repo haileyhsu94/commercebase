@@ -307,7 +307,7 @@ export function AIHomeView() {
   const isCampaignIntent = (text: string): boolean => {
     const lower = text.toLowerCase()
     return (
-      lower.includes("create") && (lower.includes("campaign") || lower.includes("ad")) ||
+      lower.includes("create") && (lower.includes("campaign") || /\bad\b/.test(lower)) ||
       lower.includes("launch") && lower.includes("campaign") ||
       lower.includes("new campaign") ||
       lower.includes("set up") && lower.includes("campaign") ||
@@ -476,7 +476,7 @@ export function AIHomeView() {
   const isConversationActive = conversationStep !== "idle"
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       {/* Main chat area */}
       <div className="relative flex min-w-0 flex-1 flex-col bg-gradient-to-b from-indigo-50/60 via-white to-white dark:from-indigo-950/20 dark:via-background dark:to-background">
         {/* Saved notification toast */}
