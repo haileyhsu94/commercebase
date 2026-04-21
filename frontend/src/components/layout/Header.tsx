@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react"
 import { LayoutDashboard, MessageSquare, Search, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -12,37 +13,81 @@ export function Header() {
   const { openSearch } = useGlobalSearch()
   const { mode, setMode } = useHomeMode()
 
+  const dashboardRef = useRef<HTMLButtonElement>(null)
+  const agentRef = useRef<HTMLButtonElement>(null)
+  const [thumbStyle, setThumbStyle] = useState<{ left: number; width: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const target = mode === "dashboard" ? dashboardRef.current : agentRef.current
+    if (!target) return
+    setThumbStyle({ left: target.offsetLeft, width: target.offsetWidth })
+  }, [mode])
+
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />
 
       {/* Mode toggle */}
-      <div className="inline-flex h-8 shrink-0 items-center rounded-lg bg-secondary p-0.5">
+      <div className="relative inline-flex h-8 shrink-0 items-center rounded-lg bg-secondary p-0.5">
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute top-0.5 bottom-0.5 rounded-md shadow-sm transition-[left,width,background-color] duration-300 ease-out",
+            mode === "dashboard"
+              ? "bg-background"
+              : "bg-indigo-100 dark:bg-indigo-950/60"
+          )}
+          style={{
+            left: thumbStyle?.left ?? 2,
+            width: thumbStyle?.width ?? 0,
+            opacity: thumbStyle ? 1 : 0,
+          }}
+        />
         <button
+          ref={dashboardRef}
           type="button"
           onClick={() => setMode("dashboard")}
           className={cn(
-            "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-all",
+            "relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors duration-300 ease-out",
             mode === "dashboard"
-              ? "bg-background text-foreground shadow-sm"
+              ? "text-foreground"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
           <LayoutDashboard className="h-3.5 w-3.5" />
-          {mode === "dashboard" && <span className="hidden sm:inline">Dashboard</span>}
+          <span
+            className={cn(
+              "hidden overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin-left] duration-300 ease-out sm:inline-block",
+              mode === "dashboard"
+                ? "ml-0 max-w-[6rem] opacity-100"
+                : "ml-0 max-w-0 opacity-0"
+            )}
+          >
+            Dashboard
+          </span>
         </button>
         <button
+          ref={agentRef}
           type="button"
           onClick={() => setMode("ai")}
           className={cn(
-            "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-all",
+            "relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors duration-300 ease-out",
             mode === "ai"
-              ? "bg-indigo-100 text-indigo-900 shadow-sm dark:bg-indigo-950/60 dark:text-indigo-100"
+              ? "text-indigo-900 dark:text-indigo-100"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
           <MessageSquare className="h-3.5 w-3.5" />
-          {mode === "ai" && <span className="hidden sm:inline">Agent</span>}
+          <span
+            className={cn(
+              "hidden overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin-left] duration-300 ease-out sm:inline-block",
+              mode === "ai"
+                ? "ml-0 max-w-[6rem] opacity-100"
+                : "ml-0 max-w-0 opacity-0"
+            )}
+          >
+            Agent
+          </span>
         </button>
       </div>
 
