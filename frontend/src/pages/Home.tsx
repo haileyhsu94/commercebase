@@ -17,6 +17,7 @@ import { HealthScoreCard } from "@/components/shared/HealthScoreCard"
 import { AIVisibilityScoreCard } from "@/components/shared/AIVisibilityScoreCard"
 import { QuickActions } from "@/components/shared/QuickActions"
 import { CampaignSummary } from "@/components/shared/CampaignSummary"
+import { AIHomeView } from "@/components/shared/AIHomeView"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -34,6 +35,7 @@ import {
   formatAiPresencePeriodShort,
   type AiPresenceTimeRange,
 } from "@/pages/ai-presence/ai-presence-time-range"
+import { useHomeMode } from "@/contexts/HomeModeContext"
 
 const DND_TYPE = "application/x-commercebase-home-widget"
 
@@ -46,6 +48,7 @@ function reorderWidgets(order: HomeWidgetId[], fromIndex: number, toIndex: numbe
 }
 
 export function Home() {
+  const { mode } = useHomeMode()
   const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
   const [layout, setLayout] = useState<HomeLayoutState>(() => getHomeLayout())
   const [customizeOpen, setCustomizeOpen] = useState(false)
@@ -98,35 +101,43 @@ export function Home() {
 
   return (
     <>
-      <PageHeader
-        title={`${greeting}, ${currentUser.name.split(" ")[0]}`}
-        description={`Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`}
-        actions={
-          <>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setCustomizeOpen(true)}
-              aria-label="Customize home"
-            >
-              <Pencil className="size-4" />
-            </Button>
-            <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
-          </>
-        }
-      />
+      {mode === "dashboard" && (
+        <PageHeader
+          title={`${greeting}, ${currentUser.name.split(" ")[0]}`}
+          description={`Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`}
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setCustomizeOpen(true)}
+                aria-label="Customize home"
+              >
+                <Pencil className="size-4" />
+              </Button>
+              <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
+            </>
+          }
+        />
+      )}
 
-      <div className="space-y-6">
-        {visibleOrdered.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-            All sections are hidden. Use <span className="font-medium text-foreground">Customize home</span> to show
-            them again.
-          </p>
-        ) : (
-          visibleOrdered.map((id) => <HomeWidgetBlock key={id} id={id} timeRange={timeRange} />)
-        )}
-      </div>
+      {mode === "ai" ? (
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <AIHomeView />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {visibleOrdered.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+              All sections are hidden. Use <span className="font-medium text-foreground">Customize home</span> to show
+              them again.
+            </p>
+          ) : (
+            visibleOrdered.map((id) => <HomeWidgetBlock key={id} id={id} timeRange={timeRange} />)
+          )}
+        </div>
+      )}
 
       <Dialog
         open={customizeOpen}

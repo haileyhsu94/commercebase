@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Accordion } from "@base-ui/react/accordion"
-import { BarChart3, ChevronDown, Inbox, Package, Settings, Workflow } from "lucide-react"
+import { BarChart3, ChevronDown, Inbox, MessageSquare, Package, PenSquare, Pin, Settings, Workflow } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuAction,
@@ -30,6 +31,21 @@ import {
 } from "@/lib/sidebar-nav"
 import { useUnreadInboxCount } from "@/hooks/use-inbox-unread"
 import { navigationItems, currentUser } from "@/lib/mock-data"
+import { useHomeMode } from "@/contexts/HomeModeContext"
+
+const pinnedConversations = [
+  { id: "p1", title: "Q2 campaign strategy planning" },
+]
+
+const recentConversations = [
+  { id: "r1", title: "Optimize sneaker campaign ROAS" },
+  { id: "r2", title: "AI visibility gap analysis" },
+  { id: "r3", title: "FW26 audience refinement ideas" },
+  { id: "r4", title: "Product feed sync troubleshooting" },
+  { id: "r5", title: "Revenue trends last 90 days" },
+  { id: "r6", title: "Competitor benchmarking report" },
+  { id: "r7", title: "Budget reallocation suggestions" },
+]
 
 const AI_PRESENCE_HREF = "/ai-presence" as const
 const platformNavItems = navigationItems.filter((i) => i.href !== AI_PRESENCE_HREF)
@@ -52,6 +68,7 @@ export function AppSidebar() {
   const pathname = location.pathname
   const { open: sidebarOpen, setOpen: setSidebarOpen } = useSidebar()
   const unreadInboxCount = useUnreadInboxCount()
+  const { mode } = useHomeMode()
 
   const [aiOpen, setAiOpen] = useState<string[]>(() =>
     pathname.startsWith("/ai-presence") ? ["ai"] : []
@@ -143,25 +160,117 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup className="p-1.5">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {platformNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    isActive={isActive(item.href)}
-                    tooltip={item.title}
-                    render={<Link to={item.href} />}
-                  >
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              {aiVisibilityNavItem && (
+        {mode === "ai" && pathname === "/" ? (
+          <>
+            <SidebarGroup className="p-1.5">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton tooltip="New chat">
+                      <PenSquare />
+                      <span>New chat</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="px-1.5">
+              <SidebarGroupLabel className="flex items-center gap-1.5 px-2 text-xs font-medium text-muted-foreground">
+                <Pin className="h-3 w-3" />
+                Pinned
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {pinnedConversations.map((conv) => (
+                    <SidebarMenuItem key={conv.id}>
+                      <SidebarMenuButton tooltip={conv.title}>
+                        <MessageSquare className="shrink-0" />
+                        <span className="truncate">{conv.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="px-1.5">
+              <SidebarGroupLabel className="px-2 text-xs font-medium text-muted-foreground">
+                Recents
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {recentConversations.map((conv) => (
+                    <SidebarMenuItem key={conv.id}>
+                      <SidebarMenuButton tooltip={conv.title}>
+                        <MessageSquare className="shrink-0" />
+                        <span className="truncate">{conv.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : (
+          <SidebarGroup className="p-1.5">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {platformNavItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      isActive={isActive(item.href)}
+                      tooltip={item.title}
+                      render={<Link to={item.href} />}
+                    >
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                {aiVisibilityNavItem && (
+                  <SidebarMenuItem>
+                    <Accordion.Root value={aiOpen} onValueChange={handleAiAccordionChange} multiple={false}>
+                      <Accordion.Item value="ai" className="border-0">
+                        <Accordion.Header className="m-0 w-full p-0">
+                          <Accordion.Trigger
+                            className={cn(
+                              accordionTriggerClass,
+                              "h-8 text-sm data-[panel-open]:bg-sidebar-accent/80 [&[data-panel-open]_svg:last-child]:rotate-180"
+                            )}
+                          >
+                            <aiVisibilityNavItem.icon />
+                            <span className="truncate font-medium">AI Visibility</span>
+                            <ChevronDown
+                              aria-hidden
+                              className="ml-auto shrink-0 transition-transform duration-200"
+                            />
+                          </Accordion.Trigger>
+                        </Accordion.Header>
+                        <Accordion.Panel className="overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-top-1">
+                          <SidebarMenuSub className="gap-1 pt-2 pb-0.5">
+                            {aiPresenceSubnav.map(({ path, label }) => {
+                              const href = aiPresenceHref(path)
+                              return (
+                                <SidebarMenuSubItem key={path || "overview"}>
+                                  <SidebarMenuSubButton
+                                    isActive={aiPresenceSubActive(pathname, path)}
+                                    render={<Link to={href} />}
+                                  >
+                                    <span className="truncate">{label}</span>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              )
+                            })}
+                          </SidebarMenuSub>
+                        </Accordion.Panel>
+                      </Accordion.Item>
+                    </Accordion.Root>
+                  </SidebarMenuItem>
+                )}
                 <SidebarMenuItem>
-                  <Accordion.Root value={aiOpen} onValueChange={handleAiAccordionChange} multiple={false}>
-                    <Accordion.Item value="ai" className="border-0">
+                  <Accordion.Root value={analyticsOpen} onValueChange={handleAnalyticsAccordionChange} multiple={false}>
+                    <Accordion.Item value="analytics" className="border-0">
                       <Accordion.Header className="m-0 w-full p-0">
                         <Accordion.Trigger
                           className={cn(
@@ -169,8 +278,8 @@ export function AppSidebar() {
                             "h-8 text-sm data-[panel-open]:bg-sidebar-accent/80 [&[data-panel-open]_svg:last-child]:rotate-180"
                           )}
                         >
-                          <aiVisibilityNavItem.icon />
-                          <span className="truncate font-medium">AI Visibility</span>
+                          <BarChart3 />
+                          <span className="truncate font-medium">Analytics</span>
                           <ChevronDown
                             aria-hidden
                             className="ml-auto shrink-0 transition-transform duration-200"
@@ -179,110 +288,72 @@ export function AppSidebar() {
                       </Accordion.Header>
                       <Accordion.Panel className="overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-top-1">
                         <SidebarMenuSub className="gap-1 pt-2 pb-0.5">
-                          {aiPresenceSubnav.map(({ path, label }) => {
-                            const href = aiPresenceHref(path)
-                            return (
-                              <SidebarMenuSubItem key={path || "overview"}>
-                                <SidebarMenuSubButton
-                                  isActive={aiPresenceSubActive(pathname, path)}
-                                  render={<Link to={href} />}
-                                >
-                                  <span className="truncate">{label}</span>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            )
-                          })}
+                          {analyticsSubnav.map(({ href, label }) => (
+                            <SidebarMenuSubItem key={href}>
+                              <SidebarMenuSubButton
+                                isActive={analyticsSubItemActive(pathname, href)}
+                                render={<Link to={href} />}
+                              >
+                                <span className="truncate">{label}</span>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
                         </SidebarMenuSub>
                       </Accordion.Panel>
                     </Accordion.Item>
                   </Accordion.Root>
                 </SidebarMenuItem>
-              )}
-              <SidebarMenuItem>
-                <Accordion.Root value={analyticsOpen} onValueChange={handleAnalyticsAccordionChange} multiple={false}>
-                  <Accordion.Item value="analytics" className="border-0">
-                    <Accordion.Header className="m-0 w-full p-0">
-                      <Accordion.Trigger
-                        className={cn(
-                          accordionTriggerClass,
-                          "h-8 text-sm data-[panel-open]:bg-sidebar-accent/80 [&[data-panel-open]_svg:last-child]:rotate-180"
-                        )}
-                      >
-                        <BarChart3 />
-                        <span className="truncate font-medium">Analytics</span>
-                        <ChevronDown
-                          aria-hidden
-                          className="ml-auto shrink-0 transition-transform duration-200"
-                        />
-                      </Accordion.Trigger>
-                    </Accordion.Header>
-                    <Accordion.Panel className="overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-top-1">
-                      <SidebarMenuSub className="gap-1 pt-2 pb-0.5">
-                        {analyticsSubnav.map(({ href, label }) => (
-                          <SidebarMenuSubItem key={href}>
-                            <SidebarMenuSubButton
-                              isActive={analyticsSubItemActive(pathname, href)}
-                              render={<Link to={href} />}
-                            >
-                              <span className="truncate">{label}</span>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </Accordion.Panel>
-                  </Accordion.Item>
-                </Accordion.Root>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Accordion.Root value={assetsOpen} onValueChange={handleAssetsAccordionChange} multiple={false}>
-                  <Accordion.Item value="assets" className="border-0">
-                    <Accordion.Header className="m-0 w-full p-0">
-                      <Accordion.Trigger
-                        className={cn(
-                          accordionTriggerClass,
-                          "h-8 text-sm data-[panel-open]:bg-sidebar-accent/80 [&[data-panel-open]_svg:last-child]:rotate-180"
-                        )}
-                      >
-                        <Package />
-                        <span className="truncate font-medium">Assets</span>
-                        <ChevronDown
-                          aria-hidden
-                          className="ml-auto shrink-0 transition-transform duration-200"
-                        />
-                      </Accordion.Trigger>
-                    </Accordion.Header>
-                    <Accordion.Panel className="overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-top-1">
-                      <SidebarMenuSub className="gap-1 pt-2 pb-0.5">
-                        {assetsSubnav.map(({ href, label }) => (
-                          <SidebarMenuSubItem key={href}>
-                            <SidebarMenuSubButton
-                              isActive={assetsSubItemActive(pathname, href)}
-                              render={<Link to={href} />}
-                            >
-                              <span className="truncate">{label}</span>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </Accordion.Panel>
-                  </Accordion.Item>
-                </Accordion.Root>
-              </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Accordion.Root value={assetsOpen} onValueChange={handleAssetsAccordionChange} multiple={false}>
+                    <Accordion.Item value="assets" className="border-0">
+                      <Accordion.Header className="m-0 w-full p-0">
+                        <Accordion.Trigger
+                          className={cn(
+                            accordionTriggerClass,
+                            "h-8 text-sm data-[panel-open]:bg-sidebar-accent/80 [&[data-panel-open]_svg:last-child]:rotate-180"
+                          )}
+                        >
+                          <Package />
+                          <span className="truncate font-medium">Assets</span>
+                          <ChevronDown
+                            aria-hidden
+                            className="ml-auto shrink-0 transition-transform duration-200"
+                          />
+                        </Accordion.Trigger>
+                      </Accordion.Header>
+                      <Accordion.Panel className="overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-top-1">
+                        <SidebarMenuSub className="gap-1 pt-2 pb-0.5">
+                          {assetsSubnav.map(({ href, label }) => (
+                            <SidebarMenuSubItem key={href}>
+                              <SidebarMenuSubButton
+                                isActive={assetsSubItemActive(pathname, href)}
+                                render={<Link to={href} />}
+                              >
+                                <span className="truncate">{label}</span>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </Accordion.Panel>
+                    </Accordion.Item>
+                  </Accordion.Root>
+                </SidebarMenuItem>
 
-              {/* Autopilot — top-level standalone */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={isActive("/autopilot")}
-                  tooltip="Autopilot"
-                  render={<Link to="/autopilot" />}
-                >
-                  <Workflow />
-                  <span>Autopilot</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                {/* Autopilot — top-level standalone */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={isActive("/autopilot")}
+                    tooltip="Autopilot"
+                    render={<Link to="/autopilot" />}
+                  >
+                    <Workflow />
+                    <span>Autopilot</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="gap-1.5 p-1.5">
         <SidebarMenu>

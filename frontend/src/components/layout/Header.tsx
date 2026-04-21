@@ -1,18 +1,96 @@
-import { Search, Sparkles } from "lucide-react"
+import { useLayoutEffect, useRef, useState } from "react"
+import { LayoutDashboard, MessageSquare, Search, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { useGlobalSearch } from "@/contexts/GlobalSearchContext"
+import { useHomeMode } from "@/contexts/HomeModeContext"
 import { cn } from "@/lib/utils"
 
 export function Header() {
   const { toggleOpen } = useAIAssistant()
   const { openSearch } = useGlobalSearch()
+  const { mode, setMode } = useHomeMode()
+
+  const dashboardRef = useRef<HTMLButtonElement>(null)
+  const agentRef = useRef<HTMLButtonElement>(null)
+  const [thumbStyle, setThumbStyle] = useState<{ left: number; width: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const target = mode === "dashboard" ? dashboardRef.current : agentRef.current
+    if (!target) return
+    setThumbStyle({ left: target.offsetLeft, width: target.offsetWidth })
+  }, [mode])
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />
+
+      {/* Mode toggle */}
+      <div className="relative inline-flex h-8 shrink-0 items-center rounded-lg bg-secondary p-0.5">
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute top-0.5 bottom-0.5 rounded-md shadow-sm transition-[left,width,background-color] duration-300 ease-out",
+            mode === "dashboard"
+              ? "bg-background"
+              : "bg-indigo-100 dark:bg-indigo-950/60"
+          )}
+          style={{
+            left: thumbStyle?.left ?? 2,
+            width: thumbStyle?.width ?? 0,
+            opacity: thumbStyle ? 1 : 0,
+          }}
+        />
+        <button
+          ref={dashboardRef}
+          type="button"
+          onClick={() => setMode("dashboard")}
+          className={cn(
+            "relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors duration-300 ease-out",
+            mode === "dashboard"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <LayoutDashboard className="h-3.5 w-3.5" />
+          <span
+            className={cn(
+              "hidden overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin-left] duration-300 ease-out sm:inline-block",
+              mode === "dashboard"
+                ? "ml-0 max-w-[6rem] opacity-100"
+                : "ml-0 max-w-0 opacity-0"
+            )}
+          >
+            Dashboard
+          </span>
+        </button>
+        <button
+          ref={agentRef}
+          type="button"
+          onClick={() => setMode("ai")}
+          className={cn(
+            "relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors duration-300 ease-out",
+            mode === "ai"
+              ? "text-indigo-900 dark:text-indigo-100"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          <span
+            className={cn(
+              "hidden overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin-left] duration-300 ease-out sm:inline-block",
+              mode === "ai"
+                ? "ml-0 max-w-[6rem] opacity-100"
+                : "ml-0 max-w-0 opacity-0"
+            )}
+          >
+            Agent
+          </span>
+        </button>
+      </div>
+
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <button
           type="button"
@@ -30,27 +108,29 @@ export function Header() {
           </kbd>
         </button>
       </div>
-      <Button
-        onClick={toggleOpen}
-        variant="outline"
-        size="sm"
-        className={cn(
-          "gap-1.5 border-indigo-500/45 bg-indigo-500/15 text-indigo-950 shadow-none",
-          "hover:bg-indigo-500/28 hover:text-indigo-950",
-          "focus-visible:ring-indigo-500/45 [&_svg]:text-indigo-600",
-          "dark:border-indigo-400/50 dark:bg-indigo-500/22 dark:text-indigo-50",
-          "dark:hover:bg-indigo-500/32 dark:hover:text-indigo-50 dark:[&_svg]:text-indigo-300"
-        )}
-      >
-        <Sparkles className="h-4 w-4 shrink-0" />
-        Ask Aeris
-        <Badge
-          variant="secondary"
-          className="h-5 border border-violet-300/90 bg-violet-100 px-1.5 text-[10px] font-semibold text-violet-900 dark:border-violet-500/40 dark:bg-violet-950/60 dark:text-violet-200"
+      {mode !== "ai" && (
+        <Button
+          onClick={toggleOpen}
+          variant="outline"
+          size="sm"
+          className={cn(
+            "gap-1.5 border-indigo-500/45 bg-indigo-500/15 text-indigo-950 shadow-none",
+            "hover:bg-indigo-500/28 hover:text-indigo-950",
+            "focus-visible:ring-indigo-500/45 [&_svg]:text-indigo-600",
+            "dark:border-indigo-400/50 dark:bg-indigo-500/22 dark:text-indigo-50",
+            "dark:hover:bg-indigo-500/32 dark:hover:text-indigo-50 dark:[&_svg]:text-indigo-300"
+          )}
         >
-          Beta
-        </Badge>
-      </Button>
+          <Sparkles className="h-4 w-4 shrink-0" />
+          Ask Aeris
+          <Badge
+            variant="secondary"
+            className="h-5 border border-violet-300/90 bg-violet-100 px-1.5 text-[10px] font-semibold text-violet-900 dark:border-violet-500/40 dark:bg-violet-950/60 dark:text-violet-200"
+          >
+            Beta
+          </Badge>
+        </Button>
+      )}
     </header>
   )
 }
