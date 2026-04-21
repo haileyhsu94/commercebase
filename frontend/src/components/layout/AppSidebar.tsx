@@ -160,7 +160,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {mode === "ai" ? (
+        {mode === "ai" && pathname === "/" ? (
           <>
             <SidebarGroup className="p-1.5">
               <SidebarGroupContent>
