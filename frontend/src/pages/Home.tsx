@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { GripVertical, Pencil } from "lucide-react"
+import { GripVertical, LayoutDashboard, Pencil, Sparkles } from "lucide-react"
 import { currentUser } from "@/lib/mock-data"
 import {
   getHomeLayout,
@@ -17,6 +17,7 @@ import { HealthScoreCard } from "@/components/shared/HealthScoreCard"
 import { AIVisibilityScoreCard } from "@/components/shared/AIVisibilityScoreCard"
 import { QuickActions } from "@/components/shared/QuickActions"
 import { CampaignSummary } from "@/components/shared/CampaignSummary"
+import { AIHomeView } from "@/components/shared/AIHomeView"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -45,7 +46,10 @@ function reorderWidgets(order: HomeWidgetId[], fromIndex: number, toIndex: numbe
   return next
 }
 
+type HomeMode = "dashboard" | "ai"
+
 export function Home() {
+  const [mode, setMode] = useState<HomeMode>("dashboard")
   const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
   const [layout, setLayout] = useState<HomeLayoutState>(() => getHomeLayout())
   const [customizeOpen, setCustomizeOpen] = useState(false)
@@ -100,33 +104,75 @@ export function Home() {
     <>
       <PageHeader
         title={`${greeting}, ${currentUser.name.split(" ")[0]}`}
-        description={`Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`}
+        description={
+          mode === "dashboard"
+            ? `Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`
+            : "Let Aeris help you manage campaigns, analyze performance, and more."
+        }
         actions={
           <>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setCustomizeOpen(true)}
-              aria-label="Customize home"
-            >
-              <Pencil className="size-4" />
-            </Button>
-            <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
+            {/* Mode toggle */}
+            <div className="inline-flex h-9 items-center rounded-lg bg-secondary p-1">
+              <button
+                type="button"
+                onClick={() => setMode("dashboard")}
+                className={cn(
+                  "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-all",
+                  mode === "dashboard"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("ai")}
+                className={cn(
+                  "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-all",
+                  mode === "ai"
+                    ? "bg-indigo-100 text-indigo-900 shadow-sm dark:bg-indigo-950/60 dark:text-indigo-100"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                AI Mode
+              </button>
+            </div>
+
+            {mode === "dashboard" && (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setCustomizeOpen(true)}
+                  aria-label="Customize home"
+                >
+                  <Pencil className="size-4" />
+                </Button>
+                <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
+              </>
+            )}
           </>
         }
       />
 
-      <div className="space-y-6">
-        {visibleOrdered.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-            All sections are hidden. Use <span className="font-medium text-foreground">Customize home</span> to show
-            them again.
-          </p>
-        ) : (
-          visibleOrdered.map((id) => <HomeWidgetBlock key={id} id={id} timeRange={timeRange} />)
-        )}
-      </div>
+      {mode === "ai" ? (
+        <AIHomeView />
+      ) : (
+        <div className="space-y-6">
+          {visibleOrdered.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+              All sections are hidden. Use <span className="font-medium text-foreground">Customize home</span> to show
+              them again.
+            </p>
+          ) : (
+            visibleOrdered.map((id) => <HomeWidgetBlock key={id} id={id} timeRange={timeRange} />)
+          )}
+        </div>
+      )}
 
       <Dialog
         open={customizeOpen}
