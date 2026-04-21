@@ -1,4 +1,3 @@
-import { useLocation } from "react-router-dom"
 import { LayoutDashboard, MessageSquare, Search, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -12,7 +11,6 @@ export function Header() {
   const { toggleOpen } = useAIAssistant()
   const { openSearch } = useGlobalSearch()
   const { mode, setMode } = useHomeMode()
-  const { pathname } = useLocation()
 
   return (
     <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-4">
@@ -65,7 +63,7 @@ export function Header() {
           </kbd>
         </button>
       </div>
-      {!(mode === "ai" && pathname === "/") && (
+      {mode !== "ai" && (
         <Button
           onClick={toggleOpen}
           variant="outline"
