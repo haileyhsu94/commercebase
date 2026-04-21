@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import {
   Plus,
   Wand2,
@@ -15,11 +15,14 @@ import {
   Save,
   ChevronRight,
   Target,
+  ChevronDown,
+  Globe,
 } from "lucide-react"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { currentUser } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Slider } from "@/components/ui/slider"
 import {
   addLaunchedCampaign,
   makeNewCampaignRow,
@@ -31,6 +34,7 @@ import {
   type CampaignWizardFormData,
   initialCampaignWizardForm,
 } from "@/types/campaign-wizard"
+import { getCompanyProfile, saveCompanyProfile } from "@/lib/company-profile"
 
 /* ------------------------------------------------------------------ */
 /*  Suggestion cards (Gemini-style)                                    */
@@ -86,6 +90,7 @@ interface CampaignAnswers {
   storeUrl: string
   budget: string
   targetMarket: string
+  targetCountries: string[]
   campaignType: string
   maxCpc: string
   startDate: string
@@ -99,6 +104,7 @@ const emptyAnswers: CampaignAnswers = {
   storeUrl: "",
   budget: "",
   targetMarket: "",
+  targetCountries: [],
   campaignType: "",
   maxCpc: "",
   startDate: "",
@@ -106,6 +112,49 @@ const emptyAnswers: CampaignAnswers = {
   conversionGoal: "",
   other: "",
 }
+
+/* Region → Country hierarchy for target market */
+const REGION_COUNTRIES: Record<string, { value: string; label: string }[]> = {
+  uk_ie: [
+    { value: "GB", label: "United Kingdom" },
+    { value: "IE", label: "Ireland" },
+  ],
+  north_america: [
+    { value: "US", label: "United States" },
+    { value: "CA", label: "Canada" },
+    { value: "MX", label: "Mexico" },
+  ],
+  eu: [
+    { value: "DE", label: "Germany" },
+    { value: "FR", label: "France" },
+    { value: "ES", label: "Spain" },
+    { value: "IT", label: "Italy" },
+    { value: "NL", label: "Netherlands" },
+    { value: "BE", label: "Belgium" },
+    { value: "PL", label: "Poland" },
+    { value: "SE", label: "Sweden" },
+    { value: "AT", label: "Austria" },
+    { value: "PT", label: "Portugal" },
+  ],
+  apac: [
+    { value: "AU", label: "Australia" },
+    { value: "JP", label: "Japan" },
+    { value: "KR", label: "South Korea" },
+    { value: "SG", label: "Singapore" },
+    { value: "IN", label: "India" },
+    { value: "NZ", label: "New Zealand" },
+    { value: "TH", label: "Thailand" },
+  ],
+  global: [],
+}
+
+/* Budget slider config */
+const BUDGET_MIN = 10
+const BUDGET_MAX = 500
+const BUDGET_STEP = 10
+const CPC_MIN = 0.1
+const CPC_MAX = 10
+const CPC_STEP = 0.1
 
 interface ChatMessage {
   id: string
@@ -286,12 +335,18 @@ export function AIHomeView() {
   const [input, setInput] = useState("")
   const [conversationStep, setConversationStep] = useState<ConversationStep>("idle")
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [answers, setAnswers] = useState<CampaignAnswers>(emptyAnswers)
+  const [answers, setAnswers] = useState<CampaignAnswers>(() => {
+    const profile = getCompanyProfile()
+    return { ...emptyAnswers, storeUrl: profile.website || "" }
+  })
   const [campaignPlan, setCampaignPlan] = useState<CampaignPlan | null>(null)
   const [showDetailPanel, setShowDetailPanel] = useState(false)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const [showSaveUrlPrompt, setShowSaveUrlPrompt] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  const companyProfile = useMemo(() => getCompanyProfile(), [])
+  const profileHasWebsite = Boolean(companyProfile.website)
   const firstName = currentUser.name.split(" ")[0]
 
   useEffect(() => {
@@ -375,11 +430,18 @@ export function AIHomeView() {
       CAMPAIGN_OBJECTIVE_OPTIONS.find((o) => o.value === a.objective)?.label ?? a.objective
     const typeLabel =
       CAMPAIGN_TYPE_OPTIONS.find((o) => o.value === a.campaignType)?.label ?? a.campaignType
-    const marketLabel =
+    const regionLabel =
       TARGET_MARKET_OPTIONS.find((o) => o.value === a.targetMarket)?.label ?? a.targetMarket
+    const countryLabels = a.targetCountries
+      .map((c) => REGION_COUNTRIES[a.targetMarket]?.find((rc) => rc.value === c)?.label)
+      .filter(Boolean)
+    const marketLabel =
+      countryLabels.length > 0
+        ? `${regionLabel} (${countryLabels.join(", ")})`
+        : regionLabel
 
     return {
-      name: `${objectiveLabel} Campaign — ${marketLabel}`,
+      name: `${objectiveLabel} Campaign — ${regionLabel}`,
       objective: objectiveLabel,
       campaignType: typeLabel,
       budget: a.budget ? `$${a.budget}/day` : "$50/day",
@@ -398,13 +460,33 @@ export function AIHomeView() {
     }
   }
 
+  const handleSaveStoreUrl = () => {
+    if (answers.storeUrl.trim()) {
+      saveCompanyProfile({ ...companyProfile, website: answers.storeUrl.trim() })
+      setSavedMessage("Store URL saved to your organization profile!")
+      setTimeout(() => setSavedMessage(null), 3000)
+    }
+    setShowSaveUrlPrompt(false)
+  }
+
   const handleSubmitAnswers = async () => {
     const filledAnswers = Object.entries(answers)
-      .filter(([, v]) => v.trim())
-      .map(([k, v]) => `• ${k}: ${v}`)
+      .filter(([k, v]) => {
+        if (k === "targetCountries") return (v as unknown as string[]).length > 0
+        return typeof v === "string" && v.trim()
+      })
+      .map(([k, v]) => {
+        if (k === "targetCountries") return `• ${k}: ${(v as unknown as string[]).join(", ")}`
+        return `• ${k}: ${v}`
+      })
       .join("\n")
 
     addChatMessage("user", filledAnswers || "Use defaults for everything")
+
+    if (!profileHasWebsite && answers.storeUrl.trim() && answers.storeUrl.trim() !== companyProfile.website) {
+      setShowSaveUrlPrompt(true)
+    }
+
     setConversationStep("processing")
 
     await new Promise((r) => setTimeout(r, 2000))
@@ -625,21 +707,32 @@ export function AIHomeView() {
                           What do you want to achieve?
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {CAMPAIGN_OBJECTIVE_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => setAnswers({ ...answers, objective: opt.value })}
-                              className={cn(
-                                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                                answers.objective === opt.value
-                                  ? "border-indigo-300 bg-indigo-100 text-indigo-900 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-100"
-                                  : "border-border bg-background text-foreground hover:bg-muted/50"
-                              )}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
+                          {CAMPAIGN_OBJECTIVE_OPTIONS.map((opt) => {
+                            const isCreatorCommerce = opt.value === "creator_commerce"
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                disabled={isCreatorCommerce}
+                                onClick={() => {
+                                  if (!isCreatorCommerce) setAnswers({ ...answers, objective: opt.value })
+                                }}
+                                className={cn(
+                                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                                  isCreatorCommerce
+                                    ? "cursor-not-allowed border-border bg-muted/30 text-muted-foreground/50"
+                                    : answers.objective === opt.value
+                                      ? "border-indigo-300 bg-indigo-100 text-indigo-900 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-100"
+                                      : "border-border bg-background text-foreground hover:bg-muted/50"
+                                )}
+                              >
+                                {opt.label}
+                                {isCreatorCommerce && (
+                                  <span className="ml-1 text-[10px] text-muted-foreground/40">(coming soon)</span>
+                                )}
+                              </button>
+                            )
+                          })}
                         </div>
                       </div>
 
@@ -655,44 +748,117 @@ export function AIHomeView() {
                           placeholder="https://yourstore.com"
                           className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                         />
+                        {profileHasWebsite && answers.storeUrl === companyProfile.website && (
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Pre-filled from your organization profile
+                          </p>
+                        )}
                       </div>
 
-                      {/* Budget */}
+                      {/* Budget with slider */}
                       <div>
                         <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                           Daily budget (USD)
                         </label>
-                        <input
-                          type="text"
-                          value={answers.budget}
-                          onChange={(e) => setAnswers({ ...answers, budget: e.target.value })}
-                          placeholder="e.g. 50"
-                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
-                        />
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="text"
+                            value={answers.budget}
+                            onChange={(e) => setAnswers({ ...answers, budget: e.target.value })}
+                            placeholder="e.g. 50"
+                            className="w-20 shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                          />
+                          <div className="flex flex-1 items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground">${BUDGET_MIN}</span>
+                            <Slider
+                              min={BUDGET_MIN}
+                              max={BUDGET_MAX}
+                              step={BUDGET_STEP}
+                              value={[
+                                answers.budget && !isNaN(Number(answers.budget))
+                                  ? Math.min(Math.max(Number(answers.budget), BUDGET_MIN), BUDGET_MAX)
+                                  : BUDGET_MIN,
+                              ]}
+                              onValueChange={(val: number[]) =>
+                                setAnswers({ ...answers, budget: String(val[0]) })
+                              }
+                            />
+                            <span className="text-[10px] text-muted-foreground">${BUDGET_MAX}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Target Market */}
+                      {/* Target Market — Region first, then countries */}
                       <div>
                         <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                          Target market (country/region)
+                          <Globe className="mr-1 inline-block h-3 w-3" />
+                          Target market
                         </label>
+                        <p className="mb-2 text-[11px] text-muted-foreground">
+                          Choose a region, then optionally narrow to specific countries
+                        </p>
                         <div className="flex flex-wrap gap-2">
                           {TARGET_MARKET_OPTIONS.map((opt) => (
                             <button
                               key={opt.value}
                               type="button"
-                              onClick={() => setAnswers({ ...answers, targetMarket: opt.value })}
+                              onClick={() =>
+                                setAnswers({
+                                  ...answers,
+                                  targetMarket: answers.targetMarket === opt.value ? "" : opt.value,
+                                  targetCountries: answers.targetMarket === opt.value ? [] : answers.targetCountries,
+                                })
+                              }
                               className={cn(
-                                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                                "flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                                 answers.targetMarket === opt.value
                                   ? "border-indigo-300 bg-indigo-100 text-indigo-900 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-100"
                                   : "border-border bg-background text-foreground hover:bg-muted/50"
                               )}
                             >
                               {opt.label}
+                              {answers.targetMarket === opt.value && REGION_COUNTRIES[opt.value]?.length > 0 && (
+                                <ChevronDown className="h-3 w-3" />
+                              )}
                             </button>
                           ))}
                         </div>
+
+                        {/* Country sub-selector */}
+                        {answers.targetMarket &&
+                          REGION_COUNTRIES[answers.targetMarket] &&
+                          REGION_COUNTRIES[answers.targetMarket].length > 0 && (
+                          <div className="mt-2 rounded-lg border border-dashed border-indigo-200 bg-indigo-50/50 p-3 dark:border-indigo-800 dark:bg-indigo-950/20">
+                            <p className="mb-2 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+                              Select countries (leave empty for entire region)
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {REGION_COUNTRIES[answers.targetMarket].map((country) => {
+                                const isSelected = answers.targetCountries.includes(country.value)
+                                return (
+                                  <button
+                                    key={country.value}
+                                    type="button"
+                                    onClick={() => {
+                                      const next = isSelected
+                                        ? answers.targetCountries.filter((c) => c !== country.value)
+                                        : [...answers.targetCountries, country.value]
+                                      setAnswers({ ...answers, targetCountries: next })
+                                    }}
+                                    className={cn(
+                                      "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                                      isSelected
+                                        ? "border-indigo-300 bg-indigo-100 text-indigo-800 dark:border-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-200"
+                                        : "border-border bg-background text-foreground hover:bg-muted/50"
+                                    )}
+                                  >
+                                    {country.label}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Campaign Type */}
@@ -719,18 +885,37 @@ export function AIHomeView() {
                         </div>
                       </div>
 
-                      {/* Max CPC */}
+                      {/* Max CPC with slider */}
                       <div>
                         <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                           Max CPC (USD)
                         </label>
-                        <input
-                          type="text"
-                          value={answers.maxCpc}
-                          onChange={(e) => setAnswers({ ...answers, maxCpc: e.target.value })}
-                          placeholder="e.g. 1.50"
-                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
-                        />
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="text"
+                            value={answers.maxCpc}
+                            onChange={(e) => setAnswers({ ...answers, maxCpc: e.target.value })}
+                            placeholder="e.g. 1.50"
+                            className="w-20 shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                          />
+                          <div className="flex flex-1 items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground">${CPC_MIN}</span>
+                            <Slider
+                              min={CPC_MIN}
+                              max={CPC_MAX}
+                              step={CPC_STEP}
+                              value={[
+                                answers.maxCpc && !isNaN(Number(answers.maxCpc))
+                                  ? Math.min(Math.max(Number(answers.maxCpc), CPC_MIN), CPC_MAX)
+                                  : CPC_MIN,
+                              ]}
+                              onValueChange={(val: number[]) =>
+                                setAnswers({ ...answers, maxCpc: String(val[0]) })
+                              }
+                            />
+                            <span className="text-[10px] text-muted-foreground">${CPC_MAX}</span>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Date range */}
@@ -839,43 +1024,75 @@ export function AIHomeView() {
 
                 {/* Done: campaign card */}
                 {conversationStep === "done" && campaignPlan && (
-                  <button
-                    type="button"
-                    onClick={() => setShowDetailPanel(true)}
-                    className={cn(
-                      "w-full max-w-sm rounded-xl border bg-background p-4 text-left shadow-sm transition-all",
-                      showDetailPanel
-                        ? "border-indigo-200 ring-1 ring-indigo-200 dark:border-indigo-800 dark:ring-indigo-800"
-                        : "border-border hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:hover:border-indigo-800"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/40">
-                        <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setShowDetailPanel(true)}
+                      className={cn(
+                        "w-full max-w-sm rounded-xl border bg-background p-4 text-left shadow-sm transition-all",
+                        showDetailPanel
+                          ? "border-indigo-200 ring-1 ring-indigo-200 dark:border-indigo-800 dark:ring-indigo-800"
+                          : "border-border hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:hover:border-indigo-800"
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950/40">
+                          <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">{campaignPlan.name}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {campaignPlan.budget} · {campaignPlan.targetMarket} · {campaignPlan.campaignType}
+                          </p>
+                        </div>
+                        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{campaignPlan.name}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {campaignPlan.budget} · {campaignPlan.targetMarket} · {campaignPlan.campaignType}
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+                          <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedReach}</p>
+                          <p className="text-[10px] text-muted-foreground">Reach</p>
+                        </div>
+                        <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+                          <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedClicks}</p>
+                          <p className="text-[10px] text-muted-foreground">Clicks</p>
+                        </div>
+                        <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
+                          <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedConversions}</p>
+                          <p className="text-[10px] text-muted-foreground">Conv.</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Save store URL to profile prompt */}
+                    {showSaveUrlPrompt && (
+                      <div className="max-w-sm rounded-xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm dark:border-amber-800 dark:bg-amber-950/20">
+                        <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+                          Would you like to save <span className="font-semibold">{answers.storeUrl}</span> to your organization profile?
                         </p>
+                        <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-400">
+                          This will pre-fill the store URL for future campaigns.
+                        </p>
+                        <div className="mt-3 flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={handleSaveStoreUrl}
+                            className="h-7 gap-1 bg-amber-600 text-xs hover:bg-amber-700"
+                          >
+                            <Save className="h-3 w-3" />
+                            Save to profile
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowSaveUrlPrompt(false)}
+                            className="h-7 text-xs text-amber-700 hover:text-amber-900 dark:text-amber-400"
+                          >
+                            Skip
+                          </Button>
+                        </div>
                       </div>
-                      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
-                    </div>
-                    <div className="mt-3 grid grid-cols-3 gap-2">
-                      <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
-                        <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedReach}</p>
-                        <p className="text-[10px] text-muted-foreground">Reach</p>
-                      </div>
-                      <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
-                        <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedClicks}</p>
-                        <p className="text-[10px] text-muted-foreground">Clicks</p>
-                      </div>
-                      <div className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
-                        <p className="text-xs font-semibold text-foreground">{campaignPlan.estimatedConversions}</p>
-                        <p className="text-[10px] text-muted-foreground">Conv.</p>
-                      </div>
-                    </div>
-                  </button>
+                    )}
+                  </>
                 )}
 
                 <div ref={messagesEndRef} />
