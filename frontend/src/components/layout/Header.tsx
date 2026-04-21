@@ -1,4 +1,4 @@
-import { LayoutDashboard, Search, Sparkles } from "lucide-react"
+import { Home, MessageSquare, Search, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,7 @@ export function Header() {
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <LayoutDashboard className="h-3.5 w-3.5" />
+          <Home className="h-3.5 w-3.5" />
           {mode === "dashboard" && <span className="hidden sm:inline">Dashboard</span>}
         </button>
         <button
@@ -41,7 +41,7 @@ export function Header() {
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Sparkles className="h-3.5 w-3.5" />
+          <MessageSquare className="h-3.5 w-3.5" />
           {mode === "ai" && <span className="hidden sm:inline">AI Mode</span>}
         </button>
       </div>
