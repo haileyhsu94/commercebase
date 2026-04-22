@@ -175,42 +175,46 @@ export function AppSidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            <SidebarGroup className="px-1.5">
-              <SidebarGroupLabel className="flex items-center gap-1.5 px-2 text-xs font-medium text-muted-foreground">
-                <Pin className="h-3 w-3" />
-                Pinned
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {pinnedConversations.map((conv) => (
-                    <SidebarMenuItem key={conv.id}>
-                      <SidebarMenuButton tooltip={conv.title}>
-                        <MessageSquare className="shrink-0" />
-                        <span className="truncate">{conv.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {sidebarOpen && (
+              <>
+                <SidebarGroup className="px-1.5">
+                  <SidebarGroupLabel className="flex items-center gap-1.5 px-2 text-xs font-medium text-muted-foreground">
+                    <Pin className="h-3 w-3" />
+                    Pinned
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {pinnedConversations.map((conv) => (
+                        <SidebarMenuItem key={conv.id}>
+                          <SidebarMenuButton tooltip={conv.title}>
+                            <MessageSquare className="shrink-0" />
+                            <span className="truncate">{conv.title}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
 
-            <SidebarGroup className="px-1.5">
-              <SidebarGroupLabel className="px-2 text-xs font-medium text-muted-foreground">
-                Recents
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {recentConversations.map((conv) => (
-                    <SidebarMenuItem key={conv.id}>
-                      <SidebarMenuButton tooltip={conv.title}>
-                        <MessageSquare className="shrink-0" />
-                        <span className="truncate">{conv.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+                <SidebarGroup className="px-1.5">
+                  <SidebarGroupLabel className="px-2 text-xs font-medium text-muted-foreground">
+                    Recents
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {recentConversations.map((conv) => (
+                        <SidebarMenuItem key={conv.id}>
+                          <SidebarMenuButton tooltip={conv.title}>
+                            <MessageSquare className="shrink-0" />
+                            <span className="truncate">{conv.title}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              </>
+            )}
           </>
         ) : (
           <SidebarGroup className="p-1.5">
