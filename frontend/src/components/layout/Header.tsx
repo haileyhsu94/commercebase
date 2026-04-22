@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react"
-import { LayoutDashboard, MessageSquare, Search, Sparkles } from "lucide-react"
+import { LayoutDashboard, MessageSquare, PanelRightClose, PanelRightOpen, Search, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -11,16 +11,20 @@ import { cn } from "@/lib/utils"
 export function Header() {
   const { toggleOpen } = useAIAssistant()
   const { openSearch } = useGlobalSearch()
-  const { mode, setMode } = useHomeMode()
+  const { mode, setMode, campaignPanelOpen, setCampaignPanelOpen } = useHomeMode()
 
   const dashboardRef = useRef<HTMLButtonElement>(null)
   const agentRef = useRef<HTMLButtonElement>(null)
   const [thumbStyle, setThumbStyle] = useState<{ left: number; width: number } | null>(null)
 
   useLayoutEffect(() => {
-    const target = mode === "dashboard" ? dashboardRef.current : agentRef.current
-    if (!target) return
-    setThumbStyle({ left: target.offsetLeft, width: target.offsetWidth })
+    let raf: number
+    raf = requestAnimationFrame(() => {
+      const target = mode === "dashboard" ? dashboardRef.current : agentRef.current
+      if (!target) return
+      setThumbStyle({ left: target.offsetLeft, width: target.offsetWidth })
+    })
+    return () => cancelAnimationFrame(raf)
   }, [mode])
 
   return (
@@ -33,9 +37,7 @@ export function Header() {
           aria-hidden
           className={cn(
             "pointer-events-none absolute top-0.5 bottom-0.5 rounded-md shadow-sm transition-[left,width,background-color] duration-300 ease-out",
-            mode === "dashboard"
-              ? "bg-background"
-              : "bg-indigo-100 dark:bg-indigo-950/60"
+            "bg-background"
           )}
           style={{
             left: thumbStyle?.left ?? 2,
@@ -55,16 +57,9 @@ export function Header() {
           )}
         >
           <LayoutDashboard className="h-3.5 w-3.5" />
-          <span
-            className={cn(
-              "hidden overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin-left] duration-300 ease-out sm:inline-block",
-              mode === "dashboard"
-                ? "ml-0 max-w-[6rem] opacity-100"
-                : "ml-0 max-w-0 opacity-0"
-            )}
-          >
-            Dashboard
-          </span>
+          {mode === "dashboard" && (
+            <span className="hidden whitespace-nowrap sm:inline-block">Dashboard</span>
+          )}
         </button>
         <button
           ref={agentRef}
@@ -78,16 +73,9 @@ export function Header() {
           )}
         >
           <MessageSquare className="h-3.5 w-3.5" />
-          <span
-            className={cn(
-              "hidden overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin-left] duration-300 ease-out sm:inline-block",
-              mode === "ai"
-                ? "ml-0 max-w-[6rem] opacity-100"
-                : "ml-0 max-w-0 opacity-0"
-            )}
-          >
-            Agent
-          </span>
+          {mode === "ai" && (
+            <span className="hidden whitespace-nowrap sm:inline-block">Agent</span>
+          )}
         </button>
       </div>
 
@@ -108,6 +96,19 @@ export function Header() {
           </kbd>
         </button>
       </div>
+      {mode === "ai" && (
+        <button
+          type="button"
+          onClick={() => setCampaignPanelOpen(!campaignPanelOpen)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label="Toggle campaign panel"
+        >
+          {campaignPanelOpen
+            ? <PanelRightClose className="h-4 w-4" />
+            : <PanelRightOpen className="h-4 w-4" />
+          }
+        </button>
+      )}
       {mode !== "ai" && (
         <Button
           onClick={toggleOpen}

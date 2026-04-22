@@ -6,6 +6,8 @@ interface HomeModeContextType {
   mode: HomeMode
   setMode: (mode: HomeMode) => void
   toggleMode: () => void
+  campaignPanelOpen: boolean
+  setCampaignPanelOpen: (open: boolean) => void
 }
 
 const HomeModeContext = createContext<HomeModeContextType | null>(null)
@@ -20,13 +22,14 @@ export function useHomeMode() {
 
 export function HomeModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<HomeMode>("dashboard")
+  const [campaignPanelOpen, setCampaignPanelOpen] = useState(false)
 
   const toggleMode = useCallback(() => {
     setMode((prev) => (prev === "dashboard" ? "ai" : "dashboard"))
   }, [])
 
   return (
-    <HomeModeContext.Provider value={{ mode, setMode, toggleMode }}>
+    <HomeModeContext.Provider value={{ mode, setMode, toggleMode, campaignPanelOpen, setCampaignPanelOpen }}>
       {children}
     </HomeModeContext.Provider>
   )

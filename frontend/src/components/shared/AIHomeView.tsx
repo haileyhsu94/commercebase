@@ -5,7 +5,6 @@ import {
   BarChart3,
   Eye,
   FileText,
-  Package,
   Send,
   Loader2,
   Pencil,
@@ -19,6 +18,7 @@ import {
   Globe,
 } from "lucide-react"
 import { useAIAssistant } from "@/contexts/AIAssistantContext"
+import { useHomeMode } from "@/contexts/HomeModeContext"
 import { currentUser } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -61,14 +61,6 @@ const suggestionCards = [
     icon: FileText,
     color: "text-blue-500",
   },
-]
-
-const quickActions = [
-  { label: "Create Campaign", icon: Wand2 },
-  { label: "Analyze", icon: BarChart3 },
-  { label: "AI Visibility", icon: Eye },
-  { label: "Reports", icon: FileText },
-  { label: "Catalog", icon: Package },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -205,62 +197,21 @@ function CampaignDetailPanel({
   onPublish: () => void
   onFieldChange: (field: keyof CampaignPlan, value: string) => void
 }) {
-  const [editField, setEditField] = useState<string | null>(null)
-  const [editValues, setEditValues] = useState<Record<string, string>>({})
-
-  const startEdit = (field: string, currentValue: string) => {
-    setEditField(field)
-    setEditValues({ ...editValues, [field]: currentValue })
-  }
-
-  const saveEdit = (field: keyof CampaignPlan) => {
-    const newValue = editValues[field]
-    if (newValue != null) {
-      onFieldChange(field, newValue)
-    }
-    setEditField(null)
-  }
-
-  const cancelEdit = () => setEditField(null)
-
   const renderField = (label: string, field: keyof CampaignPlan, value: string) => (
-    <div className="group flex items-start justify-between gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-muted/50">
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        {editField === field ? (
-          <div className="mt-1 flex items-center gap-1.5">
-            <input
-              type={field === "startDate" || field === "endDate" ? "date" : "text"}
-              value={editValues[field] ?? value}
-              onChange={(e) => setEditValues({ ...editValues, [field]: e.target.value })}
-              className="w-full rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
-              autoFocus
-            />
-            <button type="button" onClick={() => saveEdit(field)} className="text-green-600 hover:text-green-700">
-              <Check className="h-3.5 w-3.5" />
-            </button>
-            <button type="button" onClick={cancelEdit} className="text-muted-foreground hover:text-foreground">
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ) : (
-          <p className="text-sm text-foreground">{value || "—"}</p>
-        )}
-      </div>
-      {editField !== field && (
-        <button
-          type="button"
-          onClick={() => startEdit(field, value)}
-          className="mt-1 opacity-0 transition-opacity group-hover:opacity-100"
-        >
-          <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-        </button>
-      )}
+    <div className="group px-3 py-2">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <input
+        type={field === "startDate" || field === "endDate" ? "date" : "text"}
+        value={value || ""}
+        onChange={(e) => onFieldChange(field, e.target.value)}
+        placeholder="—"
+        className="mt-0.5 block w-full -ml-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 hover:border-border hover:bg-muted/40 focus:border-indigo-400 focus:bg-muted/40 focus:ring-1 focus:ring-indigo-500/20 transition-colors cursor-text"
+      />
     </div>
   )
 
   return (
-    <div className="flex h-full flex-col border-l border-border bg-background">
+    <div className="flex h-full flex-col bg-background">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h3 className="text-sm font-semibold">Campaign Details</h3>
         <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -268,8 +219,8 @@ function CampaignDetailPanel({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1 py-2">
-        <div className="space-y-0.5">
+      <div className="flex-1 overflow-y-auto py-2">
+        <div className="divide-y divide-border/50">
           {renderField("Campaign Name", "name", plan.name)}
           {renderField("Objective", "objective", plan.objective)}
           {renderField("Campaign Type", "campaignType", plan.campaignType)}
@@ -282,7 +233,7 @@ function CampaignDetailPanel({
           {renderField("Store URL", "storeUrl", plan.storeUrl)}
         </div>
 
-        <div className="mt-4 border-t border-border px-3 pt-4">
+        <div className="mt-4 border-t border-border px-4 pt-4">
           <p className="text-xs font-medium text-muted-foreground">Channels</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {plan.channels.map((ch) => (
@@ -293,7 +244,7 @@ function CampaignDetailPanel({
           </div>
         </div>
 
-        <div className="mt-4 border-t border-border px-3 pt-4">
+        <div className="mt-4 border-t border-border px-4 pt-4">
           <p className="mb-2 text-xs font-medium text-muted-foreground">Estimated Performance</p>
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-lg bg-muted/40 px-3 py-2 text-center">
@@ -332,6 +283,7 @@ function CampaignDetailPanel({
 
 export function AIHomeView() {
   const { sendAssistantQuery, setIsOpen } = useAIAssistant()
+  const { campaignPanelOpen, setCampaignPanelOpen } = useHomeMode()
   const [input, setInput] = useState("")
   const [conversationStep, setConversationStep] = useState<ConversationStep>("idle")
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -340,10 +292,28 @@ export function AIHomeView() {
     return { ...emptyAnswers, storeUrl: profile.website || "" }
   })
   const [campaignPlan, setCampaignPlan] = useState<CampaignPlan | null>(null)
-  const [showDetailPanel, setShowDetailPanel] = useState(false)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [showSaveUrlPrompt, setShowSaveUrlPrompt] = useState(false)
+  const [panelWidth, setPanelWidth] = useState(360)
+  const panelWidthRef = useRef(360)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = panelWidthRef.current
+    const onMove = (ev: MouseEvent) => {
+      const next = Math.max(260, Math.min(600, startW - (ev.clientX - startX)))
+      panelWidthRef.current = next
+      setPanelWidth(next)
+    }
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove)
+      document.removeEventListener("mouseup", onUp)
+    }
+    document.addEventListener("mousemove", onMove)
+    document.addEventListener("mouseup", onUp)
+  }
 
   const companyProfile = useMemo(() => getCompanyProfile(), [])
   const profileHasWebsite = Boolean(companyProfile.website)
@@ -373,56 +343,27 @@ export function AIHomeView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim()) return
+    if (!input.trim() || conversationStep !== "idle") return
     const query = input.trim()
     setInput("")
-
-    if (conversationStep === "idle") {
-      if (isCampaignIntent(query)) {
-        addChatMessage("user", query)
-        setConversationStep("thinking")
-        await new Promise((r) => setTimeout(r, 1500))
-        addChatMessage(
-          "assistant",
-          "I'd love to help you create a campaign! Let me gather some details so I can put together the best plan for you.\n\nPlease fill out the information below, and feel free to skip any fields you're unsure about — I can suggest defaults."
-        )
-        setConversationStep("questions")
-      } else {
-        setIsOpen(true)
-        await sendAssistantQuery(query)
-      }
-    }
+    await handleQuery(query)
   }
 
-  const handleQuickAction = (label: string) => {
-    if (label === "Create Campaign") {
-      setInput("")
-      addChatMessage("user", "Help me create a new campaign")
+  const handleQuery = async (query: string) => {
+    if (!query.trim()) return
+    if (isCampaignIntent(query)) {
+      addChatMessage("user", query)
       setConversationStep("thinking")
-      setTimeout(async () => {
-        addChatMessage(
-          "assistant",
-          "I'd love to help you create a campaign! Let me gather some details so I can put together the best plan for you.\n\nPlease fill out the information below, and feel free to skip any fields you're unsure about — I can suggest defaults."
-        )
-        setConversationStep("questions")
-      }, 1500)
-      return
+      await new Promise((r) => setTimeout(r, 1500))
+      addChatMessage(
+        "assistant",
+        "I'd love to help you create a campaign! Let me gather some details so I can put together the best plan for you.\n\nPlease fill out the information below, and feel free to skip any fields you're unsure about — I can suggest defaults."
+      )
+      setConversationStep("questions")
+    } else {
+      setIsOpen(true)
+      await sendAssistantQuery(query)
     }
-
-    const prompts: Record<string, string> = {
-      Analyze: "How are my campaigns performing?",
-      "AI Visibility": "Where am I losing to competitors in AI search?",
-      Reports: "Show me revenue trends for the last 28 days",
-      Catalog: "Which product attributes are weakest for AI answers?",
-    }
-    const prompt = prompts[label] ?? `Help me with ${label}`
-    setInput("")
-    setIsOpen(true)
-    sendAssistantQuery(prompt)
-  }
-
-  const handleSuggestionCard = (text: string) => {
-    setInput(text)
   }
 
   const buildPlanFromAnswers = (a: CampaignAnswers): CampaignPlan => {
@@ -543,7 +484,7 @@ export function AIHomeView() {
       "Your campaign has been created successfully! 🎉\n\nYou can review and edit the details in the panel on the right. When you're ready, you can publish it directly or save it as a draft."
     )
     setConversationStep("done")
-    setShowDetailPanel(true)
+    setCampaignPanelOpen(true)
   }
 
   const handleSaveDraft = () => {
@@ -590,7 +531,7 @@ export function AIHomeView() {
                   <button
                     key={card.text}
                     type="button"
-                    onClick={() => handleSuggestionCard(card.text)}
+                    onClick={() => handleQuery(card.text)}
                     className={cn(
                       "flex items-start gap-3 rounded-xl border border-border bg-background p-4 text-left text-sm text-foreground shadow-sm transition-all",
                       "hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:hover:border-indigo-800"
@@ -604,36 +545,24 @@ export function AIHomeView() {
                 ))}
               </div>
 
-              {/* Quick action pills */}
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {quickActions.map((action) => (
-                  <button
-                    key={action.label}
-                    type="button"
-                    onClick={() => handleQuickAction(action.label)}
-                    className={cn(
-                      "inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors",
-                      "hover:bg-accent hover:text-foreground"
-                    )}
-                  >
-                    <action.icon className="h-4 w-4 text-muted-foreground" />
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-
               {/* Chat input */}
               <form
                 onSubmit={handleSubmit}
-                className="w-full rounded-2xl border border-border bg-muted/30 shadow-sm transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-200/50 dark:focus-within:border-indigo-700 dark:focus-within:ring-indigo-800/50"
+                className="w-full rounded-2xl bg-muted/30 shadow-sm"
               >
                 <div className="px-4 pt-4 pb-2">
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault()
+                        handleSubmit(e as unknown as React.FormEvent)
+                      }
+                    }}
                     placeholder="Ask Aeris anything..."
-                    className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+                    className="w-full resize-none bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
                   />
                 </div>
                 <div className="flex items-center justify-between px-3 pb-3">
@@ -1029,10 +958,10 @@ export function AIHomeView() {
                   <>
                     <button
                       type="button"
-                      onClick={() => setShowDetailPanel(true)}
+                      onClick={() => setCampaignPanelOpen(true)}
                       className={cn(
                         "w-full max-w-sm rounded-xl border bg-background p-4 text-left shadow-sm transition-all",
-                        showDetailPanel
+                        campaignPanelOpen
                           ? "border-indigo-200 ring-1 ring-indigo-200 dark:border-indigo-800 dark:ring-indigo-800"
                           : "border-border hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md dark:hover:border-indigo-800"
                       )}
@@ -1103,7 +1032,7 @@ export function AIHomeView() {
 
             {/* Bottom input (for follow-up messages during conversation) */}
             {(conversationStep === "plan" || conversationStep === "done") && (
-              <div className="border-t border-border bg-background/80 px-4 py-3">
+              <div className="border-t border-border px-4 py-3">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault()
@@ -1146,11 +1075,16 @@ export function AIHomeView() {
       </div>
 
       {/* Right panel: Campaign details */}
-      {showDetailPanel && campaignPlan && (
-        <div className="w-[380px] shrink-0 overflow-hidden">
+      {campaignPanelOpen && campaignPlan && (
+        <div className="relative shrink-0 overflow-hidden border-l border-border" style={{ width: panelWidth }}>
+          {/* Drag-to-resize handle */}
+          <div
+            onMouseDown={startResize}
+            className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400/30 active:bg-indigo-400/50 transition-colors z-10"
+          />
           <CampaignDetailPanel
             plan={campaignPlan}
-            onClose={() => setShowDetailPanel(false)}
+            onClose={() => setCampaignPanelOpen(false)}
             onSave={handleSaveDraft}
             onPublish={handlePublish}
             onFieldChange={(field, value) => {
