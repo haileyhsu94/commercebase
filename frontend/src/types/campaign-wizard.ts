@@ -21,6 +21,10 @@ export interface CampaignWizardFormData {
   /** Selected surfaces per channel id (e.g. shopping → ["ai-search"]) */
   channelSurfaces: Record<string, string[]>
   regions: string[]
+  /** ISO-3166-1 alpha-2 codes to BLOCK (advertiser doesn't want traffic from these countries) */
+  regionExclusions: string[]
+  /** ISO-639-1 codes — content language targeting */
+  languages: string[]
   ageBands: string[]
   interests: string[]
   devices: string[]
@@ -52,6 +56,8 @@ export const initialCampaignWizardForm: CampaignWizardFormData = {
   channels: [],
   channelSurfaces: {},
   regions: [],
+  regionExclusions: [],
+  languages: [],
   ageBands: [],
   interests: [],
   devices: [],
@@ -64,6 +70,19 @@ export const initialCampaignWizardForm: CampaignWizardFormData = {
   attributionModel: "",
   utmPrefix: "",
 }
+
+/** Common content languages (ISO-639-1). */
+export const LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "ko", label: "Korean" },
+  { value: "ja", label: "Japanese" },
+  { value: "zh", label: "Chinese" },
+  { value: "es", label: "Spanish" },
+  { value: "fr", label: "French" },
+  { value: "de", label: "German" },
+  { value: "it", label: "Italian" },
+  { value: "pt", label: "Portuguese" },
+] as const
 
 export const TARGET_MARKET_OPTIONS = [
   {

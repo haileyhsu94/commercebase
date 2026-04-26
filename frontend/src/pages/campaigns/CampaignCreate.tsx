@@ -67,6 +67,7 @@ import {
   BUDGET_TYPE_OPTIONS,
   ATTRIBUTION_OPTIONS,
   CURRENCY_OPTIONS,
+  LANGUAGE_OPTIONS,
   TARGET_MARKET_OPTIONS,
   IMAGE_ASPECT_RATIOS,
 } from "@/types/campaign-wizard"
@@ -1368,6 +1369,54 @@ export function CampaignCreate({
                       onClick={() => toggleInArray("devices", d)}
                     >
                       {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-1 text-sm font-medium">Languages</p>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Content language targeting. Leave empty to allow all.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {LANGUAGE_OPTIONS.map((lang) => (
+                    <button
+                      key={lang.value}
+                      type="button"
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-sm",
+                        formData.languages.includes(lang.value)
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:border-primary/50"
+                      )}
+                      onClick={() => toggleInArray("languages", lang.value)}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-1 text-sm font-medium">Blocked Countries</p>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Countries to exclude from delivery (overrides Regions).
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {REGIONS.map((region) => (
+                    <button
+                      key={`block-${region}`}
+                      type="button"
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-sm",
+                        formData.regionExclusions.includes(region)
+                          ? "border-destructive bg-destructive/10 text-destructive"
+                          : "border-border hover:border-destructive/50"
+                      )}
+                      onClick={() => toggleInArray("regionExclusions", region)}
+                    >
+                      {region}
                     </button>
                   ))}
                 </div>
