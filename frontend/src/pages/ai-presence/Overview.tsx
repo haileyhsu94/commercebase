@@ -79,11 +79,11 @@ function getScoreColor(score: number) {
   return "text-red-600 dark:text-red-400"
 }
 
-function getScoreBg(score: number) {
-  if (score >= 80) return "bg-emerald-500"
-  if (score >= 60) return "bg-blue-500"
-  if (score >= 40) return "bg-amber-500"
-  return "bg-red-500"
+function getScoreStroke(score: number) {
+  if (score >= 80) return "stroke-emerald-500"
+  if (score >= 60) return "stroke-blue-500"
+  if (score >= 40) return "stroke-amber-500"
+  return "stroke-red-500"
 }
 
 export function AIPresenceOverview() {
@@ -138,7 +138,7 @@ export function AIPresenceOverview() {
                   r="15.9155"
                 />
                 <circle
-                  className={getScoreBg(overallScore).replace("bg-", "stroke-")}
+                  className={getScoreStroke(overallScore)}
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   fill="none"
