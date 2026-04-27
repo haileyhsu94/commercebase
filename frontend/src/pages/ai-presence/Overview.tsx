@@ -1,53 +1,96 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { Link, useOutletContext, useSearchParams } from "react-router-dom"
-import { TrendingUp, TrendingDown, AlertCircle, Lightbulb, ArrowRight } from "lucide-react"
+import {
+  TrendingUp,
+  TrendingDown,
+  Lightbulb,
+  ArrowRight,
+  ArrowUpRight,
+  Target,
+  Eye,
+  Zap,
+} from "lucide-react"
+import { Area, AreaChart, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { VisibilityScoreGauge } from "@/components/shared/VisibilityScoreGauge"
-import { PlatformBreakdown } from "@/components/shared/PlatformBreakdown"
+import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { PlatformLogo } from "@/components/shared/PlatformLogo"
 import { aiVisibilityData } from "@/lib/mock-data"
-import { SOV_DESCRIPTION, SOV_LABEL_WITH_ABBR } from "@/lib/sov"
+import { SOV_SHORT } from "@/lib/sov"
 import { adjustAiVisibilityForHomeRange, daysFromAiPresenceTimeRange } from "@/lib/home-range-metrics"
 import {
   formatOverviewTrendVsPriorLabel,
-  formatOverviewVolumePeriodLabel,
   type AIPresenceOutletContext,
 } from "./ai-presence-time-range"
 
+const sovTrendData = [
+  { week: "W1", sov: 52 },
+  { week: "W2", sov: 55 },
+  { week: "W3", sov: 53 },
+  { week: "W4", sov: 58 },
+  { week: "W5", sov: 56 },
+  { week: "W6", sov: 61 },
+  { week: "W7", sov: 59 },
+  { week: "W8", sov: 64 },
+  { week: "W9", sov: 66 },
+  { week: "W10", sov: 63 },
+  { week: "W11", sov: 68 },
+  { week: "W12", sov: 74 },
+]
+
+const sovChartConfig = {
+  sov: { label: "SoV", color: "var(--color-chart-1)" },
+} satisfies ChartConfig
+
 const topQueries = [
-  { query: "luxury handbags", visibility: 23, competitors: 68, trend: "down" as const },
-  { query: "designer sneakers", visibility: 45, competitors: 52, trend: "up" as const },
-  { query: "premium watches", visibility: 67, competitors: 30, trend: "up" as const },
-  { query: "winter jackets", visibility: 34, competitors: 61, trend: "down" as const },
-  { query: "running shoes", visibility: 78, competitors: 20, trend: "up" as const },
+  { query: "luxury handbags", you: 23, leader: 68, trend: "down" as const, volume: "12.5K" },
+  { query: "designer sneakers", you: 45, leader: 52, trend: "up" as const, volume: "8.2K" },
+  { query: "premium watches", you: 67, leader: 72, trend: "up" as const, volume: "6.8K" },
+  { query: "winter jackets", you: 34, leader: 61, trend: "down" as const, volume: "5.1K" },
+  { query: "running shoes", you: 78, leader: 82, trend: "up" as const, volume: "22.3K" },
 ]
 
 const recommendations = [
   {
     title: "Add 'Italian leather' to product descriptions",
-    impact: "High",
+    impact: "High" as const,
     description: "Products with this keyword rank 2x higher in AI recommendations",
+    lift: "+12%",
   },
   {
     title: "Include customer reviews in feed",
-    impact: "High",
+    impact: "High" as const,
     description: "Products with 4.5+ stars get 3x more AI mentions",
+    lift: "+18%",
   },
   {
     title: "Optimize price positioning",
-    impact: "Medium",
+    impact: "Medium" as const,
     description: "Your luxury items are above the 'best value' threshold",
+    lift: "+6%",
   },
 ]
+
+function getScoreColor(score: number) {
+  if (score >= 80) return "text-emerald-600 dark:text-emerald-400"
+  if (score >= 60) return "text-blue-600 dark:text-blue-400"
+  if (score >= 40) return "text-amber-600 dark:text-amber-400"
+  return "text-red-600 dark:text-red-400"
+}
+
+function getScoreBg(score: number) {
+  if (score >= 80) return "bg-emerald-500"
+  if (score >= 60) return "bg-blue-500"
+  if (score >= 40) return "bg-amber-500"
+  return "bg-red-500"
+}
 
 export function AIPresenceOverview() {
   const { timeRange } = useOutletContext<AIPresenceOutletContext>()
   const days = daysFromAiPresenceTimeRange(timeRange)
-  const { overallScore, shoppingQueries, missedOpportunities } = adjustAiVisibilityForHomeRange(
-    aiVisibilityData,
-    days
-  )
+  const data = adjustAiVisibilityForHomeRange(aiVisibilityData, days)
+  const { overallScore, shoppingQueries, missedOpportunities, platforms } = data
   const [searchParams, setSearchParams] = useSearchParams()
   const recsRef = useRef<HTMLDivElement>(null)
   const shouldHighlight = searchParams.get("highlight") === "recommendations"
@@ -65,160 +108,334 @@ export function AIPresenceOverview() {
       return () => clearTimeout(timeout)
     }
   }, [shouldHighlight, setSearchParams])
-  const volumePeriodLabel = formatOverviewVolumePeriodLabel(timeRange)
+
   const trendVsPriorLabel = formatOverviewTrendVsPriorLabel(timeRange)
 
+  const mentions = Math.round(shoppingQueries * (overallScore / 100))
+
+  const sortedPlatforms = useMemo(
+    () => [...platforms].sort((a, b) => b.score - a.score),
+    [platforms]
+  )
+
   return (
-    <>
-      <div className="grid gap-6 md:grid-cols-3 mb-6">
-        <Card className="md:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{SOV_LABEL_WITH_ABBR}</CardTitle>
-            <CardDescription className="text-xs">{SOV_DESCRIPTION}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center py-4">
-            <VisibilityScoreGauge score={overallScore} size="lg" showLabel={false} />
-            <p className="mt-4 text-sm text-muted-foreground text-center">
-              Your brand captures about {overallScore}% share of voice in relevant AI shopping answers for
-              your catalog.
+    <div className="space-y-6">
+      {/* ── Hero: SoV score + trend chart ── */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Card className="lg:col-span-2">
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Overall {SOV_SHORT}
+            </p>
+            <div className="relative mt-4 flex items-center justify-center">
+              <svg className="h-36 w-36" viewBox="0 0 36 36" aria-hidden>
+                <circle
+                  className="text-muted stroke-current"
+                  strokeWidth="2.5"
+                  fill="none"
+                  cx="18"
+                  cy="18"
+                  r="15.9155"
+                />
+                <circle
+                  className={getScoreBg(overallScore).replace("bg-", "stroke-")}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  fill="none"
+                  cx="18"
+                  cy="18"
+                  r="15.9155"
+                  strokeDasharray={`${overallScore} 100`}
+                  transform="rotate(-90 18 18)"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className={`text-4xl font-bold tabular-nums ${getScoreColor(overallScore)}`}>
+                  {overallScore}
+                </span>
+                <span className="text-[10px] text-muted-foreground">/ 100</span>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+              <TrendingUp className="size-3" />
+              +15.6% {trendVsPriorLabel}
+            </div>
+            <p className="mt-3 text-center text-xs leading-relaxed text-muted-foreground max-w-[200px]">
+              Your brand captures <span className="font-semibold text-foreground">{overallScore}%</span> share
+              of voice in AI shopping answers.
             </p>
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Platform Breakdown</CardTitle>
-            <CardDescription>SoV by AI platform — where you win or lag</CardDescription>
+        <Card className="lg:col-span-3">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-medium">{SOV_SHORT} Trend</CardTitle>
+                <CardDescription>Weekly share of voice performance</CardDescription>
+              </div>
+              <Badge variant="outline" className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400 font-semibold">
+                +22 pts (12 wks)
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
-            <PlatformBreakdown />
+            <ChartContainer config={sovChartConfig} className="h-[200px] w-full">
+              <AreaChart data={sovTrendData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                <defs>
+                  <linearGradient id="sovGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-chart-1)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-chart-1)" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="week"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 10 }}
+                  tickMargin={8}
+                />
+                <YAxis
+                  domain={[40, 85]}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 10 }}
+                  tickMargin={4}
+                  tickFormatter={(v: number) => `${v}%`}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area
+                  dataKey="sov"
+                  type="monotone"
+                  stroke="var(--color-chart-1)"
+                  strokeWidth={2}
+                  fill="url(#sovGradient)"
+                />
+              </AreaChart>
+            </ChartContainer>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3 mb-6">
-        <Link to="/ai-presence/shopping-journey" className="block group/card h-full">
-          <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center justify-between">
-                Shopping Queries
-                <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold">{shoppingQueries.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">{volumePeriodLabel}</p>
+      {/* ── KPI cards ── */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Link to="/ai-presence/shopping-journey" className="group/card block">
+          <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                  <Eye className="size-4.5" />
                 </div>
-                <div className="flex flex-col items-end gap-0.5 text-green-600">
-                  <div className="flex items-center">
-                    <TrendingUp className="mr-1 h-4 w-4" />
-                    <span className="text-sm">+12%</span>
-                  </div>
-                  <span className="text-[10px] font-normal text-muted-foreground leading-none">
-                    {trendVsPriorLabel}
-                  </span>
-                </div>
+                <ArrowRight className="size-3.5 text-muted-foreground opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
+              </div>
+              <p className="mt-3 text-2xl font-bold tabular-nums">{shoppingQueries.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Shopping Queries</p>
+              <div className="mt-2 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <TrendingUp className="size-3" />
+                +12% <span className="font-normal text-muted-foreground">{trendVsPriorLabel}</span>
               </div>
             </CardContent>
           </Card>
         </Link>
 
-        <Link to="/ai-presence/merchants" className="block group/card h-full">
-          <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center justify-between">
-                Your Mentions
-                <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold">
-                    {Math.round(shoppingQueries * (overallScore / 100)).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{volumePeriodLabel}</p>
+        <Link to="/ai-presence/merchants" className="group/card block">
+          <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400">
+                  <Target className="size-4.5" />
                 </div>
-                <div className="flex flex-col items-end gap-0.5 text-green-600">
-                  <div className="flex items-center">
-                    <TrendingUp className="mr-1 h-4 w-4" />
-                    <span className="text-sm">+8%</span>
-                  </div>
-                  <span className="text-[10px] font-normal text-muted-foreground leading-none">
-                    {trendVsPriorLabel}
-                  </span>
-                </div>
+                <ArrowRight className="size-3.5 text-muted-foreground opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
+              </div>
+              <p className="mt-3 text-2xl font-bold tabular-nums">{mentions.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Your Mentions</p>
+              <div className="mt-2 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <TrendingUp className="size-3" />
+                +8% <span className="font-normal text-muted-foreground">{trendVsPriorLabel}</span>
               </div>
             </CardContent>
           </Card>
         </Link>
 
-        <Link to="/ai-presence/opportunities" className="block group/card h-full">
-          <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm cursor-pointer border-amber-500/20">
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center justify-between">
-                Missed Opportunities
-                <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-amber-600">{missedOpportunities}</p>
-                  <p className="text-xs text-muted-foreground">high-value queries</p>
+        <Link to="/ai-presence/competitors?tab=opportunities" className="group/card block">
+          <Card className="h-full border-amber-200/60 transition-all hover:bg-muted/50 hover:shadow-sm dark:border-amber-800/40">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                  <Zap className="size-4.5" />
                 </div>
-                <AlertCircle className="h-5 w-5 text-amber-600" />
+                <ArrowRight className="size-3.5 text-muted-foreground opacity-0 -translate-x-1 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-0" />
               </div>
+              <p className="mt-3 text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-400">{missedOpportunities}</p>
+              <p className="text-xs text-muted-foreground">Missed Opportunities</p>
+              <p className="mt-2 text-xs text-muted-foreground">High-value queries with low visibility</p>
             </CardContent>
           </Card>
         </Link>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+      {/* ── Platform performance grid ── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-medium">Platform Performance</CardTitle>
+              <CardDescription>{SOV_SHORT} by AI platform — where you win or lag</CardDescription>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {platforms.length} platforms
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {sortedPlatforms.map((platform, idx) => {
+              const isTop = idx === 0
+              return (
+                <div
+                  key={platform.name}
+                  className="group relative flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-colors hover:bg-muted/40"
+                >
+                  <PlatformLogo
+                    name={platform.name}
+                    shortName={platform.shortName}
+                    iconSlug={platform.iconSlug}
+                    color={platform.color}
+                    size="md"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{platform.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        {isTop && (
+                          <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                            Best
+                          </span>
+                        )}
+                        <span className={`text-sm font-bold tabular-nums ${getScoreColor(platform.score)}`}>
+                          {platform.score}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={`h-full rounded-full transition-all ${platform.color}`}
+                        style={{ width: `${platform.score}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Bottom row: Queries + Recommendations ── */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Top queries */}
+        <Card className="lg:col-span-3">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Top Shopping Queries</CardTitle>
-              <Button variant="ghost" size="sm" render={<Link to="/ai-presence/opportunities" />}>
+              <div>
+                <CardTitle className="text-sm font-medium">Top Shopping Queries</CardTitle>
+                <CardDescription>Your {SOV_SHORT} vs category leader</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" render={<Link to="/ai-presence/competitors?tab=opportunities" />}>
                 View All <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             </div>
-            <CardDescription>Query-level SoV vs top competitors (illustrative)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {topQueries.map((item) => (
-                <div key={item.query} className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.query}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: `${item.visibility}%` }}
-                        />
-                      </div>
-                      <span className="text-xs w-10">{item.visibility}%</span>
+                <div key={item.query} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{item.query}</p>
+                      <span className="text-[10px] text-muted-foreground tabular-nums">{item.volume}/wk</span>
                     </div>
-                  </div>
-                  <div
-                    className="text-right"
-                    role="group"
-                    aria-label={`Trend ${item.trend === "up" ? "up" : "down"}, ${trendVsPriorLabel}`}
-                  >
-                    <div
-                      className={`flex items-center justify-end ${item.trend === "up" ? "text-green-600" : "text-red-600"}`}
-                    >
+                    <div className="flex items-center gap-2">
                       {item.trend === "up" ? (
-                        <TrendingUp className="h-3.5 w-3.5" />
+                        <TrendingUp className="size-3 text-emerald-600" />
                       ) : (
-                        <TrendingDown className="h-3.5 w-3.5" />
+                        <TrendingDown className="size-3 text-red-500" />
                       )}
                     </div>
-                    <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
-                      {trendVsPriorLabel}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all"
+                            style={{ width: `${item.you}%` }}
+                          />
+                        </div>
+                        <span className="w-12 text-right text-xs font-semibold tabular-nums">{item.you}%</span>
+                        <span className="text-[10px] text-muted-foreground">You</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-muted-foreground/30 transition-all"
+                            style={{ width: `${item.leader}%` }}
+                          />
+                        </div>
+                        <span className="w-12 text-right text-xs tabular-nums text-muted-foreground">{item.leader}%</span>
+                        <span className="text-[10px] text-muted-foreground">Leader</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recommendations */}
+        <Card
+          ref={recsRef}
+          className={`lg:col-span-2 ${
+            shouldHighlight
+              ? "animate-pulse ring-2 ring-primary/50 transition-all duration-700"
+              : "transition-all duration-700"
+          }`}
+        >
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-medium">Quick Wins</CardTitle>
+                <CardDescription>Top actions to boost visibility</CardDescription>
+              </div>
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Lightbulb className="size-3.5" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recommendations.map((rec, i) => (
+                <div
+                  key={i}
+                  className="group flex gap-3 rounded-lg border border-border/60 p-3 transition-colors hover:bg-muted/40"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                    <ArrowUpRight className="size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium leading-snug">{rec.title}</p>
+                      <Badge
+                        variant={rec.impact === "High" ? "default" : "secondary"}
+                        className="shrink-0 text-[10px]"
+                      >
+                        {rec.impact}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{rec.description}</p>
+                    <p className="mt-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      Est. {rec.lift} {SOV_SHORT} lift
                     </p>
                   </div>
                 </div>
@@ -226,39 +443,7 @@ export function AIPresenceOverview() {
             </div>
           </CardContent>
         </Card>
-
-        <Card
-          ref={recsRef}
-          className={
-            shouldHighlight
-              ? "animate-pulse ring-2 ring-primary/50 transition-all duration-700"
-              : "transition-all duration-700"
-          }
-        >
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Recommendations</CardTitle>
-            <CardDescription>AI-powered optimization suggestions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recommendations.map((rec, i) => (
-                <div key={i} className="flex gap-3 rounded-lg border p-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Lightbulb className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{rec.title}</p>
-                      <Badge variant={rec.impact === "High" ? "default" : "secondary"}>{rec.impact}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{rec.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
-    </>
+    </div>
   )
 }
