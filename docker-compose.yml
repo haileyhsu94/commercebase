@@ -1,30 +1,41 @@
-version: '3.8'
+# Local container test for ads-realry production image.
+# Normal local dev = `php artisan serve` + `npm run dev` directly.
+# This compose verifies the prod Docker image works end-to-end.
+#
+# Usage:
+#   1. Build base image (rare):
+#      docker buildx build -f Dockerfile.base -t ads-realry-base:1.0 .
+#   2. Build + run prod image:
+#      docker compose build && docker compose up
+#   3. Test:
+#      curl http://localhost:8000/api/health
 
 services:
-  # Backend API (PHP-FPM, local dev — no nginx, use artisan serve)
-  backend:
+  ads:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: Dockerfile
       target: container-service
+      args:
+        BASE_IMAGE: ads-realry-base:1.0
     ports:
-      - "8000:80"
-    volumes:
-      - ./backend:/var/www
-      - ./frontend/dist:/var/www/public/app
+      - "8000:8000"
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - MONGODB_URI=mongodb://mongo:27017
-      - MONGODB_DATABASE=realry
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: base64:g8OgQuwoAA60pi87iI1pvxj1ExCZCQm86/WLhYUJ3zg=
+      DB_CONNECTION: mongodb
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DATABASE: realry
+      DAILYCLICKS_DRIVER: log_only
+      DAILYCLICKS_BROWSER_HEADLESS: "true"
     depends_on:
       - mongo
 
-  # MongoDB (local dev only — prod uses realry's MongoDB)
   mongo:
     image: mongo:7
     ports:
-      - "27017:27017"
+      - "27018:27017" # 호스트 27017(local realry mongodb)과 충돌 방지
     volumes:
       - mongo_data:/data/db
 

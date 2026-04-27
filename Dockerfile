@@ -2,14 +2,19 @@
 # CommerceBase / ads.realry.com — Per-commit Production Image
 # Base = ads-realry-base (PHP + Playwright + Worker node_modules pre-installed)
 #
-# Build (run from repo root):
+# Build (CI / production):
 #   docker buildx build --platform linux/arm64 --target container-service \
 #     -t ads-realry:local -f Dockerfile .
+#
+# Build (local — base built locally with tag ads-realry-base:1.0):
+#   docker buildx build --build-arg BASE_IMAGE=ads-realry-base:1.0 \
+#     --target container-service -t ads-realry:local -f Dockerfile .
 #
 # Per-commit ~80MB delta vs base (~1.1GB).
 # =============================================================================
 
-FROM 440092377860.dkr.ecr.us-east-1.amazonaws.com/ads-realry-base:1.0 AS base
+ARG BASE_IMAGE=440092377860.dkr.ecr.us-east-1.amazonaws.com/ads-realry-base:1.0
+FROM ${BASE_IMAGE} AS base
 
 ##############################################
 # Stage 1: Composer dependencies
@@ -21,7 +26,11 @@ COPY backend/composer.json backend/composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-progress --ignore-platform-req=ext-mongodb
 
 COPY backend/ /var/www
-RUN composer dump-autoload --optimize --no-dev
+# Clear stale bootstrap/cache from local dev (Pail/Telescope dev-only providers
+# baked into local cache aren't present in --no-dev vendor/). Laravel rebuilds.
+RUN rm -f bootstrap/cache/*.php
+# --no-scripts: skip artisan package:discover (runs at first request anyway).
+RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 ##############################################
 # Stage 2: Worker TypeScript compile
@@ -32,7 +41,8 @@ FROM base AS worker-build
 WORKDIR /opt/dailyclicks-worker
 COPY dailyclicks-worker/src ./src
 COPY dailyclicks-worker/tsconfig.json ./
-RUN npx tsc
+# typescript + @types/node already installed in base node_modules
+RUN ./node_modules/.bin/tsc
 
 ##############################################
 # Stage 3: Production

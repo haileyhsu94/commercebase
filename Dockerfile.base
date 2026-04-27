@@ -55,9 +55,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN mkdir -p /run/php && chown www-data:www-data /run/php
 
 # Pre-install worker node_modules (Playwright + Chromium already in base image)
+# Includes devDeps (typescript + @types/node) — needed by per-commit `tsc` build.
+# +~60 MB but avoids reinstall on every commit.
 WORKDIR /opt/dailyclicks-worker
 COPY dailyclicks-worker/package.json dailyclicks-worker/package-lock.json ./
-RUN npm ci --no-audit --no-fund --omit=dev
+RUN npm ci --no-audit --no-fund
 
 WORKDIR /var/www
 
