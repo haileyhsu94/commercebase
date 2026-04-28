@@ -18,6 +18,7 @@ import { HealthScoreCard } from "@/components/shared/HealthScoreCard"
 import { AIVisibilityScoreCard } from "@/components/shared/AIVisibilityScoreCard"
 import { QuickActions } from "@/components/shared/QuickActions"
 import { CampaignSummary } from "@/components/shared/CampaignSummary"
+import { AIHomeView } from "@/components/shared/AIHomeView"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -35,6 +36,7 @@ import {
   formatAiPresencePeriodShort,
   type AiPresenceTimeRange,
 } from "@/pages/ai-presence/ai-presence-time-range"
+import { useHomeMode } from "@/contexts/HomeModeContext"
 
 const DND_TYPE = "application/x-commercebase-home-widget"
 
@@ -120,16 +122,22 @@ export function Home() {
         }
       />
 
-      <div className="space-y-6">
-        {visibleOrdered.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-            All sections are hidden. Use <span className="font-medium text-foreground">Customize home</span> to show
-            them again.
-          </p>
-        ) : (
-          visibleOrdered.map((id) => <HomeWidgetBlock key={id} id={id} timeRange={timeRange} />)
-        )}
-      </div>
+      {mode === "ai" ? (
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <AIHomeView />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {visibleOrdered.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+              All sections are hidden. Use <span className="font-medium text-foreground">Customize home</span> to show
+              them again.
+            </p>
+          ) : (
+            visibleOrdered.map((id) => <HomeWidgetBlock key={id} id={id} timeRange={timeRange} />)
+          )}
+        </div>
+      )}
 
       <Dialog
         open={customizeOpen}
