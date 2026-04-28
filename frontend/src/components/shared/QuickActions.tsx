@@ -43,7 +43,7 @@ export function QuickActions() {
           to={action.href}
           className={cn(
             buttonVariants({ variant: action.variant }),
-            "group/action h-auto min-h-11 justify-start gap-3 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+            "group/action h-auto min-h-11 justify-start gap-3 whitespace-normal p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
             action.variant === "secondary" &&
               "hover:bg-secondary/60"
           )}

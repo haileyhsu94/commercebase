@@ -50,6 +50,7 @@ function reorderWidgets(order: HomeWidgetId[], fromIndex: number, toIndex: numbe
 
 export function Home() {
   const { user } = useAuth()
+  const { mode } = useHomeMode()
   const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
   const [layout, setLayout] = useState<HomeLayoutState>(() => getHomeLayout())
   const [customizeOpen, setCustomizeOpen] = useState(false)
@@ -102,25 +103,27 @@ export function Home() {
 
   return (
     <>
-      <PageHeader
-        title={`${greeting}, ${(user?.name ?? currentUser.name).split(" ")[0]}`}
-        description={`Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`}
-        status="working"
-        actions={
-          <>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setCustomizeOpen(true)}
-              aria-label="Customize home"
-            >
-              <Pencil className="size-4" />
-            </Button>
-            <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
-          </>
-        }
-      />
+      {mode === "dashboard" && (
+        <PageHeader
+          title={`${greeting}, ${(user?.name ?? currentUser.name).split(" ")[0]}`}
+          description={`Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`}
+          status="working"
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setCustomizeOpen(true)}
+                aria-label="Customize home"
+              >
+                <Pencil className="size-4" />
+              </Button>
+              <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
+            </>
+          }
+        />
+      )}
 
       {mode === "ai" ? (
         <div className="flex min-h-0 flex-1 overflow-hidden">
