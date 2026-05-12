@@ -9,6 +9,8 @@ import {
   CAMPAIGN_WIZARD_AI_DRAFT_KEY,
   tryBuildAiCampaignCopy,
 } from "@/lib/campaign-ai-copy-mock"
+import { generateCampaignFromPrompt } from "@/lib/campaign-brief-mock"
+import { addLaunchedCampaign } from "@/lib/campaign-storage"
 
 export type MessageRole = "user" | "assistant"
 
@@ -140,6 +142,23 @@ function getPageContext(pathname: string): { name: string; questions: string[] }
   return pageContextMap["/"]
 }
 
+function isCampaignCreationIntent(text: string): boolean {
+  const lower = text.toLowerCase()
+  const intentPatterns = [
+    /\b(create|launch|start|build|plan|draft|set up|kick off|begin)\b.*\b(campaign|content program|marketing|advertising|promotion)\b/,
+    /\bcampaign\b.*\b(create|launch|start|build|plan)\b/,
+    /\bget started\b.*\bcampaign\b/,
+    /\bfirst campaign\b/,
+    /\bnew campaign\b/,
+    /\bgrow\b.*\baudience\b/,
+    /\bthought leadership\b/,
+    /\bcontent\b.*\b(strategy|plan|calendar|program)\b/,
+    /\bdrive\b.*\b(sales|revenue|traffic|awareness)\b/,
+    /\bboost\b.*\b(sales|revenue|visibility|awareness)\b/,
+  ]
+  return intentPatterns.some((p) => p.test(lower))
+}
+
 interface AIAssistantProviderProps {
   children: ReactNode
 }
@@ -214,6 +233,28 @@ export function AIAssistantProvider({ children }: AIAssistantProviderProps) {
           })
           return
         }
+
+        const campaignIntent = isCampaignCreationIntent(trimmed)
+        if (campaignIntent) {
+          addMessage("Listed memory contents.\n\nRead \u{1F310} Brand Profile , \u{1F310} ICP , \u{1F310} Messaging & Positioning\n\nGreat context — I have everything I need from memory. Let me activate the campaign skill and build this out.", "assistant")
+          await new Promise((resolve) => setTimeout(resolve, 1500))
+          const { campaign, responseText } = generateCampaignFromPrompt(trimmed, "CommerceBase")
+          addLaunchedCampaign(campaign)
+          addMessage(responseText, "assistant", {
+            actions: [
+              {
+                label: "View campaign",
+                variant: "default",
+                onClick: () => {
+                  navigate(`/campaigns/${campaign.id}`)
+                  setIsOpen(false)
+                },
+              },
+            ],
+          })
+          return
+        }
+
         addMessage(getMockResponse(trimmed), "assistant")
       } finally {
         setIsLoading(false)

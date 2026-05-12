@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Plus,
   Wand2,
@@ -27,6 +28,7 @@ import {
   addLaunchedCampaign,
   makeNewCampaignRow,
 } from "@/lib/campaign-storage"
+import { generateCampaignFromPrompt } from "@/lib/campaign-brief-mock"
 import {
   TARGET_MARKET_OPTIONS,
   CAMPAIGN_OBJECTIVE_OPTIONS,
@@ -282,6 +284,7 @@ function CampaignDetailPanel({
 /* ------------------------------------------------------------------ */
 
 export function AIHomeView() {
+  const navigate = useNavigate()
   const { sendAssistantQuery, setIsOpen } = useAIAssistant()
   const { campaignPanelOpen, setCampaignPanelOpen } = useHomeMode()
   const [input, setInput] = useState("")
@@ -294,6 +297,7 @@ export function AIHomeView() {
   const [campaignPlan, setCampaignPlan] = useState<CampaignPlan | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [showSaveUrlPrompt, setShowSaveUrlPrompt] = useState(false)
+  const [generatedCampaignId, setGeneratedCampaignId] = useState<string | null>(null)
   const [panelWidth, setPanelWidth] = useState(360)
   const panelWidthRef = useRef(360)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -349,9 +353,34 @@ export function AIHomeView() {
     await handleQuery(query)
   }
 
+  const isDetailedCampaignPrompt = (text: string): boolean => {
+    const lower = text.toLowerCase()
+    const hasLength = text.length > 80
+    const hasDetailedContent =
+      (lower.includes("content") || lower.includes("blog") || lower.includes("linkedin") || lower.includes("newsletter") || lower.includes("thought leader")) ||
+      (lower.includes("week") && (lower.includes("campaign") || lower.includes("plan"))) ||
+      (lower.includes("audience") && lower.includes("grow"))
+    return hasLength && hasDetailedContent
+  }
+
   const handleQuery = async (query: string) => {
     if (!query.trim()) return
-    if (isCampaignIntent(query)) {
+    if (isDetailedCampaignPrompt(query)) {
+      addChatMessage("user", query)
+      setConversationStep("thinking")
+      await new Promise((r) => setTimeout(r, 1200))
+      addChatMessage(
+        "assistant",
+        "Listed memory contents.\n\nRead \u{1F310} Brand Profile , \u{1F310} ICP , \u{1F310} Messaging & Positioning\n\nGreat context \u2014 I have everything I need from memory. Let me activate the campaign skill and build this out."
+      )
+      await new Promise((r) => setTimeout(r, 2000))
+      const profile = getCompanyProfile()
+      const { campaign, responseText } = generateCampaignFromPrompt(query, profile.name || "CommerceBase")
+      addLaunchedCampaign(campaign)
+      addChatMessage("assistant", responseText)
+      setConversationStep("done")
+      setGeneratedCampaignId(campaign.id)
+    } else if (isCampaignIntent(query)) {
       addChatMessage("user", query)
       setConversationStep("thinking")
       await new Promise((r) => setTimeout(r, 1500))
@@ -949,6 +978,19 @@ export function AIHomeView() {
                     >
                       <Pencil className="h-3.5 w-3.5 mr-1.5" />
                       Edit
+                    </Button>
+                  </div>
+                )}
+
+                {/* Done: AI-generated campaign with brief/tasks */}
+                {conversationStep === "done" && generatedCampaignId && !campaignPlan && (
+                  <div className="max-w-sm">
+                    <Button
+                      className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700"
+                      onClick={() => navigate(`/campaigns/${generatedCampaignId}`)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      View campaign
                     </Button>
                   </div>
                 )}

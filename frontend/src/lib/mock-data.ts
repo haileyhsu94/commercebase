@@ -82,6 +82,8 @@ export interface Campaign {
   launchedAt?: string
   /** Saved when launched from the wizard — used for Duplicate campaign. */
   wizardSnapshot?: CampaignWizardFormData
+  /** AI-generated campaign data (brief, tasks, deliverables, chats). */
+  aiCampaign?: import("@/lib/campaign-brief-mock").AiCampaignData
 }
 
 export const campaigns: Campaign[] = [
