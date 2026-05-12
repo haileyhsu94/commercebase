@@ -49,7 +49,7 @@ import {
   formatAiPresencePeriodShort,
   type AiPresenceTimeRange,
 } from "@/pages/ai-presence/ai-presence-time-range"
-import type { AiCampaignData, CampaignTask } from "@/lib/campaign-brief-mock"
+import type { CampaignTask } from "@/lib/campaign-brief-mock"
 
 const chartConfig = {
   revenue: {

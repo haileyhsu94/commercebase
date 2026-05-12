@@ -375,7 +375,7 @@ export function AIHomeView() {
       )
       await new Promise((r) => setTimeout(r, 2000))
       const profile = getCompanyProfile()
-      const { campaign, responseText } = generateCampaignFromPrompt(query, profile.name || "CommerceBase")
+      const { campaign, responseText } = generateCampaignFromPrompt(query, profile.companyName || "CommerceBase")
       addLaunchedCampaign(campaign)
       addChatMessage("assistant", responseText)
       setConversationStep("done")
