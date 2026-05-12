@@ -3,13 +3,14 @@ import { Link, useNavigate } from "react-router-dom"
 import {
   ArrowLeft,
   ArrowRight,
-  Building2,
+  Bot,
   Check,
+  ChevronDown,
+  ChevronUp,
   Globe,
   Globe2,
-  ClipboardList,
+  Building2,
   Landmark,
-  Mail,
   MapPin,
   Megaphone,
   MousePointerClick,
@@ -20,9 +21,6 @@ import {
   ShoppingCart,
   UserPlus,
   Zap,
-  Target,
-  Percent,
-  SlidersHorizontal,
   Sparkles,
   Upload,
   Copy,
@@ -43,7 +41,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { defaultCompanyProfile } from "@/lib/mock-data"
 import { getCompanyProfile, siteHostname } from "@/lib/company-profile"
 import {
   addLaunchedCampaign,
@@ -52,7 +49,6 @@ import {
   wizardFormFromCampaign,
 } from "@/lib/campaign-storage"
 import { CAMPAIGN_WIZARD_AI_DRAFT_KEY } from "@/lib/campaign-ai-copy-mock"
-import { regionFlag } from "@/lib/region-flags"
 import { AdPreview } from "@/components/campaigns/AdPreview"
 import { CampaignPlanAllowanceBanner } from "@/components/campaigns/CampaignPlanAllowanceBanner"
 import {
@@ -68,147 +64,17 @@ import {
   IMAGE_ASPECT_RATIOS,
 } from "@/types/campaign-wizard"
 
-const STEP_COUNT = 7
+const STEP_COUNT = 3
 
 const steps = [
-  { id: 1, title: "Goal & market", description: "Market, objective, campaign type" },
-  { id: 2, title: "Budget & bids", description: "Currency, budget, bids, tracking" },
-  { id: 3, title: "Products", description: "Catalog and exclusions" },
-  { id: 4, title: "Channels", description: "Multi-select surfaces" },
-  { id: 5, title: "Audience", description: "Geo, demo, devices" },
-  { id: 6, title: "Creative", description: "Copy, ratio, preview" },
-  { id: 7, title: "Review", description: "Preview and launch" },
+  { id: 1, title: "Goal & budget", description: "What, where, how much" },
+  { id: 2, title: "Ad design", description: "Copy and creative" },
+  { id: 3, title: "Review & launch", description: "Confirm and go live" },
 ] as const
-
-const PRODUCT_CATEGORIES = [
-  { id: "All Products", count: "523 items" },
-  { id: "Sneakers", count: "128 items" },
-  { id: "Luxury Bags", count: "64 items" },
-  { id: "Watches", count: "41 items" },
-  { id: "Jackets", count: "89 items" },
-  { id: "Accessories", count: "201 items" },
-]
-
-const EXCLUSION_OPTIONS = ["Outlet / damaged SKU", "Pre-order only", "Gift cards", "Samples"]
-
-const CHANNEL_DEFS = [
-  {
-    id: "shopping",
-    name: "Shopping",
-    desc: "AI Search & Price Comparison",
-    surfaces: [
-      { id: "ai-search", label: "AI shopping search" },
-      { id: "price-compare", label: "Price comparison" },
-    ],
-  },
-  {
-    id: "creator",
-    name: "Creator Network",
-    desc: "Influencer & Affiliate Marketing",
-    surfaces: [
-      { id: "stories", label: "Stories & short video" },
-      { id: "affiliate", label: "Affiliate links" },
-    ],
-  },
-  {
-    id: "commerce",
-    name: "Commerce Network",
-    desc: "Publisher Partners",
-    surfaces: [
-      { id: "placements", label: "Premium placements" },
-      { id: "retargeting", label: "On-site retargeting" },
-    ],
-  },
-] as const
-
-const REGIONS = [
-  "United Kingdom",
-  "United States",
-  "Canada",
-  "Australia",
-  "New Zealand",
-  "Germany",
-  "France",
-  "Italy",
-  "Spain",
-  "Netherlands",
-  "Belgium",
-  "Austria",
-  "Switzerland",
-  "Ireland",
-  "Portugal",
-  "Sweden",
-  "Norway",
-  "Denmark",
-  "Finland",
-  "Poland",
-  "Czech Republic",
-  "Hungary",
-  "Romania",
-  "Japan",
-  "South Korea",
-  "Singapore",
-  "Hong Kong",
-  "Taiwan",
-  "India",
-  "Thailand",
-  "Malaysia",
-  "Indonesia",
-  "Philippines",
-  "United Arab Emirates",
-  "Saudi Arabia",
-  "Israel",
-  "South Africa",
-  "Brazil",
-  "Mexico",
-  "Argentina",
-  "Chile",
-  "Colombia",
-]
-
-const AGE_BANDS = ["18–24", "25–34", "35–44", "45–54", "55+"]
-
-const INTEREST_TAGS = ["Fashion", "Luxury", "Sports", "Streetwear", "Sustainability", "Travel"]
-
-const DEVICE_OPTIONS = ["Desktop", "Mobile", "Tablet"]
-
-const CONVERSION_GOAL_OPTIONS = [
-  {
-    id: "purchase",
-    label: "Purchase",
-    description: "Completed orders and revenue events for ROAS and sales reporting.",
-  },
-  {
-    id: "add_to_cart",
-    label: "Add to cart",
-    description: "Cart adds for mid-funnel optimization and catalog campaigns.",
-  },
-  {
-    id: "lead",
-    label: "Lead form",
-    description: "Qualified leads from forms; pairs with smart bidding and CRM goals.",
-  },
-  {
-    id: "signup",
-    label: "Newsletter signup",
-    description: "Email subscribers and list growth beyond immediate purchase.",
-  },
-] as const
-
-const CONVERSION_GOAL_ICONS = {
-  purchase: ShoppingBag,
-  add_to_cart: ShoppingCart,
-  lead: ClipboardList,
-  signup: Mail,
-} as const
 
 const BUDGET_SLIDER_MIN = 0
 const BUDGET_SLIDER_MAX = 50000
 const BUDGET_SLIDER_STEP = 100
-
-const MAX_CPC_SLIDER_MIN = 0
-const MAX_CPC_SLIDER_MAX = 25
-const MAX_CPC_SLIDER_STEP = 0.05
 
 const TARGET_MARKET_ICONS = {
   uk_ie: Landmark,
@@ -232,13 +98,6 @@ const CAMPAIGN_TYPE_ICONS = {
   remarketing: RotateCcw,
 } as const
 
-const BID_STRATEGY_ICONS = {
-  maximize_conversions: Zap,
-  target_roas: Percent,
-  target_cpa: Target,
-  manual_cpc: SlidersHorizontal,
-} as const
-
 const textareaClass =
   "flex min-h-[88px] w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"
 
@@ -250,11 +109,87 @@ function optionLabel<T extends { value: string; label: string }>(
   return options.find((o) => o.value === value)?.label ?? value
 }
 
+/** AI-recommended defaults based on goal and target market */
+function getAiDefaults(formData: CampaignWizardFormData) {
+  const objective = formData.objective
+  const bidStrategy =
+    objective === "sales" || objective === "newcustomer"
+      ? "maximize_conversions"
+      : objective === "traffic"
+        ? "target_cpa"
+        : "target_roas"
+  const channels =
+    objective === "creator_commerce"
+      ? ["creator"]
+      : objective === "awareness"
+        ? ["shopping", "commerce"]
+        : ["shopping"]
+  const channelSurfaces: Record<string, string[]> = {}
+  if (channels.includes("shopping"))
+    channelSurfaces.shopping = ["ai-search", "price-compare"]
+  if (channels.includes("creator"))
+    channelSurfaces.creator = ["stories", "affiliate"]
+  if (channels.includes("commerce"))
+    channelSurfaces.commerce = ["placements", "retargeting"]
+
+  const targetMarket = formData.targetMarket
+  let regions: string[] = []
+  if (targetMarket === "uk_ie") regions = ["United Kingdom", "Ireland"]
+  else if (targetMarket === "north_america")
+    regions = ["United States", "Canada", "Mexico"]
+  else if (targetMarket === "eu")
+    regions = [
+      "Germany",
+      "France",
+      "Italy",
+      "Spain",
+      "Netherlands",
+      "Belgium",
+      "Austria",
+      "Portugal",
+      "Ireland",
+    ]
+  else if (targetMarket === "apac")
+    regions = [
+      "Japan",
+      "South Korea",
+      "Singapore",
+      "Australia",
+      "New Zealand",
+    ]
+  else
+    regions = [
+      "United States",
+      "United Kingdom",
+      "Canada",
+      "Germany",
+      "France",
+      "Australia",
+    ]
+
+  return {
+    bidStrategy,
+    channels,
+    channelSurfaces,
+    regions,
+    products: ["All Products"],
+    ageBands: ["18–24", "25–34", "35–44"],
+    interests: ["Fashion", "Luxury"],
+    devices: ["Desktop", "Mobile", "Tablet"],
+    conversionGoals: objective === "sales" || objective === "newcustomer" ? ["purchase"] : ["add_to_cart"],
+    attributionModel: "data_driven",
+    campaignType:
+      objective === "sales"
+        ? "performance"
+        : objective === "traffic"
+          ? "shopping"
+          : "performance",
+  }
+}
+
 export type CampaignCreateProps = {
-  /** When true, wizard runs inside a dialog (no back link; close via onClose). */
   embedded?: boolean
   onClose?: () => void
-  /** Pre-fill all steps from this campaign id (Copy campaign). */
   duplicateSourceId?: string | null
 }
 
@@ -275,6 +210,7 @@ export function CampaignCreate({
     () => duplicateSourceId ?? "__none__"
   )
   const [showAiDraftBanner, setShowAiDraftBanner] = useState(false)
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
 
   const duplicateSourceCampaign = useMemo(() => {
     if (!duplicateSourceId) return null
@@ -317,7 +253,6 @@ export function CampaignCreate({
     setStepError("")
   }, [duplicateSourceId])
 
-  // Precedence: parent duplicateSourceId wins over Aeris draft (same sessionStorage key discarded unread).
   useEffect(() => {
     if (typeof sessionStorage === "undefined") return
     const raw = sessionStorage.getItem(CAMPAIGN_WIZARD_AI_DRAFT_KEY)
@@ -356,6 +291,8 @@ export function CampaignCreate({
     }
   }
 
+  const aiDefaults = useMemo(() => getAiDefaults(formData), [formData])
+
   const handleSaveDraft = () => {
     exitToCampaigns()
   }
@@ -363,29 +300,38 @@ export function CampaignCreate({
   const handleLaunch = () => {
     const sym =
       CURRENCY_OPTIONS.find((c) => c.value === formData.currency)?.symbol ?? "$"
+    const merged: CampaignWizardFormData = {
+      ...formData,
+      bidStrategy: formData.bidStrategy || aiDefaults.bidStrategy,
+      channels: formData.channels.length ? formData.channels : aiDefaults.channels,
+      channelSurfaces: Object.keys(formData.channelSurfaces).length
+        ? formData.channelSurfaces
+        : aiDefaults.channelSurfaces,
+      regions: formData.regions.length ? formData.regions : aiDefaults.regions,
+      products: formData.products.length ? formData.products : aiDefaults.products,
+      ageBands: formData.ageBands.length ? formData.ageBands : aiDefaults.ageBands,
+      interests: formData.interests.length ? formData.interests : aiDefaults.interests,
+      devices: formData.devices.length ? formData.devices : aiDefaults.devices,
+      conversionGoals: formData.conversionGoals.length
+        ? formData.conversionGoals
+        : aiDefaults.conversionGoals,
+      attributionModel: formData.attributionModel || aiDefaults.attributionModel,
+      campaignType: formData.campaignType || aiDefaults.campaignType,
+    }
     addLaunchedCampaign(
-      makeNewCampaignRow(formData.name.trim() || "Untitled campaign", sym, { ...formData })
+      makeNewCampaignRow(merged.name.trim() || "Untitled campaign", sym, { ...merged })
     )
     exitToCampaigns()
   }
 
   const handleNext = () => {
     if (currentStep === 1) {
-      if (
-        !formData.name.trim() ||
-        !formData.targetMarket ||
-        !formData.objective ||
-        !formData.campaignType
-      ) {
-        setStepError(
-          "Add a campaign name, objective, target market, and campaign type to continue."
-        )
+      if (!formData.name.trim() || !formData.objective) {
+        setStepError("Add a campaign name and goal to continue.")
         return
       }
-    }
-    if (currentStep === 2) {
       if (!formData.currency) {
-        setStepError("Select a currency for budgets, bids, and performance metrics.")
+        setStepError("Select a currency for budgets and reporting.")
         return
       }
     }
@@ -400,14 +346,6 @@ export function CampaignCreate({
     if (currentStep > 1) {
       setCurrentStep((s) => s - 1)
     }
-  }
-
-  const toggleInArray = (key: keyof CampaignWizardFormData, value: string) => {
-    setFormData((prev) => {
-      const arr = prev[key] as string[]
-      const next = arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value]
-      return { ...prev, [key]: next }
-    })
   }
 
   const toggleImageAspectRatio = (ratio: string) => {
@@ -455,18 +393,6 @@ export function CampaignCreate({
     setShowAiDraftBanner(false)
   }
 
-  const toggleChannel = (channel: string) => {
-    setFormData((prev) => {
-      const isOn = prev.channels.includes(channel)
-      const nextChannels = isOn ? prev.channels.filter((c) => c !== channel) : [...prev.channels, channel]
-      const nextSurfaces = { ...prev.channelSurfaces }
-      if (isOn) {
-        delete nextSurfaces[channel]
-      }
-      return { ...prev, channels: nextChannels, channelSurfaces: nextSurfaces }
-    })
-  }
-
   const budgetNumeric = (() => {
     const n = Number.parseInt(formData.budget, 10)
     if (Number.isNaN(n)) return 0
@@ -481,17 +407,6 @@ export function CampaignCreate({
     setFormData((prev) => ({ ...prev, budget: String(clamped) }))
   }
 
-  const maxCpcNumeric = (() => {
-    const n = Number.parseFloat(formData.maxCpc)
-    if (Number.isNaN(n)) return 0
-    return Math.min(MAX_CPC_SLIDER_MAX, Math.max(MAX_CPC_SLIDER_MIN, n))
-  })()
-
-  const setMaxCpcFromNumber = (n: number) => {
-    const clamped = Math.min(MAX_CPC_SLIDER_MAX, Math.max(MAX_CPC_SLIDER_MIN, n))
-    setFormData((prev) => ({ ...prev, maxCpc: clamped.toFixed(2) }))
-  }
-
   const companyProfile = useMemo(() => getCompanyProfile(), [])
 
   const applyAiHeadlines = () => {
@@ -499,24 +414,25 @@ export function CampaignCreate({
     const host = siteHostname(p.website)
     setFormData((prev) => ({
       ...prev,
-      headlinePrimary: `Shop ${p.companyName} — styles you’ll love`,
+      headlinePrimary: `Shop ${p.companyName} — styles you'll love`,
       headlineSecondary: `New arrivals and bestsellers from ${host}`,
       description: `Explore curated products from ${p.companyName}. Aeris drafted this from your company profile and website—you can edit every line.`,
     }))
   }
 
-  const toggleSurface = (channelId: string, surfaceId: string) => {
-    setFormData((prev) => {
-      const list = prev.channelSurfaces[channelId] ?? []
-      const nextList = list.includes(surfaceId)
-        ? list.filter((s) => s !== surfaceId)
-        : [...list, surfaceId]
-      return {
-        ...prev,
-        channelSurfaces: { ...prev.channelSurfaces, [channelId]: nextList },
-      }
-    })
-  }
+  // Effective values for review: user overrides or AI defaults
+  const effectiveBidStrategy = formData.bidStrategy || aiDefaults.bidStrategy
+  const effectiveChannels = formData.channels.length ? formData.channels : aiDefaults.channels
+  const effectiveRegions = formData.regions.length ? formData.regions : aiDefaults.regions
+  const effectiveProducts = formData.products.length ? formData.products : aiDefaults.products
+  const effectiveAgeBands = formData.ageBands.length ? formData.ageBands : aiDefaults.ageBands
+  const effectiveInterests = formData.interests.length ? formData.interests : aiDefaults.interests
+  const effectiveDevices = formData.devices.length ? formData.devices : aiDefaults.devices
+  const effectiveCampaignType = formData.campaignType || aiDefaults.campaignType
+  const effectiveConversionGoals = formData.conversionGoals.length
+    ? formData.conversionGoals
+    : aiDefaults.conversionGoals
+  const effectiveAttribution = formData.attributionModel || aiDefaults.attributionModel
 
   return (
     <>
@@ -579,7 +495,7 @@ export function CampaignCreate({
             <div
               key={step.id}
               className={cn(
-                "flex min-w-[4.5rem] flex-col items-center",
+                "flex min-w-[5rem] flex-col items-center",
                 step.id <= currentStep ? "text-primary" : "text-muted-foreground"
               )}
             >
@@ -603,7 +519,7 @@ export function CampaignCreate({
         </div>
       </div>
 
-      {stepError && (currentStep === 1 || currentStep === 2) && (
+      {stepError && currentStep === 1 && (
         <p className="mb-4 text-sm text-destructive" role="alert">
           {stepError}
         </p>
@@ -643,708 +559,293 @@ export function CampaignCreate({
 
       <Card className="mb-6">
         <CardContent className="space-y-6">
+          {/* ── STEP 1 — Goal & budget ── */}
           {currentStep === 1 && (
-            <div
-              id="wizard-start-from-existing"
-              className="max-w-3xl scroll-mt-4 space-y-3 rounded-xl border-2 border-dashed border-primary/40 bg-muted/30 p-4 sm:p-5"
-            >
-              <div className="flex items-start gap-2">
-                <Copy className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-                <div>
-                  <span className="text-sm font-semibold text-foreground" id="copy-from-existing-label">
-                    Start from an existing campaign
-                  </span>
-                  <p className="mt-1 text-xs text-muted-foreground" id="copy-from-existing-desc">
-                    Choose a campaign below to load its settings (same as{" "}
-                    <span className="font-medium text-foreground">Copy campaign</span> on the list). Leave
-                    blank to start fresh.
-                  </p>
+            <>
+              {/* Copy from existing */}
+              <div
+                id="wizard-start-from-existing"
+                className="max-w-3xl scroll-mt-4 space-y-3 rounded-xl border-2 border-dashed border-primary/40 bg-muted/30 p-4 sm:p-5"
+              >
+                <div className="flex items-start gap-2">
+                  <Copy className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  <div>
+                    <span className="text-sm font-semibold text-foreground" id="copy-from-existing-label">
+                      Start from an existing campaign
+                    </span>
+                    <p className="mt-1 text-xs text-muted-foreground" id="copy-from-existing-desc">
+                      Choose a campaign below to load its settings (same as{" "}
+                      <span className="font-medium text-foreground">Copy campaign</span> on the list). Leave
+                      blank to start fresh.
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <Select value={copyPickerValue} onValueChange={handleCopyFromExistingChange}>
-                <SelectTrigger
-                  className="max-w-full sm:max-w-md"
-                  aria-labelledby="copy-from-existing-label"
-                  aria-describedby="copy-from-existing-desc"
-                >
-                  <SelectValue placeholder="Don't copy — start blank" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Don't copy — start blank</SelectItem>
-                  {getMergedCampaigns().map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          <CampaignPlanAllowanceBanner compact />
-          {currentStep === 1 && (
-            <div className="max-w-3xl space-y-8">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="campaign-name">
-                  Campaign name
-                </label>
-                <Input
-                  id="campaign-name"
-                  placeholder="e.g., Summer Sale 2026"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-sm font-medium">Objective</h3>
-                  <p className="text-xs text-muted-foreground">What success looks like for this campaign.</p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {CAMPAIGN_OBJECTIVE_OPTIONS.map((o) => {
-                    const Icon = OBJECTIVE_ICONS[o.value as keyof typeof OBJECTIVE_ICONS]
-                    const selected = formData.objective === o.value
-                    return (
-                      <button
-                        key={o.value}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, objective: o.value })}
-                        className={cn(
-                          "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
-                          selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
-                        )}
-                      >
-                        {selected && (
-                          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                            <Check className="h-3 w-3" />
-                          </span>
-                        )}
-                        <Icon className="h-5 w-5 text-primary" />
-                        <span className="font-medium leading-tight">{o.label}</span>
-                        <span className="text-xs text-muted-foreground">{o.description}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-sm font-medium">Target market</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Strategic cluster for optimization and reporting (e.g. EU vs North America). This is not
-                    the same as ad delivery countries—those are chosen in the Audience step.
-                  </p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {TARGET_MARKET_OPTIONS.map((m) => {
-                    const Icon = TARGET_MARKET_ICONS[m.value as keyof typeof TARGET_MARKET_ICONS]
-                    const selected = formData.targetMarket === m.value
-                    return (
-                      <button
-                        key={m.value}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, targetMarket: m.value })}
-                        className={cn(
-                          "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
-                          selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
-                        )}
-                      >
-                        {selected && (
-                          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                            <Check className="h-3 w-3" />
-                          </span>
-                        )}
-                        {Icon && <Icon className="h-5 w-5 text-primary" />}
-                        <span className="font-medium leading-tight">{m.label}</span>
-                        <span className="text-xs text-muted-foreground">{m.description}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-sm font-medium">Campaign type</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Shapes channel recommendations and bidding in later steps.
-                  </p>
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {CAMPAIGN_TYPE_OPTIONS.map((t) => {
-                    const Icon = CAMPAIGN_TYPE_ICONS[t.value as keyof typeof CAMPAIGN_TYPE_ICONS]
-                    const selected = formData.campaignType === t.value
-                    return (
-                      <button
-                        key={t.value}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, campaignType: t.value })}
-                        className={cn(
-                          "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
-                          selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
-                        )}
-                      >
-                        {selected && (
-                          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                            <Check className="h-3 w-3" />
-                          </span>
-                        )}
-                        <Icon className="h-5 w-5 text-primary" />
-                        <span className="font-medium leading-tight">{t.label}</span>
-                        <span className="text-xs text-muted-foreground">{t.description}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
-            <div className="max-w-lg space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="campaign-currency">
-                  Currency
-                </label>
-                <p className="text-xs text-muted-foreground">
-                  Budget amounts, bid caps, and reports use this currency. Choose the code you bill in.
-                </p>
-                <Select
-                  value={formData.currency}
-                  onValueChange={(value) => setFormData({ ...formData, currency: value ?? "" })}
-                >
-                  <SelectTrigger id="campaign-currency" className="w-full max-w-md">
-                    <SelectValue placeholder="Select currency" />
+                <Select value={copyPickerValue} onValueChange={handleCopyFromExistingChange}>
+                  <SelectTrigger
+                    className="max-w-full sm:max-w-md"
+                    aria-labelledby="copy-from-existing-label"
+                    aria-describedby="copy-from-existing-desc"
+                  >
+                    <SelectValue placeholder="Don't copy — start blank" />
                   </SelectTrigger>
                   <SelectContent>
-                    {CURRENCY_OPTIONS.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {`${c.symbol} ${c.value} — ${c.label}`}
+                    <SelectItem value="__none__">Don't copy — start blank</SelectItem>
+                    {getMergedCampaigns().map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <label className="text-sm font-medium" htmlFor="campaign-budget">
-                    Budget
+
+              <CampaignPlanAllowanceBanner compact />
+
+              <div className="max-w-3xl space-y-8">
+                {/* Campaign name */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="campaign-name">
+                    Campaign name
                   </label>
                   <Input
-                    id="campaign-budget"
-                    type="number"
-                    min={BUDGET_SLIDER_MIN}
-                    max={BUDGET_SLIDER_MAX}
-                    step={BUDGET_SLIDER_STEP}
-                    placeholder="5000"
-                    value={formData.budget}
-                    onChange={(e) => {
-                      const raw = e.target.value
-                      if (raw === "") {
-                        setFormData({ ...formData, budget: "" })
-                        return
-                      }
-                      const n = Number.parseInt(raw, 10)
-                      if (Number.isNaN(n)) return
-                      setBudgetFromNumber(n)
-                    }}
-                  />
-                  <Slider
-                    min={BUDGET_SLIDER_MIN}
-                    max={BUDGET_SLIDER_MAX}
-                    step={BUDGET_SLIDER_STEP}
-                    value={[budgetNumeric]}
-                    onValueChange={(v) => {
-                      const arr = Array.isArray(v) ? v : [v]
-                      const next = arr[0]
-                      if (typeof next === "number") setBudgetFromNumber(next)
-                    }}
-                    aria-label="Adjust budget"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {formData.budget ? (
-                      <>
-                        <span className="font-medium text-foreground">
-                          {currencySymbol}
-                          {budgetNumeric.toLocaleString()}
-                        </span>
-                        {" "}
-                        budget cap ·{" "}
-                      </>
-                    ) : (
-                      <>
-                        Set a cap between {currencySymbol}
-                        {BUDGET_SLIDER_MIN.toLocaleString()}–{currencySymbol}
-                        {BUDGET_SLIDER_MAX.toLocaleString()}.{" "}
-                      </>
-                    )}
-                    {BUDGET_TYPE_OPTIONS.find((b) => b.value === formData.budgetType)?.description ??
-                      "Choose how the budget is spent across time."}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Budget type</label>
-                  <Select
-                    value={formData.budgetType}
-                    onValueChange={(value) => {
-                      if (value) setFormData({ ...formData, budgetType: value })
-                    }}
-                  >
-                    <SelectTrigger
-                      className="h-auto min-h-8 w-full min-w-0 whitespace-normal py-2 [&_[data-slot=select-value]]:line-clamp-none"
-                    >
-                      <SelectValue placeholder="Select budget type" />
-                    </SelectTrigger>
-                    <SelectContent className="min-w-[min(100vw-2rem,22rem)] max-w-lg w-[min(100vw-2rem,28rem)]">
-                      {BUDGET_TYPE_OPTIONS.map((b) => (
-                        <SelectItem key={b.value} value={b.value} title={b.description}>
-                          <span className="block font-medium leading-snug">{b.label}</span>
-                          <span className="block text-xs text-muted-foreground">{b.description}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Bid strategy</label>
-                  <p className="text-xs text-muted-foreground">
-                    Smart bidding uses your account conversion data when available.
-                  </p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {BID_STRATEGY_OPTIONS.map((o) => {
-                    const Icon = BID_STRATEGY_ICONS[o.value as keyof typeof BID_STRATEGY_ICONS]
-                    const selected = formData.bidStrategy === o.value
-                    return (
-                      <button
-                        key={o.value}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, bidStrategy: o.value })}
-                        className={cn(
-                          "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
-                          selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
-                        )}
-                      >
-                        {selected && (
-                          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                            <Check className="h-3 w-3" />
-                          </span>
-                        )}
-                        <Icon className="h-5 w-5 text-primary" />
-                        <span className="font-medium leading-tight">{o.label}</span>
-                        <span className="text-xs text-muted-foreground">{o.description}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              <div className="space-y-3">
-                <label className="text-sm font-medium" htmlFor="campaign-max-cpc">
-                  Max CPC cap (optional)
-                </label>
-                <Input
-                  id="campaign-max-cpc"
-                  type="number"
-                  min={MAX_CPC_SLIDER_MIN}
-                  max={MAX_CPC_SLIDER_MAX}
-                  step={MAX_CPC_SLIDER_STEP}
-                  placeholder={`e.g., ${currencySymbol}2.50`}
-                  value={formData.maxCpc}
-                  onChange={(e) => {
-                    const raw = e.target.value
-                    if (raw === "") {
-                      setFormData({ ...formData, maxCpc: "" })
-                      return
-                    }
-                    const n = Number.parseFloat(raw)
-                    if (Number.isNaN(n)) return
-                    setMaxCpcFromNumber(n)
-                  }}
-                />
-                <Slider
-                  min={MAX_CPC_SLIDER_MIN}
-                  max={MAX_CPC_SLIDER_MAX}
-                  step={MAX_CPC_SLIDER_STEP}
-                  value={[maxCpcNumeric]}
-                  onValueChange={(v) => {
-                    const arr = Array.isArray(v) ? v : [v]
-                    const next = arr[0]
-                    if (typeof next === "number") setMaxCpcFromNumber(next)
-                  }}
-                  aria-label="Adjust max CPC cap"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {currencySymbol}
-                  {MAX_CPC_SLIDER_MIN.toFixed(2)} – {currencySymbol}
-                  {MAX_CPC_SLIDER_MAX.toFixed(2)} max bid per click
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="campaign-start-date" className="text-sm font-medium">
-                    Start date
-                  </label>
-                  <DatePickerField
-                    id="campaign-start-date"
-                    value={formData.startDate}
-                    onChange={(v) => setFormData({ ...formData, startDate: v })}
-                    maxDate={parseIsoDateString(formData.endDate)}
-                    placeholder="Start date"
+                    id="campaign-name"
+                    placeholder="e.g., Summer Sale 2026"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="campaign-end-date" className="text-sm font-medium">
-                    End date
-                  </label>
-                  <DatePickerField
-                    id="campaign-end-date"
-                    value={formData.endDate}
-                    onChange={(v) => setFormData({ ...formData, endDate: v })}
-                    minDate={parseIsoDateString(formData.startDate)}
-                    placeholder="End date"
-                  />
-                </div>
-              </div>
-              <Separator />
-              <div>
-                <h3 className="mb-1 text-sm font-medium">Conversion &amp; measurement</h3>
-                <p className="mb-3 text-xs text-muted-foreground">
-                  Set these early so reporting and smart bidding stay aligned (same as Google Ads / Meta
-                  onboarding flows).
-                </p>
-                <div className="space-y-4">
+
+                {/* Goal */}
+                <div className="space-y-3">
                   <div>
-                    <p className="mb-2 text-sm font-medium">Conversion goals</p>
-                    <p className="mb-3 text-xs text-muted-foreground">
-                      Multi-select — used for reporting and smart bidding eligibility.
+                    <h3 className="text-sm font-medium">Goal</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Choose your primary objective. AI configures targeting, bidding, and channels to
+                      match.
                     </p>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {CONVERSION_GOAL_OPTIONS.map((g) => {
-                        const Icon =
-                          CONVERSION_GOAL_ICONS[g.id as keyof typeof CONVERSION_GOAL_ICONS]
-                        const selected = formData.conversionGoals.includes(g.id)
-                        return (
-                          <button
-                            key={g.id}
-                            type="button"
-                            onClick={() => toggleInArray("conversionGoals", g.id)}
-                            className={cn(
-                              "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
-                              selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
-                            )}
-                          >
-                            {selected && (
-                              <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                                <Check className="h-3 w-3" />
-                              </span>
-                            )}
-                            <Icon className="h-5 w-5 text-primary" />
-                            <span className="font-medium leading-tight">{g.label}</span>
-                            <span className="text-xs text-muted-foreground">{g.description}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
                   </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {CAMPAIGN_OBJECTIVE_OPTIONS.map((o) => {
+                      const Icon = OBJECTIVE_ICONS[o.value as keyof typeof OBJECTIVE_ICONS]
+                      const selected = formData.objective === o.value
+                      return (
+                        <button
+                          key={o.value}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, objective: o.value })}
+                          className={cn(
+                            "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
+                            selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                          )}
+                        >
+                          {selected && (
+                            <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                              <Check className="h-3 w-3" />
+                            </span>
+                          )}
+                          <Icon className="h-5 w-5 text-primary" />
+                          <span className="font-medium leading-tight">{o.label}</span>
+                          <span className="text-xs text-muted-foreground">{o.description}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Target market */}
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-medium">Target market</h3>
+                    <p className="text-xs text-muted-foreground">
+                      AI auto-selects delivery regions and audience from this market.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {TARGET_MARKET_OPTIONS.map((m) => {
+                      const Icon = TARGET_MARKET_ICONS[m.value as keyof typeof TARGET_MARKET_ICONS]
+                      const selected = formData.targetMarket === m.value
+                      return (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, targetMarket: m.value })}
+                          className={cn(
+                            "relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
+                            selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                          )}
+                        >
+                          {selected && (
+                            <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                              <Check className="h-3 w-3" />
+                            </span>
+                          )}
+                          {Icon && <Icon className="h-5 w-5 text-primary" />}
+                          <span className="font-medium leading-tight">{m.label}</span>
+                          <span className="text-xs text-muted-foreground">{m.description}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Currency + Budget */}
+                <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Attribution model</label>
+                    <label className="text-sm font-medium" htmlFor="campaign-currency">
+                      Currency
+                    </label>
                     <Select
-                      value={formData.attributionModel}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, attributionModel: value ?? "" })
-                      }
+                      value={formData.currency}
+                      onValueChange={(value) => setFormData({ ...formData, currency: value ?? "" })}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select model" />
+                      <SelectTrigger id="campaign-currency" className="w-full max-w-md">
+                        <SelectValue placeholder="Select currency" />
                       </SelectTrigger>
                       <SelectContent>
-                        {ATTRIBUTION_OPTIONS.map((o) => (
-                          <SelectItem key={o.value} value={o.value}>
-                            {o.label}
+                        {CURRENCY_OPTIONS.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {`${c.symbol} ${c.value} — ${c.label}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">UTM prefix (optional)</label>
-                    <Input
-                      placeholder="e.g., ss26_sale"
-                      value={formData.utmPrefix}
-                      onChange={(e) => setFormData({ ...formData, utmPrefix: e.target.value })}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Applied to landing URLs in analytics integrations.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <Card className="bg-muted/20">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Which catalog?</CardTitle>
-                  <CardDescription>
-                    Onboarding captures your company profile and website so we can analyze your site, map
-                    product feeds, and label categories. You can update this anytime in{" "}
-                    <Link to="/settings" className="text-primary underline underline-offset-2">
-                      Settings → Company
-                    </Link>
-                    .
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <p>
-                    <span className="font-medium text-foreground">Company:</span>{" "}
-                    {companyProfile.companyName}
-                  </p>
-                  <p>
-                    <span className="font-medium text-foreground">Website:</span> {companyProfile.website}
-                  </p>
-                  <p>
-                    <span className="font-medium text-foreground">Location:</span>{" "}
-                    {[companyProfile.city, companyProfile.country].filter(Boolean).join(", ") ||
-                      "Not set — add city and country in Settings → Company"}
-                  </p>
-                  <p>
-                    <span className="font-medium text-foreground">Primary feed:</span>{" "}
-                    {companyProfile.catalogSource ?? defaultCompanyProfile.catalogSource}
-                  </p>
-                </CardContent>
-              </Card>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Choose catalog scope for this campaign. &quot;All Products&quot; uses the full synced feed;
-                  other tiles narrow delivery to those categories.
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
-                  {PRODUCT_CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      className={cn(
-                        "rounded-lg border p-4 text-left transition-colors",
-                        formData.products.includes(cat.id)
-                          ? "border-primary bg-primary/5"
-                          : "hover:border-primary/50"
-                      )}
-                      onClick={() => toggleInArray("products", cat.id)}
-                    >
-                      <p className="font-medium">{cat.id}</p>
-                      <p className="text-xs text-muted-foreground">{cat.count}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <Separator />
-              <div>
-                <p className="mb-2 text-sm font-medium">Exclude from campaign (optional)</p>
-                <p className="mb-3 text-sm text-muted-foreground">
-                  SKUs or groups to never promote in this campaign.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {EXCLUSION_OPTIONS.map((ex) => (
-                    <button
-                      key={ex}
-                      type="button"
-                      className={cn(
-                        "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                        formData.productExclusions.includes(ex)
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:border-primary/50"
-                      )}
-                      onClick={() => toggleInArray("productExclusions", ex)}
-                    >
-                      {ex}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 4 && (
-            <div className="space-y-6">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Multi-select:</span> choose one or more channels.
-                For each channel you enable, you can multi-select surfaces (placements) below it.
-              </p>
-              <div className="grid gap-4">
-                {CHANNEL_DEFS.map((channel) => (
-                  <div key={channel.id} className="rounded-lg border">
-                    <button
-                      type="button"
-                      className={cn(
-                        "flex w-full items-center justify-between p-4 text-left transition-colors",
-                        formData.channels.includes(channel.id) ? "bg-primary/5" : "hover:bg-muted/50"
-                      )}
-                      onClick={() => toggleChannel(channel.id)}
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{channel.name}</p>
-                          {channel.id === "shopping" && (
-                            <span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                              Recommended
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{channel.desc}</p>
-                      </div>
-                      <div
-                        className={cn(
-                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-                          formData.channels.includes(channel.id)
-                            ? "border-primary bg-primary"
-                            : "border-muted"
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium" htmlFor="campaign-budget">
+                        Budget
+                      </label>
+                      <Input
+                        id="campaign-budget"
+                        type="number"
+                        min={BUDGET_SLIDER_MIN}
+                        max={BUDGET_SLIDER_MAX}
+                        step={BUDGET_SLIDER_STEP}
+                        placeholder="5000"
+                        value={formData.budget}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          if (raw === "") {
+                            setFormData({ ...formData, budget: "" })
+                            return
+                          }
+                          const n = Number.parseInt(raw, 10)
+                          if (Number.isNaN(n)) return
+                          setBudgetFromNumber(n)
+                        }}
+                      />
+                      <Slider
+                        min={BUDGET_SLIDER_MIN}
+                        max={BUDGET_SLIDER_MAX}
+                        step={BUDGET_SLIDER_STEP}
+                        value={[budgetNumeric]}
+                        onValueChange={(v) => {
+                          const arr = Array.isArray(v) ? v : [v]
+                          const next = arr[0]
+                          if (typeof next === "number") setBudgetFromNumber(next)
+                        }}
+                        aria-label="Adjust budget"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {formData.budget ? (
+                          <>
+                            <span className="font-medium text-foreground">
+                              {currencySymbol}
+                              {budgetNumeric.toLocaleString()}
+                            </span>{" "}
+                            budget cap ·{" "}
+                          </>
+                        ) : (
+                          <>
+                            Set a cap between {currencySymbol}
+                            {BUDGET_SLIDER_MIN.toLocaleString()}–{currencySymbol}
+                            {BUDGET_SLIDER_MAX.toLocaleString()}.{" "}
+                          </>
                         )}
+                        {BUDGET_TYPE_OPTIONS.find((b) => b.value === formData.budgetType)?.description ??
+                          "Choose how the budget is spent across time."}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Budget type</label>
+                      <Select
+                        value={formData.budgetType}
+                        onValueChange={(value) => {
+                          if (value) setFormData({ ...formData, budgetType: value })
+                        }}
                       >
-                        {formData.channels.includes(channel.id) && (
-                          <Check className="h-3 w-3 text-primary-foreground" />
-                        )}
-                      </div>
-                    </button>
-                    {formData.channels.includes(channel.id) && (
-                      <div className="space-y-2 border-t px-4 py-3">
-                        <p className="text-xs font-medium text-muted-foreground">Surfaces</p>
-                        <div className="flex flex-wrap gap-2">
-                          {channel.surfaces.map((s) => (
-                            <button
-                              key={s.id}
-                              type="button"
-                              className={cn(
-                                "rounded-md border px-2.5 py-1 text-xs transition-colors",
-                                (formData.channelSurfaces[channel.id] ?? []).includes(s.id)
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "border-border hover:border-primary/50"
-                              )}
-                              onClick={() => toggleSurface(channel.id, s.id)}
-                            >
-                              {s.label}
-                            </button>
+                        <SelectTrigger className="h-auto min-h-8 w-full min-w-0 whitespace-normal py-2 [&_[data-slot=select-value]]:line-clamp-none">
+                          <SelectValue placeholder="Select budget type" />
+                        </SelectTrigger>
+                        <SelectContent className="min-w-[min(100vw-2rem,22rem)] max-w-lg w-[min(100vw-2rem,28rem)]">
+                          {BUDGET_TYPE_OPTIONS.map((b) => (
+                            <SelectItem key={b.value} value={b.value} title={b.description}>
+                              <span className="block font-medium leading-snug">{b.label}</span>
+                              <span className="block text-xs text-muted-foreground">{b.description}</span>
+                            </SelectItem>
                           ))}
-                        </div>
-                      </div>
-                    )}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {currentStep === 5 && (
-            <div className="space-y-8">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Regions are multi-select.</span> Choose every
-                country where ads may be served and billed. This is separate from step 1 &quot;Target
-                market&quot;—that sets optimization focus; this list controls geo delivery.
-              </p>
-              <div>
-                <p className="mb-3 text-sm font-medium">Regions</p>
-                <div className="grid max-h-[min(420px,50vh)] grid-cols-2 gap-3 overflow-y-auto md:grid-cols-3">
-                  {REGIONS.map((region) => (
-                    <button
-                      key={region}
-                      type="button"
-                      className={cn(
-                        "flex items-center justify-between gap-2 rounded-lg border p-4 text-left transition-colors",
-                        formData.regions.includes(region)
-                          ? "border-primary bg-primary/5"
-                          : "hover:border-primary/50"
-                      )}
-                      onClick={() => toggleInArray("regions", region)}
-                    >
-                      <span className="flex min-w-0 items-center gap-2 font-medium">
-                        <span className="text-lg leading-none" aria-hidden>
-                          {regionFlag(region)}
-                        </span>
-                        <span className="min-w-0">{region}</span>
-                      </span>
-                      <div
-                        className={cn(
-                          "flex h-5 w-5 items-center justify-center rounded border-2",
-                          formData.regions.includes(region) ? "border-primary bg-primary" : "border-muted"
-                        )}
-                      >
-                        {formData.regions.includes(region) && (
-                          <Check className="h-3 w-3 text-primary-foreground" />
-                        )}
+                  {/* Schedule */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label htmlFor="campaign-start-date" className="text-sm font-medium">
+                        Start date
+                      </label>
+                      <DatePickerField
+                        id="campaign-start-date"
+                        value={formData.startDate}
+                        onChange={(v) => setFormData({ ...formData, startDate: v })}
+                        maxDate={parseIsoDateString(formData.endDate)}
+                        placeholder="Start date"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="campaign-end-date" className="text-sm font-medium">
+                        End date
+                      </label>
+                      <DatePickerField
+                        id="campaign-end-date"
+                        value={formData.endDate}
+                        onChange={(v) => setFormData({ ...formData, endDate: v })}
+                        minDate={parseIsoDateString(formData.startDate)}
+                        placeholder="End date"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI-configured notice */}
+                {formData.objective && (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+                    <div className="flex items-start gap-3">
+                      <Bot className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                      <div className="min-w-0 text-sm">
+                        <p className="font-medium text-foreground">AI will configure the rest</p>
+                        <p className="mt-1 text-muted-foreground">
+                          Based on your goal ({optionLabel(CAMPAIGN_OBJECTIVE_OPTIONS, formData.objective)})
+                          {formData.targetMarket
+                            ? ` and market (${optionLabel(TARGET_MARKET_OPTIONS, formData.targetMarket)})`
+                            : ""}
+                          , we'll auto-set channels, targeting, bidding, and product selection for optimal
+                          performance. You can review everything before launch.
+                        </p>
                       </div>
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <Separator />
-              <div>
-                <p className="mb-3 text-sm font-medium">Age</p>
-                <div className="flex flex-wrap gap-2">
-                  {AGE_BANDS.map((age) => (
-                    <button
-                      key={age}
-                      type="button"
-                      className={cn(
-                        "rounded-full border px-3 py-1.5 text-sm",
-                        formData.ageBands.includes(age)
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:border-primary/50"
-                      )}
-                      onClick={() => toggleInArray("ageBands", age)}
-                    >
-                      {age}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="mb-3 text-sm font-medium">Interests</p>
-                <div className="flex flex-wrap gap-2">
-                  {INTEREST_TAGS.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      className={cn(
-                        "rounded-full border px-3 py-1.5 text-sm",
-                        formData.interests.includes(tag)
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:border-primary/50"
-                      )}
-                      onClick={() => toggleInArray("interests", tag)}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="mb-3 text-sm font-medium">Devices</p>
-                <div className="flex flex-wrap gap-2">
-                  {DEVICE_OPTIONS.map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      className={cn(
-                        "rounded-full border px-3 py-1.5 text-sm",
-                        formData.devices.includes(d)
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:border-primary/50"
-                      )}
-                      onClick={() => toggleInArray("devices", d)}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            </>
           )}
 
-          {currentStep === 6 && (
+          {/* ── STEP 2 — Ad design ── */}
+          {currentStep === 2 && (
             <div className="max-w-5xl space-y-8">
               <div>
                 <h3 className="text-sm font-medium">Copy</h3>
@@ -1481,13 +982,16 @@ export function CampaignCreate({
             </div>
           )}
 
-          {currentStep === 7 && (
+          {/* ── STEP 3 — Review & launch ── */}
+          {currentStep === 3 && (
             <div className="space-y-6">
               <div className="py-4 text-center">
                 <Rocket className="mx-auto mb-4 h-12 w-12 text-primary" />
                 <h2 className="text-xl font-semibold">Ready to launch</h2>
                 <p className="text-muted-foreground">Review settings below, then launch or save as draft.</p>
               </div>
+
+              {/* Your settings */}
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader className="pb-2">
@@ -1496,16 +1000,12 @@ export function CampaignCreate({
                   <CardContent className="space-y-2 text-sm">
                     <ReviewRow label="Name" value={formData.name || "—"} />
                     <ReviewRow
-                      label="Objective"
+                      label="Goal"
                       value={optionLabel(CAMPAIGN_OBJECTIVE_OPTIONS, formData.objective)}
                     />
                     <ReviewRow
                       label="Target market"
                       value={optionLabel(TARGET_MARKET_OPTIONS, formData.targetMarket)}
-                    />
-                    <ReviewRow
-                      label="Campaign type"
-                      value={optionLabel(CAMPAIGN_TYPE_OPTIONS, formData.campaignType)}
                     />
                     <ReviewRow
                       label="Currency"
@@ -1531,59 +1031,9 @@ export function CampaignCreate({
                       }
                     />
                     <ReviewRow
-                      label="Bid strategy"
-                      value={optionLabel(BID_STRATEGY_OPTIONS, formData.bidStrategy)}
-                    />
-                    <ReviewRow
-                      label="Max CPC"
-                      value={formData.maxCpc ? `${currencySymbol}${formData.maxCpc}` : "—"}
-                    />
-                    <ReviewRow
                       label="Schedule"
                       value={[formData.startDate, formData.endDate].filter(Boolean).join(" → ") || "—"}
                     />
-                    <ReviewRow
-                      label="Conversion goals"
-                      value={
-                        formData.conversionGoals
-                          .map((id) => CONVERSION_GOAL_OPTIONS.find((g) => g.id === id)?.label)
-                          .filter(Boolean)
-                          .join(", ") || "—"
-                      }
-                    />
-                    <ReviewRow
-                      label="Attribution"
-                      value={optionLabel(ATTRIBUTION_OPTIONS, formData.attributionModel)}
-                    />
-                    <ReviewRow label="UTM prefix" value={formData.utmPrefix || "—"} />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Products & channels</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <ReviewRow label="Categories" value={formData.products.join(", ") || "—"} />
-                    <ReviewRow label="Exclusions" value={formData.productExclusions.join(", ") || "None"} />
-                    <ReviewRow label="Channels" value={formData.channels.join(", ") || "—"} />
-                    <div className="text-muted-foreground">
-                      <span className="font-medium text-foreground">Surfaces: </span>
-                      {Object.entries(formData.channelSurfaces)
-                        .filter(([, v]) => v.length)
-                        .map(([k, v]) => `${k}: ${v.join(", ")}`)
-                        .join(" · ") || "—"}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Audience</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <ReviewRow label="Regions" value={formData.regions.join(", ") || "—"} />
-                    <ReviewRow label="Age" value={formData.ageBands.join(", ") || "—"} />
-                    <ReviewRow label="Interests" value={formData.interests.join(", ") || "—"} />
-                    <ReviewRow label="Devices" value={formData.devices.join(", ") || "—"} />
                   </CardContent>
                 </Card>
                 <Card>
@@ -1624,6 +1074,154 @@ export function CampaignCreate({
                   </CardContent>
                 </Card>
               </div>
+
+              {/* AI-configured settings */}
+              <Card className="border-primary/30 bg-primary/[0.02]">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-sm">AI-configured settings</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Auto-optimized based on your goal and market. These deliver the best performance for
+                    most advertisers.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <ReviewRow
+                    label="Campaign type"
+                    value={optionLabel(CAMPAIGN_TYPE_OPTIONS, effectiveCampaignType)}
+                  />
+                  <ReviewRow
+                    label="Bid strategy"
+                    value={optionLabel(BID_STRATEGY_OPTIONS, effectiveBidStrategy)}
+                  />
+                  <ReviewRow label="Products" value={effectiveProducts.join(", ")} />
+                  <ReviewRow label="Channels" value={effectiveChannels.join(", ")} />
+                  <ReviewRow
+                    label="Regions"
+                    value={
+                      effectiveRegions.length > 4
+                        ? `${effectiveRegions.slice(0, 4).join(", ")} +${effectiveRegions.length - 4} more`
+                        : effectiveRegions.join(", ") || "—"
+                    }
+                  />
+                  <ReviewRow label="Age" value={effectiveAgeBands.join(", ")} />
+                  <ReviewRow label="Interests" value={effectiveInterests.join(", ")} />
+                  <ReviewRow label="Devices" value={effectiveDevices.join(", ")} />
+                  <ReviewRow
+                    label="Conversion goals"
+                    value={effectiveConversionGoals.join(", ") || "—"}
+                  />
+                  <ReviewRow
+                    label="Attribution"
+                    value={optionLabel(ATTRIBUTION_OPTIONS, effectiveAttribution)}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Advanced / override toggle */}
+              <div>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setShowAdvancedSettings((p) => !p)}
+                >
+                  {showAdvancedSettings ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  {showAdvancedSettings ? "Hide" : "Show"} advanced overrides
+                </button>
+                {showAdvancedSettings && (
+                  <Card className="mt-3">
+                    <CardContent className="space-y-5 pt-4">
+                      <p className="text-xs text-muted-foreground">
+                        Override any AI-configured setting. Leave unchanged to keep the AI recommendation.
+                      </p>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Campaign type</label>
+                        <div className="grid gap-3 md:grid-cols-3">
+                          {CAMPAIGN_TYPE_OPTIONS.map((t) => {
+                            const Icon = CAMPAIGN_TYPE_ICONS[t.value as keyof typeof CAMPAIGN_TYPE_ICONS]
+                            const selected = effectiveCampaignType === t.value
+                            return (
+                              <button
+                                key={t.value}
+                                type="button"
+                                onClick={() => setFormData({ ...formData, campaignType: t.value })}
+                                className={cn(
+                                  "relative flex flex-col gap-2 rounded-lg border p-3 text-left text-sm transition-colors",
+                                  selected ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                                )}
+                              >
+                                {selected && (
+                                  <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                    <Check className="h-2.5 w-2.5" />
+                                  </span>
+                                )}
+                                <Icon className="h-4 w-4 text-primary" />
+                                <span className="font-medium">{t.label}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Bid strategy</label>
+                        <Select
+                          value={effectiveBidStrategy}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, bidStrategy: value ?? "" })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select strategy" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {BID_STRATEGY_OPTIONS.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Attribution model</label>
+                        <Select
+                          value={effectiveAttribution}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, attributionModel: value ?? "" })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select model" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ATTRIBUTION_OPTIONS.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">UTM prefix (optional)</label>
+                        <Input
+                          placeholder="e.g., ss26_sale"
+                          value={formData.utmPrefix}
+                          onChange={(e) => setFormData({ ...formData, utmPrefix: e.target.value })}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Ad preview */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {formData.imageAspectRatios.map((ratio) => (
                   <AdPreview
