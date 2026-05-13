@@ -1,6 +1,7 @@
 import type { Campaign } from "@/lib/mock-data"
 import { campaigns as seedCampaigns } from "@/lib/mock-data"
 import {
+  assetTextFromLegacySnapshot,
   initialCampaignWizardForm,
   type CampaignWizardFormData,
 } from "@/types/campaign-wizard"
@@ -64,11 +65,16 @@ export function makeNewCampaignRow(
 /** Pre-fill wizard for Copy campaign — uses saved snapshot when present. */
 export function wizardFormFromCampaign(c: Campaign): CampaignWizardFormData {
   if (c.wizardSnapshot) {
-    return {
+    const merged: Record<string, unknown> = {
       ...initialCampaignWizardForm,
       ...c.wizardSnapshot,
       name: `${(c.wizardSnapshot.name || c.name).trim() || c.name} (copy)`,
     }
+    const { headlines: _h, longHeadlines: _lh, descriptions: _d, ...rest } = merged
+    return {
+      ...rest,
+      ...assetTextFromLegacySnapshot(merged as Parameters<typeof assetTextFromLegacySnapshot>[0]),
+    } as CampaignWizardFormData
   }
   return {
     ...initialCampaignWizardForm,

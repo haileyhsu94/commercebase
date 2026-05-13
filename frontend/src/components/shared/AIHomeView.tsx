@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import { Link } from "react-router-dom"
 import {
   Plus,
   Wand2,
@@ -21,7 +22,9 @@ import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { useHomeMode } from "@/contexts/HomeModeContext"
 import { currentUser } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
 import {
   addLaunchedCampaign,
@@ -39,6 +42,13 @@ import { getCompanyProfile, saveCompanyProfile } from "@/lib/company-profile"
 /* ------------------------------------------------------------------ */
 /*  Suggestion cards (Gemini-style)                                    */
 /* ------------------------------------------------------------------ */
+
+const homeQuickActions = [
+  { label: "Create a campaign", href: "/campaigns?create=1", icon: Plus },
+  { label: "Generate performance report", href: "/analytics", icon: BarChart3 },
+  { label: "Optimize product listings", href: "/ai-presence/optimize", icon: Wand2 },
+  { label: "Compare to competitors", href: "/ai-presence/competitors", icon: Eye },
+] as const
 
 const suggestionCards = [
   {
@@ -516,7 +526,7 @@ export function AIHomeView() {
         {!isConversationActive ? (
           /* ---- Idle state: Gemini-style greeting ---- */
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4">
-            <div className="flex w-full max-w-2xl flex-col items-center gap-8">
+            <div className="flex w-full max-w-3xl flex-col items-center gap-6">
               {/* Greeting — no icon, like Gemini */}
               <div className="text-center">
                 <p className="text-lg text-muted-foreground">Hi {firstName}</p>
@@ -524,6 +534,30 @@ export function AIHomeView() {
                   What should we do today?
                 </h1>
               </div>
+
+              {/* Quick shortcuts — shadcn Card + Badge (outline chips as links) */}
+              <Card
+                size="sm"
+                className="w-full border-border/80 bg-card/90 shadow-sm backdrop-blur-sm dark:bg-card/60"
+              >
+                <CardContent className="flex flex-wrap items-center justify-center gap-2 py-3">
+                  {homeQuickActions.map((action) => (
+                    <Badge
+                      key={action.href}
+                      variant="outline"
+                      className={cn(
+                        "h-auto min-h-7 shrink-0 gap-1.5 rounded-full border-border px-3 py-1.5 text-xs font-medium normal-case whitespace-normal shadow-none",
+                        "[a]:hover:bg-accent/40 [a]:hover:text-foreground",
+                        "[&_svg]:size-3.5 [&_svg]:text-indigo-600 dark:[&_svg]:text-indigo-400"
+                      )}
+                      render={<Link to={action.href} />}
+                    >
+                      <action.icon className="shrink-0" />
+                      {action.label}
+                    </Badge>
+                  ))}
+                </CardContent>
+              </Card>
 
               {/* Suggestion cards */}
               <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
@@ -636,32 +670,21 @@ export function AIHomeView() {
                           What do you want to achieve?
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {CAMPAIGN_OBJECTIVE_OPTIONS.map((opt) => {
-                            const isCreatorCommerce = opt.value === "creator_commerce"
-                            return (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                disabled={isCreatorCommerce}
-                                onClick={() => {
-                                  if (!isCreatorCommerce) setAnswers({ ...answers, objective: opt.value })
-                                }}
-                                className={cn(
-                                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                                  isCreatorCommerce
-                                    ? "cursor-not-allowed border-border bg-muted/30 text-muted-foreground/50"
-                                    : answers.objective === opt.value
-                                      ? "border-indigo-300 bg-indigo-100 text-indigo-900 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-100"
-                                      : "border-border bg-background text-foreground hover:bg-muted/50"
-                                )}
-                              >
-                                {opt.label}
-                                {isCreatorCommerce && (
-                                  <span className="ml-1 text-[10px] text-muted-foreground/40">(coming soon)</span>
-                                )}
-                              </button>
-                            )
-                          })}
+                          {CAMPAIGN_OBJECTIVE_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setAnswers({ ...answers, objective: opt.value })}
+                              className={cn(
+                                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                                answers.objective === opt.value
+                                  ? "border-indigo-300 bg-indigo-100 text-indigo-900 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-100"
+                                  : "border-border bg-background text-foreground hover:bg-muted/50"
+                              )}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
@@ -1032,7 +1055,7 @@ export function AIHomeView() {
 
             {/* Bottom input (for follow-up messages during conversation) */}
             {(conversationStep === "plan" || conversationStep === "done") && (
-              <div className="border-t border-border px-4 py-3">
+              <div className="shrink-0 px-4 py-3">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault()

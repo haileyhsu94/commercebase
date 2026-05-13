@@ -20,7 +20,10 @@ import {
   Integrations,
   TeamSettings,
   AnalyticsLayout,
-  AutopilotPage,
+  AutopilotOutlet,
+  AutopilotListPage,
+  AutopilotNewPage,
+  AutopilotFlowEditorPage,
   AIPresenceLayout,
   AIPresenceOverview,
   MerchantsPage,
@@ -39,7 +42,15 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <Home /> },
-      { path: "autopilot", element: <AutopilotPage /> },
+      {
+        path: "autopilot",
+        element: <AutopilotOutlet />,
+        children: [
+          { index: true, element: <AutopilotListPage /> },
+          { path: "new", element: <AutopilotNewPage /> },
+          { path: ":flowId/edit", element: <AutopilotFlowEditorPage /> },
+        ],
+      },
       { path: "inbox", element: <Inbox /> },
       { path: "campaigns", element: <CampaignList /> },
       { path: "campaigns/new", element: <Navigate to="/campaigns?create=1" replace /> },

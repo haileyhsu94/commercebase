@@ -171,6 +171,16 @@ export function AppSidebar() {
                       <span>New chat</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      tooltip="Settings"
+                      render={<Link to="/settings" />}
+                      isActive={isActive("/settings")}
+                    >
+                      <Settings />
+                      <span>Settings</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -346,7 +356,9 @@ export function AppSidebar() {
                 {/* Autopilot — top-level standalone */}
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    isActive={isActive("/autopilot")}
+                    isActive={
+                      pathname === "/autopilot" || pathname.startsWith("/autopilot/")
+                    }
                     tooltip="Autopilot"
                     render={<Link to="/autopilot" />}
                   >

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowRight, ExternalLink, Shield, Trash2 } from "lucide-react"
+import { ArrowRight, Brain, ExternalLink, Shield, Trash2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -171,6 +171,7 @@ const SETTINGS_MAIN_TABS = new Set([
   "billing",
   "api-keys",
   "notifications",
+  "memory",
   "integrations",
   "security",
 ])
@@ -204,6 +205,22 @@ export function AccountSettings() {
     weeklyDigest: true,
     productUpdates: true,
   })
+
+  const [aerisMemoryEnabled, setAerisMemoryEnabled] = useState(true)
+  const [memoryFacts, setMemoryFacts] = useState<
+    { id: string; text: string; updatedAt: string }[]
+  >([
+    {
+      id: "1",
+      text: "Primary catalog is athletic apparel; paid ROAS goal is roughly 4×.",
+      updatedAt: "May 8, 2026",
+    },
+    {
+      id: "2",
+      text: "Reporting and budgets are preferred in USD, with weekly summaries.",
+      updatedAt: "May 4, 2026",
+    },
+  ])
 
   const [companyName, setCompanyName] = useState(() => getCompanyProfile().companyName)
   const [website, setWebsite] = useState(() => getCompanyProfile().website)
@@ -304,7 +321,7 @@ export function AccountSettings() {
       <div className="py-4">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your account, billing, API keys, and integrations.
+          Manage your account, billing, API keys, Aeris memory, and integrations.
         </p>
       </div>
 
@@ -644,6 +661,92 @@ export function AccountSettings() {
                   />
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="memory" className="mt-0 min-w-0 flex-1 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Brain className="h-4 w-4 text-muted-foreground" aria-hidden />
+                Aeris memory
+              </CardTitle>
+              <CardDescription>
+                Control whether Aeris keeps long-term context from your conversations. You can review or delete
+                individual facts at any time.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                  <p className="text-sm font-medium">Use saved context in new chats</p>
+                  <p className="text-xs text-muted-foreground">
+                    When on, Aeris can use the facts below in new chats. When off, context stays session-only until you
+                    turn memory back on.
+                  </p>
+                </div>
+                <Switch checked={aerisMemoryEnabled} onCheckedChange={setAerisMemoryEnabled} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Saved facts</CardTitle>
+              <CardDescription>
+                Derived from chats and edits you have confirmed. Removing a fact updates what Aeris can reference
+                next time.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {!aerisMemoryEnabled && (
+                <p className="rounded-lg border border-dashed bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                  Memory is turned off. Turn it on above to use these facts in new conversations.
+                </p>
+              )}
+              {memoryFacts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No saved facts yet.</p>
+              ) : (
+                <ul className="space-y-2" role="list">
+                  {memoryFacts.map((m) => (
+                    <li
+                      key={m.id}
+                      className="flex items-start gap-3 rounded-lg border border-border/80 bg-muted/20 p-3"
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="text-sm text-foreground">{m.text}</p>
+                        <p className="text-xs text-muted-foreground">Updated {m.updatedAt}</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        aria-label={`Remove memory: ${m.text.slice(0, 48)}${m.text.length > 48 ? "…" : ""}`}
+                        onClick={() => setMemoryFacts((rows) => rows.filter((r) => r.id !== m.id))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={memoryFacts.length === 0}
+                  onClick={() => {
+                    if (memoryFacts.length === 0) return
+                    const ok = window.confirm("Remove all saved memory facts for this workspace?")
+                    if (ok) setMemoryFacts([])
+                  }}
+                >
+                  Clear all facts
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

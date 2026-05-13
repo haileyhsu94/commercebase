@@ -15,6 +15,8 @@ function MainContent() {
   const { mode } = useHomeMode()
   const { pathname } = useLocation()
   const isAgentHome = mode === "ai" && pathname === "/"
+  const isAutopilotFlowEditor = pathname.startsWith("/autopilot/") && pathname.endsWith("/edit")
+  const isFullBleedMain = isAgentHome || isAutopilotFlowEditor
 
   return (
     <SidebarInset
@@ -28,7 +30,7 @@ function MainContent() {
       <main
         className={cn(
           "min-w-0 flex-1 overflow-x-hidden",
-          isAgentHome ? "flex flex-col overflow-hidden" : "overflow-y-auto p-4 pt-0"
+          isFullBleedMain ? "flex min-h-0 flex-col overflow-hidden" : "overflow-y-auto p-4 pt-0"
         )}
       >
         <Outlet />
@@ -41,9 +43,10 @@ function InnerLayout() {
   const { mode } = useHomeMode()
   const { pathname } = useLocation()
   const isAgentHome = mode === "ai" && pathname === "/"
+  const isAutopilotFlowEditor = pathname.startsWith("/autopilot/") && pathname.endsWith("/edit")
 
   return (
-    <SidebarProvider className={isAgentHome ? "!h-svh !min-h-0" : undefined}>
+    <SidebarProvider className={isAgentHome || isAutopilotFlowEditor ? "!h-svh !min-h-0" : undefined}>
       <AppSidebar />
       <MainContent />
       <AIAssistantPanel />
