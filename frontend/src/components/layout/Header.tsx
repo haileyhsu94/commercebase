@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { LayoutDashboard, MessageSquare, PanelRightClose, PanelRightOpen, Search, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -12,6 +13,13 @@ export function Header() {
   const { toggleOpen } = useAIAssistant()
   const { openSearch } = useGlobalSearch()
   const { mode, setMode, campaignPanelOpen, setCampaignPanelOpen } = useHomeMode()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  const handleModeChange = (next: "dashboard" | "ai") => {
+    setMode(next)
+    if (pathname !== "/") navigate("/")
+  }
 
   const dashboardRef = useRef<HTMLButtonElement>(null)
   const agentRef = useRef<HTMLButtonElement>(null)
@@ -48,7 +56,7 @@ export function Header() {
         <button
           ref={dashboardRef}
           type="button"
-          onClick={() => setMode("dashboard")}
+          onClick={() => handleModeChange("dashboard")}
           className={cn(
             "relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors duration-300 ease-out",
             mode === "dashboard"
@@ -64,7 +72,7 @@ export function Header() {
         <button
           ref={agentRef}
           type="button"
-          onClick={() => setMode("ai")}
+          onClick={() => handleModeChange("ai")}
           className={cn(
             "relative z-10 inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors duration-300 ease-out",
             mode === "ai"
