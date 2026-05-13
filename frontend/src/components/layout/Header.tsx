@@ -36,7 +36,7 @@ export function Header() {
   }, [mode])
 
   return (
-    <header className="flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-4">
+    <header className="flex h-14 min-w-0 shrink-0 items-center gap-2 border-b px-3">
       <SidebarTrigger className="-ml-1" />
 
       {/* Mode toggle */}

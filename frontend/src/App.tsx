@@ -1,7 +1,18 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import { RootLayout } from "@/components/layout"
+import { HomeRoute } from "@/pages/HomeRoute"
 import {
-  Home,
+  OnboardingWizard,
+  CampaignSkill,
+  CampaignsList as AgentCampaignsList,
+  FlowSkill,
+  FlowsList as AgentFlowsList,
+  WidgetSkill,
+  WidgetsList as AgentWidgetsList,
+  ChatsList,
+  ChatView,
+} from "@/pages/agent"
+import {
   CampaignList,
   CampaignDetail,
   PerformanceOverview,
@@ -20,10 +31,7 @@ import {
   Integrations,
   TeamSettings,
   AnalyticsLayout,
-  AutopilotOutlet,
-  AutopilotListPage,
-  AutopilotNewPage,
-  AutopilotFlowEditorPage,
+  AutopilotPage,
   AIPresenceLayout,
   AIPresenceOverview,
   MerchantsPage,
@@ -41,16 +49,17 @@ const router = createBrowserRouter([
     path: "/",
     element: <RootLayout />,
     children: [
-      { index: true, element: <Home /> },
-      {
-        path: "autopilot",
-        element: <AutopilotOutlet />,
-        children: [
-          { index: true, element: <AutopilotListPage /> },
-          { path: "new", element: <AutopilotNewPage /> },
-          { path: ":flowId/edit", element: <AutopilotFlowEditorPage /> },
-        ],
-      },
+      { index: true, element: <HomeRoute /> },
+      { path: "agent/onboarding", element: <OnboardingWizard /> },
+      { path: "agent/chats", element: <ChatsList /> },
+      { path: "agent/chats/:id", element: <ChatView /> },
+      { path: "agent/campaigns", element: <AgentCampaignsList /> },
+      { path: "agent/campaign/:id", element: <CampaignSkill /> },
+      { path: "agent/flows", element: <AgentFlowsList /> },
+      { path: "agent/flow/:id", element: <FlowSkill /> },
+      { path: "agent/widgets", element: <AgentWidgetsList /> },
+      { path: "agent/widget/:id", element: <WidgetSkill /> },
+      { path: "autopilot", element: <AutopilotPage /> },
       { path: "inbox", element: <Inbox /> },
       { path: "campaigns", element: <CampaignList /> },
       { path: "campaigns/new", element: <Navigate to="/campaigns?create=1" replace /> },
