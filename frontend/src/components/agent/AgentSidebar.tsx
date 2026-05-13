@@ -4,7 +4,6 @@ import {
   BarChart3,
   Home,
   Inbox as InboxIcon,
-  Layers,
   MessageSquare,
   PenSquare,
   Pin,
@@ -28,7 +27,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import { SidebarTrialCard } from "@/components/layout/SidebarTrialCard"
 import { useUnreadInboxCount } from "@/hooks/use-inbox-unread"
 import { currentUser } from "@/lib/mock-data"
 import { getAgentChats, AGENT_STORAGE_EVENT } from "@/lib/agent/storage"
@@ -173,7 +172,7 @@ export function AgentSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="gap-1.5 p-1.5">
-        {sidebarOpen && <TrialCard />}
+        {sidebarOpen && <SidebarTrialCard />}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -241,25 +240,4 @@ function chatRoute(chat: AgentChat) {
   if (chat.artifactRef?.type === "autopilot") return `/agent/flow/${chat.artifactRef.id}`
   if (chat.artifactRef?.type === "widget") return `/agent/widget/${chat.artifactRef.id}`
   return `/agent/chats/${chat.id}`
-}
-
-function TrialCard() {
-  return (
-    <div className="rounded-lg border bg-muted/30 p-3">
-      <div className="flex items-center gap-1.5 text-xs font-semibold">
-        <Layers className="h-3.5 w-3.5" />
-        CommerceBase Pro Trial
-      </div>
-      <p className="mt-1 text-[11px] leading-tight text-muted-foreground">
-        Upgrade to keep unlimited skills, connectors, and approvals.
-      </p>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div className="h-full w-3/4 rounded-full bg-foreground" />
-      </div>
-      <p className="mt-1 text-[10px] text-muted-foreground">14 of 14 days remaining</p>
-      <Button size="sm" className="mt-2 h-7 w-full text-xs">
-        Upgrade
-      </Button>
-    </div>
-  )
 }

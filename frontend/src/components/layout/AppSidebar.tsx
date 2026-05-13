@@ -21,6 +21,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SidebarTrialCard } from "./SidebarTrialCard"
 import { cn } from "@/lib/utils"
 import { aiPresenceSubnav } from "@/lib/ai-presence-mock"
 import {
@@ -372,6 +373,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
       <SidebarFooter className="gap-1.5 p-1.5">
+        {sidebarOpen && <SidebarTrialCard />}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
