@@ -135,7 +135,6 @@ export interface FlowNode {
   outputType?: "text" | "json" | "list" | "boolean"
   branch?: "true" | "false"
   parentId?: string
-  config?: Record<string, string | number | boolean>
 }
 
 export interface FlowInput {
