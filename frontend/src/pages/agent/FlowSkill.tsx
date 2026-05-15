@@ -31,8 +31,6 @@ import {
   Tag as TagIcon,
   Trash2,
   Undo2,
-  Workflow,
-  Zap,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -876,26 +874,6 @@ function PropertiesPanel({
   onDeleteNode: (nodeId: string) => void
 }) {
   const isCap = node.type === "start" || node.type === "end"
-  const nodeIcon = (() => {
-    switch (node.type) {
-      case "start":
-        return Zap
-      case "end":
-        return Workflow
-      case "prompt-llm":
-        return Sparkles
-      case "web-scrape":
-        return Globe
-      case "google-search":
-        return Search
-      case "exa-search":
-        return Brain
-      case "call-api":
-        return Braces
-      default:
-        return Sparkles
-    }
-  })()
 
   function addInput() {
     const next: FlowInput = {
@@ -916,15 +894,9 @@ function PropertiesPanel({
     onChange({ inputs: (artifact.inputs ?? []).filter((i) => i.id !== inputId) })
   }
 
-  const Icon = nodeIcon
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4" />
-          <span className="text-sm font-medium underline-offset-2 hover:underline">{node.title}</span>
-        </div>
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="absolute top-2 right-2 z-10">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label="Node actions">
