@@ -11,6 +11,18 @@ function isAgentRoute(pathname: string) {
   return pathname === "/" || pathname.startsWith("/agent")
 }
 
+// Routes that manage their own internal scroll (full-bleed editors / chat views).
+// Everything else under /agent should let <main> scroll the page.
+function ownsInternalScroll(pathname: string) {
+  if (pathname === "/") return true
+  return (
+    /^\/agent\/flow\/[^/]+$/.test(pathname) ||
+    /^\/agent\/campaign\/[^/]+$/.test(pathname) ||
+    /^\/agent\/widget\/[^/]+$/.test(pathname) ||
+    /^\/agent\/chats\/[^/]+$/.test(pathname)
+  )
+}
+
 export function AgentLayout() {
   const { openSearch } = useGlobalSearch()
   const { mode, setMode } = useHomeMode()
@@ -108,7 +120,9 @@ export function AgentLayout() {
         className={cn(
           "min-w-0 flex-1",
           isAgentRoute(pathname)
-            ? "overflow-hidden"
+            ? ownsInternalScroll(pathname)
+              ? "overflow-hidden"
+              : "overflow-y-auto"
             : "overflow-y-auto p-4 pt-0",
         )}
       >

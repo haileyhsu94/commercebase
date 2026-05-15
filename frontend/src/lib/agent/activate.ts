@@ -10,6 +10,7 @@ import {
   upsertWidgetArtifact,
 } from "./storage"
 import {
+  buildCommerceFlow,
   buildSampleCampaign,
   buildSampleFlow,
   buildSampleWidget,
@@ -43,8 +44,11 @@ function titleFromPrompt(prompt: string): string {
   return clean.slice(0, 56).replace(/[,.;:!\-\s]+$/, "") + "…"
 }
 
-export function activateSkillFromPrompt(prompt: string): ActivationResult {
-  const skill = detectSkill(prompt)
+export function activateSkillFromPrompt(
+  prompt: string,
+  options: { templateId?: string } = {},
+): ActivationResult {
+  const skill = options.templateId ? "autopilot" : detectSkill(prompt)
   const chatId = newId("chat")
   const memory = defaultMemoryItems(skill)
   const skillLabel = describeSkill(skill)
@@ -85,7 +89,9 @@ export function activateSkillFromPrompt(prompt: string): ActivationResult {
       route: `/agent/campaign/${artifact.id}`,
     }
   } else if (skill === "autopilot") {
-    const artifact = buildSampleFlow(prompt, chatId)
+    const artifact =
+      (options.templateId && buildCommerceFlow(options.templateId, prompt, chatId)) ||
+      buildSampleFlow(prompt, chatId)
     upsertFlowArtifact(artifact)
     messages.push(
       msg(
