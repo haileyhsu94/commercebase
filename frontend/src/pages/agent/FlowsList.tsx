@@ -53,12 +53,12 @@ export function FlowsList() {
     return combined.filter((r) => r.name.toLowerCase().includes(q))
   }, [liveRows, query])
 
-  function submit(prompt: string) {
+  function submit(prompt: string, templateId?: string) {
     const text = prompt.trim()
     if (!text || submitting) return
     setSubmitting(true)
     setTimeout(() => {
-      const result = activateSkillFromPrompt(text)
+      const result = activateSkillFromPrompt(text, { templateId })
       navigate(result.route)
     }, 120)
   }
@@ -154,14 +154,11 @@ export function FlowsList() {
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => submit(t.prompt)}
+                  onClick={() => submit(t.prompt, t.id)}
                   className="flex flex-col items-start gap-3 rounded-xl border bg-muted/40 p-3 text-left transition-colors hover:bg-accent/60"
                 >
-                  <span
-                    className="flex size-8 items-center justify-center rounded-full text-xs font-semibold text-white"
-                    style={{ backgroundColor: t.iconColor }}
-                  >
-                    {t.iconLetter}
+                  <span className="flex size-8 items-center justify-center rounded-full bg-foreground/10 text-foreground">
+                    <t.icon className="h-4 w-4" />
                   </span>
                   <span className="line-clamp-2 text-sm font-medium">{t.name}</span>
                 </button>
@@ -230,11 +227,8 @@ export function FlowsList() {
               onClick={() => submit(t.prompt)}
               className="flex items-start gap-3 rounded-xl border bg-card p-4 text-left transition-colors hover:border-foreground/30 hover:bg-accent/30"
             >
-              <span
-                className="flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-                style={{ backgroundColor: t.iconColor }}
-              >
-                {t.iconLetter}
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-foreground">
+                <t.icon className="h-5 w-5" />
               </span>
               <div className="min-w-0">
                 <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{t.category}</div>

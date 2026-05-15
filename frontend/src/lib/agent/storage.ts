@@ -95,6 +95,9 @@ export function upsertFlowArtifact(a: AutopilotArtifact) {
   list.unshift(a)
   saveFlowArtifacts(list)
 }
+export function deleteFlowArtifact(id: string) {
+  saveFlowArtifacts(getFlowArtifacts().filter((x) => x.id !== id))
+}
 
 export function getWidgetArtifacts(): WidgetArtifact[] {
   return readJSON<WidgetArtifact[]>(KEY_WIDGETS, [])

@@ -120,9 +120,15 @@ export type FlowNodeType =
   | "tag"
   | "webhook"
 
+// Per-node configuration. Each node type writes its own shape; the editor
+// PropertiesPanel dispatches on node.type to render the right form.
+// Kept loose by design so adding node types doesn't churn the schema.
+export type NodeConfig = Record<string, unknown>
+
 export interface FlowNode {
   id: string
   type: FlowNodeType
+  config?: NodeConfig
   title: string
   subtitle?: string
   outputLabel?: string

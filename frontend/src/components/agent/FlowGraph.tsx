@@ -17,6 +17,7 @@ import {
   Webhook,
   Zap,
 } from "lucide-react"
+import { useRef } from "react"
 import type { FlowNode, FlowNodeType } from "@/types/agent"
 import { cn } from "@/lib/utils"
 
@@ -25,6 +26,8 @@ interface Props {
   activeId?: string
   onSelect?: (id: string) => void
   onAddBetween?: (parentId: string) => void
+  zoom?: number
+  tool?: "pan" | "select"
 }
 
 const NODE_META: Record<
@@ -102,7 +105,14 @@ function layoutNodes(nodes: FlowNode[]): { layouts: Layout[]; columns: number; d
   return { layouts: normalized, columns, depth }
 }
 
-export function FlowGraph({ nodes, activeId, onSelect, onAddBetween }: Props) {
+export function FlowGraph({
+  nodes,
+  activeId,
+  onSelect,
+  onAddBetween,
+  zoom = 1,
+  tool = "select",
+}: Props) {
   const { layouts, columns, depth: maxDepth } = layoutNodes(nodes)
 
   const COL_WIDTH = 280
@@ -123,15 +133,55 @@ export function FlowGraph({ nodes, activeId, onSelect, onAddBetween }: Props) {
     return acc
   }, [])
 
-  const width = Math.max(columns * COL_WIDTH, 600)
+  // Inner container is exactly as wide as the column count; `mx-auto` then
+  // horizontally centers a narrow (e.g. single-column) flow inside the
+  // wider scroll area.
+  const width = columns * COL_WIDTH
   const height = (maxDepth + 1) * ROW_HEIGHT + 60
 
   const nodeX = (col: number) => col * COL_WIDTH + COL_WIDTH / 2
   const nodeY = (depth: number) => depth * ROW_HEIGHT + 30
 
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{ x: number; y: number; sl: number; st: number } | null>(null)
+
   return (
-    <div className="relative h-full w-full overflow-auto bg-[radial-gradient(circle_at_1px_1px,theme(colors.border)_1px,transparent_0)] [background-size:16px_16px]">
-      <div style={{ width, height }} className="relative mx-auto">
+    <div
+      ref={scrollerRef}
+      className={cn(
+        "relative h-full w-full overflow-auto bg-[radial-gradient(circle_at_1px_1px,theme(colors.border)_1px,transparent_0)] [background-size:16px_16px]",
+        tool === "pan" ? "cursor-grab select-none active:cursor-grabbing" : "cursor-default",
+      )}
+      onMouseDown={(e) => {
+        if (tool !== "pan") return
+        const el = scrollerRef.current
+        if (!el) return
+        dragRef.current = { x: e.clientX, y: e.clientY, sl: el.scrollLeft, st: el.scrollTop }
+        // Prevent text selection / node-click while panning
+        e.preventDefault()
+      }}
+      onMouseMove={(e) => {
+        const drag = dragRef.current
+        const el = scrollerRef.current
+        if (!drag || !el || tool !== "pan") return
+        el.scrollLeft = drag.sl - (e.clientX - drag.x)
+        el.scrollTop = drag.st - (e.clientY - drag.y)
+      }}
+      onMouseUp={() => {
+        dragRef.current = null
+      }}
+      onMouseLeave={() => {
+        dragRef.current = null
+      }}
+    >
+      <div
+        style={{ width, height, transform: `scale(${zoom})`, transformOrigin: "top center" }}
+        className={cn(
+          "relative mx-auto transition-transform",
+          // In pan mode, swallow pointer events on nodes/buttons so drags scroll the canvas
+          tool === "pan" && "[&_button]:pointer-events-none",
+        )}
+      >
         <svg width={width} height={height} className="pointer-events-none absolute inset-0">
           {edges.map((e, i) => {
             const x1 = nodeX(e.from.col)
@@ -209,9 +259,12 @@ function NodeCard({
   onSelect?: (id: string) => void
 }) {
   const { node } = layout
-  const meta = NODE_META[node.type]
+  const meta =
+    NODE_META[node.type] ??
+    ({ icon: Sparkles, tint: "bg-muted text-muted-foreground" } as (typeof NODE_META)[FlowNodeType])
   const Icon = meta.icon
   const isCap = node.type === "start" || node.type === "end"
+  const summary = describeNode(node)
   return (
     <button
       type="button"
@@ -227,6 +280,11 @@ function NodeCard({
       </div>
       {!isCap && (
         <div className="border-t bg-background px-3 py-2 text-[11px]">
+          {summary && (
+            <div className="mb-1 truncate font-medium text-foreground" title={summary}>
+              {summary}
+            </div>
+          )}
           <div className="flex items-center justify-between text-muted-foreground">
             <span>Output</span>
             {node.outputLabel && node.outputType && (
@@ -235,9 +293,9 @@ function NodeCard({
           </div>
         </div>
       )}
-      {isCap && node.subtitle && (
+      {isCap && (summary || node.subtitle) && (
         <div className="border-t bg-background px-3 py-2 text-[11px] text-muted-foreground">
-          {node.subtitle}
+          {summary ?? node.subtitle}
           <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded bg-muted px-1 text-[10px] font-medium text-foreground">
             1
           </span>
@@ -245,6 +303,73 @@ function NodeCard({
       )}
     </button>
   )
+}
+
+// Human-readable summary of a node based on its config — keeps the canvas
+// readable at a glance instead of forcing the user to open the right panel.
+function describeNode(node: FlowNode): string | undefined {
+  const c = (node.config ?? {}) as Record<string, unknown>
+  switch (node.type) {
+    case "start":
+    case "trigger": {
+      const kind = c.kind as string | undefined
+      if (kind === "schedule") {
+        const h = (c.hour as number | undefined) ?? 9
+        const m = (c.minute as number | undefined) ?? 0
+        const label = h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`
+        return `at ${label}${m ? `:${String(m).padStart(2, "0")}` : ""}`
+      }
+      if (kind === "webhook") return "on webhook"
+      if (kind === "event") return (c.event as string) ? `on ${c.event}` : "on event"
+      return undefined
+    }
+    case "prompt-llm":
+      return (c.model as string) ?? undefined
+    case "web-scrape":
+      return (c.url as string) ?? undefined
+    case "google-search":
+    case "exa-search":
+    case "perplexity-search":
+      return (c.query as string) ?? undefined
+    case "call-api":
+      return c.method ? `${c.method} ${(c.url as string) ?? ""}`.trim() : (c.url as string) ?? undefined
+    case "conditional": {
+      const left = c.left as string | undefined
+      const op = (c.op as string | undefined) ?? "=="
+      const right = c.right as string | undefined
+      return left ? `${left} ${op} ${right ?? ""}`.trim() : undefined
+    }
+    case "iteration":
+      return c.items ? `for each ${(c.itemName as string) ?? "item"} in ${c.items}` : undefined
+    case "slack":
+      return c.channel ? String(c.channel).replace(/^#?/, "#") : undefined
+    case "send-email":
+    case "send-sms": {
+      const a = c.audience as string | undefined
+      if (!a) return undefined
+      // Look up the friendly segment name if the value is a segment id.
+      const known: Record<string, string> = {
+        vip: "VIP segment",
+        "high-intent": "High-intent shoppers",
+        "cart-abandoners": "Cart abandoners",
+        "lapsed-90d": "Lapsed (90d)",
+        subscribers: "Email subscribers",
+        "all-customers": "All customers",
+      }
+      return `to ${known[a] ?? a}`
+    }
+    case "delay":
+      return c.amount ? `wait ${c.amount} ${c.unit ?? "min"}` : undefined
+    case "tag":
+      return c.tag ? `tag "${c.tag}"` : undefined
+    case "webhook":
+      return (c.url as string) ?? undefined
+    case "code":
+      return (c.language as string) ?? "code"
+    case "end":
+      return node.subtitle ?? "Outputs"
+  }
+  return node.subtitle
 }
 
 function OutputChip({ label, type }: { label: string; type: NonNullable<FlowNode["outputType"]> }) {
