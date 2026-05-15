@@ -19,6 +19,7 @@ import {
   Maximize2,
   MessageSquare,
   Minus,
+  Play,
   MoreHorizontal,
   MousePointer2,
   Pencil,
@@ -141,6 +142,7 @@ export function FlowSkill() {
     steps: Array<{ nodeId: string; title: string; status: "pending" | "running" | "ok" | "fail"; output?: string }>
     error?: string
   } | null>(null)
+  const [insertParentId, setInsertParentId] = useState<string | null>(null)
 
   useEffect(() => {
     const load = () => {
@@ -242,6 +244,28 @@ export function FlowSkill() {
       cursor = next.id
     }
     return undefined
+  }
+
+  // Insert a new node on the link between `parentId` and its (single) child.
+  // The existing child is re-parented onto the new node, preserving the chain.
+  function handleInsertBetween(parentId: string, nodeType: FlowNodeType, title: string) {
+    if (!artifact) return
+    const child = artifact.nodes.find((n) => n.parentId === parentId)
+    const newId = `n_${Math.random().toString(36).slice(2, 8)}`
+    const newNode: FlowNode = {
+      id: newId,
+      type: nodeType,
+      title,
+      parentId,
+      outputLabel: nodeType === "conditional" ? "Branch" : "Output",
+      outputType: nodeType === "conditional" ? "boolean" : "text",
+    }
+    const nextNodes = artifact.nodes
+      .map((n) => (child && n.id === child.id ? { ...n, parentId: newId } : n))
+      .concat(newNode)
+    update({ nodes: nextNodes })
+    setActiveNodeId(newId)
+    setInsertParentId(null)
   }
 
   function handleDropNode(nodeType: FlowNodeType, title: string) {
@@ -362,9 +386,7 @@ export function FlowSkill() {
             disabled={testRun?.state === "running"}
             className="gap-1.5"
           >
-            <span className="inline-flex size-3 items-center justify-center rounded-full bg-foreground text-[8px] text-background">
-              ▶
-            </span>
+            <Play className="h-3.5 w-3.5 fill-current" />
             {testRun?.state === "running" ? "Running…" : "Run test"}
           </Button>
           <DropdownMenu>
@@ -565,9 +587,16 @@ export function FlowSkill() {
             nodes={artifact.nodes}
             activeId={activeNodeId}
             onSelect={setActiveNodeId}
+            onAddBetween={setInsertParentId}
             zoom={zoom}
             tool={tool}
           />
+          {insertParentId && (
+            <InsertNodePicker
+              onPick={(t) => handleInsertBetween(insertParentId, t.nodeType, t.title)}
+              onClose={() => setInsertParentId(null)}
+            />
+          )}
           {testRun && (
             <TestRunPanel run={testRun} onClose={() => setTestRun(null)} onRerun={runTest} />
           )}
@@ -608,6 +637,66 @@ export function FlowSkill() {
             </div>
           )}
         </aside>
+      </div>
+    </div>
+  )
+}
+
+// Floating picker shown when the user clicks a "+" inserter on the canvas.
+// Lists the same library entries as the left rail; picking one calls back
+// with the node type/title so FlowSkill can splice it into the link.
+function InsertNodePicker({
+  onPick,
+  onClose,
+}: {
+  onPick: (item: { nodeType: FlowNodeType; title: string }) => void
+  onClose: () => void
+}) {
+  return (
+    <div
+      className="absolute inset-0 z-30 flex items-center justify-center bg-background/40 backdrop-blur-[1px]"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-label="Insert node"
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[80%] w-72 overflow-y-auto rounded-xl border bg-background shadow-xl"
+      >
+        <div className="flex items-center justify-between border-b px-3 py-2">
+          <span className="text-xs font-medium">Insert node</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Close"
+          >
+            <Plus className="h-3 w-3 rotate-45" />
+          </button>
+        </div>
+        <div className="p-2">
+          {NODE_LIBRARY.map((section) => (
+            <div key={section.section} className="mb-2">
+              <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                {section.section}
+              </div>
+              <ul className="space-y-0.5">
+                {section.items.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => onPick({ nodeType: item.nodeType, title: item.title })}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                    >
+                      <item.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="flex-1 truncate text-left">{item.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -682,9 +771,7 @@ function TestRunPanel({
             Close
           </Button>
           <Button size="sm" onClick={onRerun} className="gap-1.5">
-            <span className="inline-flex size-3 items-center justify-center rounded-full bg-background text-[8px] text-foreground">
-              ▶
-            </span>
+            <Play className="h-3 w-3 fill-current" />
             Run again
           </Button>
         </div>
