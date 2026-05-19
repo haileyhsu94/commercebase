@@ -41,22 +41,40 @@ export function addLaunchedCampaign(campaign: Campaign): void {
   write([campaign, ...read()])
 }
 
+/** Map V2 wizard objective → display label for the All Campaigns "Goal KPI" column. */
+function goalLabelFromObjective(objective?: string): string | undefined {
+  switch (objective) {
+    case "awareness_consideration":
+      return "Drive discovery"
+    case "leads":
+      return "Acquire new customers"
+    case "sales":
+      return "Maximize conversion"
+    default:
+      return undefined
+  }
+}
+
 export function makeNewCampaignRow(
   name: string,
   currencySymbol: string,
   wizardSnapshot?: CampaignWizardFormData
 ): Campaign {
   const launchedAt = new Date().toISOString()
+  const cpcValue = wizardSnapshot?.maxCpc?.trim()
+  const cpsValue = wizardSnapshot?.maxCps?.trim()
+  const goal = goalLabelFromObjective(wizardSnapshot?.objective)
   return {
     id: `new-${Date.now()}`,
     name,
     status: "active",
+    ...(goal ? { goal } : {}),
     spent: `${currencySymbol}0`,
     revenue: `${currencySymbol}0`,
     cvr: "—",
     roas: "—",
-    cpc: "—",
-    cps: "—",
+    cpc: cpcValue ? `${currencySymbol}${cpcValue}` : "—",
+    cps: cpsValue ? `${currencySymbol}${cpsValue}` : "—",
     launchedAt,
     ...(wizardSnapshot ? { wizardSnapshot: { ...wizardSnapshot } } : {}),
   }

@@ -81,6 +81,13 @@ export interface CampaignArtifactDeliverable {
   body?: string
 }
 
+export interface CampaignArtifactAdCopy {
+  headline: string
+  description: string
+  imageUrl?: string
+  aspectRatio?: "1.91:1" | "1:1" | "4:5" | "9:16"
+}
+
 export interface CampaignArtifact {
   id: string
   name: string
@@ -92,10 +99,38 @@ export interface CampaignArtifact {
   goals: string[]
   audience: string
   channels: string[]
-  budget?: { amount: number; currency: string }
+  budget?: { amount: number; currency: string; type?: string }
   tasks: CampaignArtifactTask[]
   deliverables: CampaignArtifactDeliverable[]
   activation: { channel: string; status: string; reachEstimate: string }[]
+  /** Per-channel ad creative copy, keyed by channel name (e.g. "Instagram"). */
+  ads?: Record<string, CampaignArtifactAdCopy>
+
+  // Prose (top of Brief)
+  audienceDescription?: string
+  messaging?: string
+
+  // Essentials form
+  objective?: string
+  campaignType?: string
+  finalUrl?: string
+
+  // Advanced — Bidding & attribution
+  bidStrategy?: string
+  biddingTargetCpa?: string
+  biddingTargetRoas?: string
+  attributionModel?: string
+
+  // Advanced — Targeting
+  regions?: string[]
+  devices?: string[]
+  ageBands?: string[]
+  languages?: string[]
+
+  // Advanced — Brand & tracking
+  brand?: { mainColor?: string; accentColor?: string; font?: string }
+  tracking?: { utmPrefix?: string; trackingTemplate?: string }
+
   chatId: string
   createdAt: string
 }

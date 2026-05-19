@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { useAIAssistant } from "@/contexts/AIAssistantContext"
+import { useHomeMode } from "@/contexts/HomeModeContext"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { getMergedCampaigns } from "@/lib/campaign-storage"
 import { useCampaignPlanAllowance } from "@/hooks/use-campaign-plan-allowance"
@@ -58,7 +58,7 @@ import {
   formatAiPresencePeriodShort,
   type AiPresenceTimeRange,
 } from "@/pages/ai-presence/ai-presence-time-range"
-import { CampaignCreate } from "./CampaignCreate"
+import { CampaignCreateV2 as CampaignCreate } from "./CampaignCreateV2"
 
 function parseRoasPercent(roas: string): number | null {
   const m = /^([\d.]+)\s*%/.exec(roas.trim())
@@ -179,7 +179,7 @@ function SortableHead({
 export function CampaignList() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { openPanelWithComposerText } = useAIAssistant()
+  const { setMode } = useHomeMode()
   const allowance = useCampaignPlanAllowance()
   const [searchParams, setSearchParams] = useSearchParams()
   const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
@@ -455,11 +455,10 @@ export function CampaignList() {
             <Button
               type="button"
               variant="outline"
-              onClick={() =>
-                openPanelWithComposerText(
-                  "Help me create a new campaign. Suggest targeting, budget, and channels based on my best-performing campaigns."
-                )
-              }
+              onClick={() => {
+                setMode("ai")
+                navigate("/agent/campaigns?focus=1")
+              }}
             >
               <Sparkles className="mr-2 h-4 w-4" />
               Create with Aeris
