@@ -9,8 +9,10 @@ import { AppSidebar } from "./AppSidebar"
 import { Header } from "./Header"
 import { AIAssistantPanel } from "./AIAssistantPanel"
 import { GlobalSearchDialog } from "./GlobalSearchDialog"
+import { AgentSidebar } from "@/components/agent/AgentSidebar"
+import { AgentLayout } from "@/components/agent/AgentLayout"
 
-function MainContent() {
+function DashboardSurface() {
   const { isOpen, panelWidth } = useAIAssistant()
   const { mode } = useHomeMode()
   const { pathname } = useLocation()
@@ -28,7 +30,7 @@ function MainContent() {
       <main
         className={cn(
           "min-w-0 flex-1 overflow-x-hidden",
-          isAgentHome ? "flex flex-col overflow-hidden" : "overflow-y-auto p-4 pt-0"
+          isAgentHome ? "flex flex-col overflow-hidden" : "overflow-y-auto p-4 pt-0",
         )}
       >
         <Outlet />
@@ -39,14 +41,13 @@ function MainContent() {
 
 function InnerLayout() {
   const { mode } = useHomeMode()
-  const { pathname } = useLocation()
-  const isAgentHome = mode === "ai" && pathname === "/"
+  const isAgent = mode === "ai"
 
   return (
-    <SidebarProvider className={isAgentHome ? "!h-svh !min-h-0" : undefined}>
-      <AppSidebar />
-      <MainContent />
-      <AIAssistantPanel />
+    <SidebarProvider className={isAgent ? "!h-svh !min-h-0" : undefined}>
+      {isAgent ? <AgentSidebar /> : <AppSidebar />}
+      {isAgent ? <AgentLayout /> : <DashboardSurface />}
+      {!isAgent && <AIAssistantPanel />}
       <GlobalSearchDialog />
       <Toaster richColors position="bottom-right" />
     </SidebarProvider>

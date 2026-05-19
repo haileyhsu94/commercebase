@@ -10,7 +10,7 @@ export const analyticsSubnav = [
 
 export const assetsSubnav = [
   { href: "/catalogs", label: "Catalogs" },
-  { href: "/publishers", label: "Publishers" },
+  { href: "/publishers", label: "Publishers", badge: "Internal" },
 ] as const
 
 /** Returns true when the given nav href is the active sub-page. */

@@ -1,5 +1,11 @@
 export { Home } from "./Home"
-export { AutopilotPage } from "./Autopilot"
+export {
+  AutopilotOutlet,
+  AutopilotListPage,
+  AutopilotNewPage,
+  AutopilotFlowEditorPage,
+  AutopilotListPage as AutopilotPage,
+} from "./autopilot/index"
 export { Inbox } from "./Inbox"
 export * from "./campaigns"
 export * from "./ai-presence"

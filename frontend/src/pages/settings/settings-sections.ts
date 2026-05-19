@@ -6,6 +6,7 @@ export const SETTINGS_SECTIONS = [
   { id: "billing", label: "Billing", href: "/settings?tab=billing" },
   { id: "api-keys", label: "API Keys", href: "/settings?tab=api-keys" },
   { id: "notifications", label: "Notifications", href: "/settings?tab=notifications" },
+  { id: "memory", label: "Memory", href: "/settings?tab=memory" },
   { id: "integrations", label: "Integrations", href: "/settings?tab=integrations" },
   { id: "security", label: "Security", href: "/settings?tab=security" },
 ] as const
