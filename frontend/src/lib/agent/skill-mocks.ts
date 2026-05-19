@@ -9,13 +9,15 @@ export function newId(prefix: string) {
 }
 
 export function buildSampleCampaign(
-  _prompt: string,
+  prompt: string,
   chatId: string,
   overrides?: Partial<CampaignArtifact>,
 ): CampaignArtifact {
   const id = newId("camp")
   const start = new Date()
   const end = new Date(start.getTime() + 42 * 24 * 60 * 60 * 1000)
+  const p = prompt.toLowerCase()
+  const objective = inferObjective(p)
   return {
     id,
     name: overrides?.name ?? "Audience Growth — 6-Week Thought Leadership",
@@ -42,10 +44,42 @@ export function buildSampleCampaign(
       { channel: "Blog (SEO)", status: "Ready", reachEstimate: "Indexed in 7–14 days" },
       { channel: "Newsletter", status: "Ready", reachEstimate: "~4.2K subscribers" },
     ],
+    // Prose
+    audienceDescription:
+      "Fashion-forward shoppers and operators in DTC commerce who value clarity, taste, and a strong point of view. Active across LinkedIn and X; receptive to long-form weekly emails.",
+    messaging:
+      "Positioning: a sharp, opinionated voice at the intersection of AI and commerce — useful, never hype. Tone is confident but curious; we earn attention with insight, not volume.",
+    // Essentials
+    objective,
+    campaignType: "performance_max",
+    budget: { amount: 5000, currency: "USD", type: "total" },
+    finalUrl: "https://yourbrand.com/launch",
+    // Advanced — Bidding & attribution
+    bidStrategy: "maximize_conversions",
+    biddingTargetCpa: "",
+    biddingTargetRoas: "",
+    attributionModel: "data_driven",
+    // Advanced — Targeting
+    regions: ["United States", "Canada"],
+    devices: ["mobile", "desktop"],
+    ageBands: ["25-34", "35-44"],
+    languages: ["en"],
+    // Advanced — Brand & tracking
+    brand: { mainColor: "", accentColor: "", font: "" },
+    tracking: { utmPrefix: "agent_", trackingTemplate: "" },
     chatId,
     createdAt: new Date().toISOString(),
     ...overrides,
   }
+}
+
+function inferObjective(prompt: string): string {
+  if (/(sales|revenue|orders?|purchase|buy)/.test(prompt)) return "sales"
+  if (/(leads?|signups?|registration)/.test(prompt)) return "leads"
+  if (/(awareness|thought leadership|brand)/.test(prompt)) return "awareness_consideration"
+  if (/(traffic|visit)/.test(prompt)) return "website_traffic"
+  if (/(app|install)/.test(prompt)) return "app_promotion"
+  return "sales"
 }
 
 function buildCampaignTasks() {

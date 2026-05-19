@@ -13,6 +13,8 @@ export interface CampaignWizardFormData {
   budgetType: string
   bidStrategy: string
   maxCpc: string
+  /** Target cost per sale; new in V2 wizard. */
+  maxCps: string
   startDate: string
   endDate: string
   products: string[]
@@ -169,6 +171,7 @@ export const initialCampaignWizardForm: CampaignWizardFormData = {
   budgetType: "daily",
   bidStrategy: "",
   maxCpc: "",
+  maxCps: "",
   startDate: "",
   endDate: "",
   products: [],
@@ -407,6 +410,11 @@ export const BUDGET_TYPE_OPTIONS = [
     value: "daily",
     label: "Daily budget",
     description: "Average daily spend cap; platform may pace delivery across the day.",
+  },
+  {
+    value: "weekly",
+    label: "Weekly limit",
+    description: "Cap per calendar week; renews each Monday.",
   },
   {
     value: "total",

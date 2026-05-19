@@ -34,10 +34,16 @@ import { getAgentChats, AGENT_STORAGE_EVENT } from "@/lib/agent/storage"
 import type { AgentChat } from "@/types/agent"
 import { cn } from "@/lib/utils"
 
-const PRIMARY_NAV = [
+const PRIMARY_NAV: {
+  title: string
+  href: string
+  icon: typeof Home
+  match: (p: string) => boolean
+  badge?: string
+}[] = [
   { title: "Home", href: "/", icon: Home, match: (p: string) => p === "/" },
   { title: "Campaigns", href: "/agent/campaigns", icon: Sparkles, match: (p: string) => p.startsWith("/agent/campaign") },
-  { title: "Autopilot", href: "/agent/flows", icon: Workflow, match: (p: string) => p.startsWith("/agent/flow") },
+  { title: "Autopilot", href: "/agent/flows", icon: Workflow, match: (p: string) => p.startsWith("/agent/flow"), badge: "Next phase" },
   { title: "Widgets", href: "/agent/widgets", icon: BarChart3, match: (p: string) => p.startsWith("/agent/widget") },
 ]
 
@@ -116,6 +122,11 @@ export function AgentSidebar() {
                   >
                     <item.icon />
                     <span>{item.title}</span>
+                    {item.badge && (
+                      <span className="ml-auto rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-amber-700 group-data-[collapsible=icon]:hidden dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                        {item.badge}
+                      </span>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

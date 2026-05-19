@@ -12,12 +12,16 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  SkillFilterChip,
+  SkillTable,
+  type SkillTableRow,
+} from "@/components/agent/SkillTable"
 import { AGENT_STORAGE_EVENT, getFlowArtifacts } from "@/lib/agent/storage"
 import { activateSkillFromPrompt } from "@/lib/agent/activate"
 import {
   FLOW_TABLE_PLACEHOLDERS,
   FLOW_TEMPLATES,
-  type FlowTableRow,
 } from "@/lib/agent/flow-templates"
 import type { AutopilotArtifact } from "@/types/agent"
 import { cn } from "@/lib/utils"
@@ -39,7 +43,7 @@ export function FlowsList() {
     return () => window.removeEventListener(AGENT_STORAGE_EVENT, load)
   }, [])
 
-  const liveRows: FlowTableRow[] = items.map((f) => ({
+  const liveRows: SkillTableRow[] = items.map((f) => ({
     id: f.id,
     name: f.name,
     status: f.status,
@@ -47,7 +51,14 @@ export function FlowsList() {
     lastModified: f.createdAt,
   }))
   const rows = useMemo(() => {
-    const combined = [...liveRows, ...FLOW_TABLE_PLACEHOLDERS]
+    const placeholders: SkillTableRow[] = FLOW_TABLE_PLACEHOLDERS.map((p) => ({
+      id: p.id,
+      name: p.name,
+      status: p.status,
+      createdBy: p.createdBy,
+      lastModified: p.lastModified,
+    }))
+    const combined = [...liveRows, ...placeholders]
     const q = query.toLowerCase().trim()
     if (!q) return combined
     return combined.filter((r) => r.name.toLowerCase().includes(q))
@@ -61,6 +72,20 @@ export function FlowsList() {
       const result = activateSkillFromPrompt(text, { templateId })
       navigate(result.route)
     }, 120)
+  }
+
+  function handleRowClick(id: string) {
+    if (id.startsWith("placeholder")) {
+      const placeholder = FLOW_TABLE_PLACEHOLDERS.find((p) => p.id === id)
+      const template = placeholder?.templateId
+        ? FLOW_TEMPLATES.find((t) => t.id === placeholder.templateId)
+        : undefined
+      if (template) {
+        submit(template.prompt, template.id)
+      }
+      return
+    }
+    navigate(`/agent/flow/${id}`)
   }
 
   return (
@@ -170,8 +195,8 @@ export function FlowsList() {
           <section className="mt-10">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FilterChip label="Created by" />
-                <FilterChip label="Status" />
+                <SkillFilterChip label="Created by" />
+                <SkillFilterChip label="Status" />
               </div>
               <div className="flex items-center gap-2">
                 <div className="relative">
@@ -192,7 +217,13 @@ export function FlowsList() {
                 </button>
               </div>
             </div>
-            <FlowsTable rows={rows.slice(0, 6)} onRowClick={(id) => navigate(`/agent/flow/${id}`)} />
+            <SkillTable
+              rows={rows.slice(0, 6)}
+              onRowClick={handleRowClick}
+              icon={Workflow}
+              nameLabel="Agent"
+              emptyText="No agents match your filters."
+            />
           </section>
         </>
       )}
@@ -201,8 +232,8 @@ export function FlowsList() {
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FilterChip label="Created by" />
-              <FilterChip label="Status" />
+              <SkillFilterChip label="Created by" />
+              <SkillFilterChip label="Status" />
             </div>
             <div className="relative">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -214,7 +245,13 @@ export function FlowsList() {
               />
             </div>
           </div>
-          <FlowsTable rows={rows} onRowClick={(id) => navigate(`/agent/flow/${id}`)} />
+          <SkillTable
+            rows={rows}
+            onRowClick={handleRowClick}
+            icon={Workflow}
+            nameLabel="Agent"
+            emptyText="No agents match your filters."
+          />
         </section>
       )}
 
@@ -277,93 +314,3 @@ function TabPill({
   )
 }
 
-function FilterChip({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="inline-flex items-center gap-1 rounded-md border border-dashed border-input px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-    >
-      {label}
-      <ChevronDown className="h-3 w-3" />
-    </button>
-  )
-}
-
-function FlowsTable({
-  rows,
-  onRowClick,
-}: {
-  rows: FlowTableRow[]
-  onRowClick: (id: string) => void
-}) {
-  if (rows.length === 0) {
-    return (
-      <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
-        No agents match your filters.
-      </div>
-    )
-  }
-  return (
-    <div className="overflow-hidden rounded-xl border bg-card">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/40 text-xs text-muted-foreground">
-          <tr>
-            <th className="py-2.5 pl-4 pr-2 text-left font-medium">Agent</th>
-            <th className="px-2 py-2.5 text-left font-medium">Status</th>
-            <th className="px-2 py-2.5 text-left font-medium">Created by</th>
-            <th className="py-2.5 pl-2 pr-4 text-left font-medium">Last modified</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr
-              key={r.id}
-              onClick={() => !r.id.startsWith("placeholder") && onRowClick(r.id)}
-              className={cn(
-                "border-t text-sm",
-                !r.id.startsWith("placeholder") && "cursor-pointer hover:bg-muted/30",
-              )}
-            >
-              <td className="py-2.5 pl-4 pr-2">
-                <div className="flex items-center gap-2">
-                  <Workflow className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{r.name}</span>
-                </div>
-              </td>
-              <td className="px-2 py-2.5">
-                <StatusChip status={r.status} />
-              </td>
-              <td className="px-2 py-2.5 text-xs text-muted-foreground">{r.createdBy}</td>
-              <td className="py-2.5 pl-2 pr-4 text-xs text-muted-foreground">
-                {formatRelative(r.lastModified)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function StatusChip({ status }: { status: AutopilotArtifact["status"] }) {
-  const meta = {
-    active: { label: "Active", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200" },
-    paused: { label: "Paused", className: "bg-muted text-muted-foreground" },
-    draft: { label: "Draft", className: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200" },
-  }[status]
-  return (
-    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium", meta.className)}>
-      {meta.label}
-    </span>
-  )
-}
-
-function formatRelative(iso: string) {
-  const date = new Date(iso)
-  const diff = Date.now() - date.getTime()
-  const days = Math.floor(diff / 86400000)
-  if (days < 1) return "today"
-  if (days === 1) return "yesterday"
-  if (days < 30) return `${days}d ago`
-  return date.toLocaleDateString()
-}
