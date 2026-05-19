@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react"
 import { GripVertical, Pencil } from "lucide-react"
 import { currentUser } from "@/lib/mock-data"
+import { useAuth } from "@/contexts/AuthContext"
 import {
   getHomeLayout,
   getVisibleWidgetsInOrder,
@@ -48,6 +49,7 @@ function reorderWidgets(order: HomeWidgetId[], fromIndex: number, toIndex: numbe
 }
 
 export function Home() {
+  const { user } = useAuth()
   const { mode } = useHomeMode()
   const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
   const [layout, setLayout] = useState<HomeLayoutState>(() => getHomeLayout())
@@ -103,8 +105,9 @@ export function Home() {
     <>
       {mode === "dashboard" && (
         <PageHeader
-          title={`${greeting}, ${currentUser.name.split(" ")[0]}`}
+          title={`${greeting}, ${(user?.name ?? currentUser.name).split(" ")[0]}`}
           description={`Here's what's happening with your campaigns — ${formatAiPresencePeriodShort(timeRange)}.`}
+          status="working"
           actions={
             <>
               <Button

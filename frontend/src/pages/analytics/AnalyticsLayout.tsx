@@ -6,6 +6,7 @@ import {
   defaultAiPresenceTimeRange,
   type AiPresenceTimeRange,
 } from "@/pages/ai-presence/ai-presence-time-range"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 
 export type AnalyticsOutletContext = {
   timeRange: AiPresenceTimeRange
@@ -34,9 +35,18 @@ const pageInfo: Record<string, { label: string; description: string }> = {
   },
 }
 
+const STATUS_BY_PATH: Record<string, "demo" | "working" | "live"> = {
+  "/analytics": "working",          // PerformanceOverview — API 연결됨
+  "/analytics/channels": "working", // ChannelAttribution — API 연결됨
+  "/analytics/products": "demo",
+  "/analytics/audiences": "demo",
+  "/analytics/regions": "demo",
+}
+
 export function AnalyticsLayout() {
   const { pathname } = useLocation()
   const info = pageInfo[pathname] ?? pageInfo["/analytics"]
+  const status = STATUS_BY_PATH[pathname] ?? "demo"
   const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
 
   return (
@@ -54,7 +64,10 @@ export function AnalyticsLayout() {
               <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" aria-hidden />
               <span className="font-medium text-foreground">{info.label}</span>
             </nav>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight">{info.label}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight">{info.label}</h1>
+              <PageStatusBadge status={status} />
+            </div>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{info.description}</p>
           </div>
           <div className="shrink-0 self-start sm:mt-7">

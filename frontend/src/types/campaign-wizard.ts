@@ -23,6 +23,10 @@ export interface CampaignWizardFormData {
   /** Selected surfaces per channel id (e.g. shopping → ["ai-search"]) */
   channelSurfaces: Record<string, string[]>
   regions: string[]
+  /** ISO-3166-1 alpha-2 codes to BLOCK (advertiser doesn't want traffic from these countries) */
+  regionExclusions: string[]
+  /** ISO-639-1 codes — content language targeting */
+  languages: string[]
   ageBands: string[]
   interests: string[]
   devices: string[]
@@ -56,8 +60,6 @@ export interface CampaignWizardFormData {
   newCustomerAcquisition: string
   /** presence_interest | presence | interest — location-targeting mode. */
   locationPresence: string
-  /** ISO 639-1 language codes (e.g. "en"). */
-  languages: string[]
   /** all_day | custom — ad schedule mode. */
   adScheduleMode: string
   /** Freeform comma-separated brand exclusions. */
@@ -179,6 +181,8 @@ export const initialCampaignWizardForm: CampaignWizardFormData = {
   channels: [],
   channelSurfaces: {},
   regions: [],
+  regionExclusions: [],
+  languages: [],
   ageBands: [],
   interests: [],
   devices: [],
@@ -200,7 +204,6 @@ export const initialCampaignWizardForm: CampaignWizardFormData = {
   biddingTargetRoas: "",
   newCustomerAcquisition: "off",
   locationPresence: "presence_interest",
-  languages: [],
   adScheduleMode: "all_day",
   brandExclusions: "",
   headline: "",

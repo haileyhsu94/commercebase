@@ -2,17 +2,16 @@ import { Link, useOutletContext } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { XAxis, YAxis, Area, AreaChart } from "recharts"
-import { statsCards, revenueChartData, topProducts } from "@/lib/mock-data"
+import { topProducts } from "@/lib/mock-data"
 import { FunnelChart, type FunnelStage } from "@/components/shared/FunnelChart"
 import { cn } from "@/lib/utils"
 import { ArrowRight, TrendingUp } from "lucide-react"
 import type { AnalyticsOutletContext } from "./AnalyticsLayout"
 import { useMemo } from "react"
-import {
-  daysFromAiPresenceTimeRange,
-  scaleStatCardsForHomeRange,
-} from "@/lib/home-range-metrics"
-import { getMergedCampaigns } from "@/lib/campaign-storage"
+import { daysFromAiPresenceTimeRange } from "@/lib/home-range-metrics"
+import { campaigns as seedCampaigns } from "@/lib/mock-data"
+import { useCampaignsQuery } from "@/hooks/api/useCampaigns"
+import { useOverviewQuery, toAnalyticsRange } from "@/hooks/api/useAnalytics"
 import {
   Table,
   TableBody,
@@ -43,12 +42,11 @@ const generateSparkline = (trend: "up" | "down") => {
   }))
 }
 
-// Mock Funnel Data for the Performance Overview
-const funnelStages: FunnelStage[] = [
-  { id: "impressions", label: "Impressions", value: 4500000, pct: 100, change: "+12%", changeTrend: "up" },
-  { id: "clicks", label: "Clicks", value: 65600, pct: 1.45, change: "+5%", changeTrend: "up" },
-  { id: "carts", label: "Add to Cart", value: 4200, pct: 6.4, change: "-2%", changeTrend: "down" },
-  { id: "orders", label: "Orders", value: 902, pct: 21.4, change: "+0.3%", changeTrend: "up" },
+// Funnel defaults — used if API returns empty.
+const EMPTY_FUNNEL: FunnelStage[] = [
+  { id: "impressions", label: "Impressions", value: 0, pct: 100 },
+  { id: "clicks", label: "Clicks", value: 0, pct: 0 },
+  { id: "orders", label: "Orders", value: 0, pct: 0 },
 ]
 
 const quickLinks = [
@@ -71,39 +69,38 @@ export function PerformanceOverview() {
   const { timeRange } = useOutletContext<AnalyticsOutletContext>()
   const days = daysFromAiPresenceTimeRange(timeRange)
 
-  const activeStats = useMemo(() => scaleStatCardsForHomeRange(statsCards, days), [days])
+  // API: 실데이터
+  const { data: overview } = useOverviewQuery(toAnalyticsRange(timeRange))
+
+  const activeStats = useMemo(
+    () => overview?.stats ?? [
+      { title: "Total Revenue", value: "$0", change: "", trend: "up" as const },
+      { title: "Total Orders", value: "0", change: "", trend: "up" as const },
+      { title: "Avg Order Value", value: "$0", change: "", trend: "up" as const },
+      { title: "ROAS", value: "0%", change: "", trend: "up" as const },
+    ],
+    [overview]
+  )
 
   const activeRevenueData = useMemo(() => {
-    const sliceCount = Math.min(revenueChartData.length, days)
-    const data = revenueChartData.slice(-sliceCount)
-    // Add some jitter based on days to make it feel dynamic
-    return data.map((d, i) => ({
-      ...d,
-      revenue: Math.round(d.revenue * (0.9 + ((days + i) % 15) / 100)),
-      // Some mock data might not have spend, handle gracefully
-      spend: Math.round(((d as any).spend || d.revenue * 0.4) * (0.85 + ((days + i) % 20) / 100)),
-    }))
-  }, [days, revenueChartData])
+    const chart = overview?.revenueChart ?? []
+    // Chart 타입이 revenue + spend 둘 다 기대하므로 spend는 일단 0으로 채움
+    return chart.map((d) => ({ ...d, spend: 0 }))
+  }, [overview])
 
   const activeFunnelStages = useMemo(() => {
-    const factor = 0.5 + days / 50
-    return funnelStages.map((s) => ({
-      ...s,
-      value: Math.round(s.value * factor),
-    }))
-  }, [days])
+    return overview?.funnel ?? EMPTY_FUNNEL
+  }, [overview])
 
+  const { data: apiCampaigns } = useCampaignsQuery()
   const topCampaigns = useMemo(() => {
-    const factor = 0.6 + days / 45
-    return getMergedCampaigns()
+    const api = apiCampaigns ?? []
+    const ids = new Set(api.map((c) => c.id))
+    const merged = [...api, ...seedCampaigns.filter((c) => !ids.has(c.id))]
+    return merged
       .sort((a, b) => parseDollar(b.revenue) - parseDollar(a.revenue))
       .slice(0, 5)
-      .map((c) => ({
-        ...c,
-        revenue: `$${(parseDollar(c.revenue) * factor / 1000).toFixed(1)}K`,
-        spent: `$${(parseDollar(c.spent) * factor / 1000).toFixed(1)}K`,
-      }))
-  }, [days])
+  }, [apiCampaigns])
 
   const activeTopProducts = useMemo(() => {
     const factor = 0.7 + days / 40

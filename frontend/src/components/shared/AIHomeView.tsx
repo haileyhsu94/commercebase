@@ -1055,7 +1055,7 @@ export function AIHomeView() {
 
             {/* Bottom input (for follow-up messages during conversation) */}
             {(conversationStep === "plan" || conversationStep === "done") && (
-              <div className="shrink-0 px-4 py-3">
+              <div className="shrink-0 border-t border-border px-4 py-3">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault()

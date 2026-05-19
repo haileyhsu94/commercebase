@@ -21,7 +21,7 @@ import {
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, XAxis, YAxis, Pie, PieChart, Cell } from "recharts"
 import type { AnalyticsOutletContext } from "./AnalyticsLayout"
-import { getChannelData, getChannelPieData, getChannelBarData } from "@/lib/analytics-mock"
+import { useChannelsQuery, toAnalyticsRange } from "@/hooks/api/useAnalytics"
 
 const chartConfig = {
   revenue: {
@@ -36,9 +36,24 @@ export function ChannelAttribution() {
   const { timeRange } = useOutletContext<AnalyticsOutletContext>()
   const [currentPage, setCurrentPage] = useState(1)
 
-  const channelData  = useMemo(() => getChannelData(timeRange),    [timeRange])
-  const pieData      = useMemo(() => getChannelPieData(timeRange).slice(0, 5), [timeRange])
-  const barData      = useMemo(() => getChannelBarData(timeRange).slice(0, 10), [timeRange])
+  const { data: apiChannels } = useChannelsQuery(toAnalyticsRange(timeRange))
+  const channelData = useMemo(() => apiChannels?.channels ?? [], [apiChannels])
+
+  const pieData = useMemo(
+    () =>
+      channelData.slice(0, 5).map((c, i) => ({
+        name: c.name,
+        value: c.share,
+        fill: ["var(--color-primary)", "var(--color-chart-2)", "var(--color-chart-3)", "var(--color-chart-4)"][i] ?? "var(--color-primary)",
+      })),
+    [channelData]
+  )
+
+  const barData = useMemo(
+    () =>
+      channelData.slice(0, 10).map((c) => ({ name: c.name, revenue: c.revenueRaw })),
+    [channelData]
+  )
 
   const totalPages = Math.ceil(channelData.length / PAGE_SIZE)
   const paginatedItems = useMemo(() => {
