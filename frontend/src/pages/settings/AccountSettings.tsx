@@ -20,6 +20,7 @@ import { LocationCombobox } from "@/components/ui/location-combobox"
 import { COUNTRIES, CITIES } from "@/lib/location-options"
 import { cn } from "@/lib/utils"
 import { currentUser, simpleIconSvgUrl } from "@/lib/mock-data"
+import { clearSession } from "@/lib/session"
 import { getCompanyProfile, saveCompanyProfile } from "@/lib/company-profile"
 import {
   buildPlanCatalog,
@@ -378,6 +379,7 @@ export function AccountSettings() {
             </CardContent>
           </Card>
           <ThemeAppearanceCard />
+          <SignOutButton />
         </TabsContent>
 
         <TabsContent value="company" className="mt-0 min-w-0 flex-1 space-y-4">
@@ -1223,5 +1225,25 @@ export function AccountSettings() {
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+function SignOutButton() {
+  const navigate = useNavigate()
+  return (
+    <div className="flex justify-end pt-2">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="text-muted-foreground hover:text-destructive"
+        onClick={() => {
+          clearSession()
+          navigate("/signup")
+        }}
+      >
+        Sign out
+      </Button>
+    </div>
   )
 }

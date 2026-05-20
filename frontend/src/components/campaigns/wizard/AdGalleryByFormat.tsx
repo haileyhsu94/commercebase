@@ -12,6 +12,7 @@ export function AdGalleryByFormat({
   imageUrl,
   videoUrl,
   domainLabel,
+  hideVideo = false,
 }: {
   headline?: string
   headlineSecondary?: string
@@ -19,13 +20,16 @@ export function AdGalleryByFormat({
   imageUrl?: string
   videoUrl?: string
   domainLabel?: string
+  /** Suppress the video-format preview (e.g. AI generation produces images only). */
+  hideVideo?: boolean
 }) {
-  const formats: { aspect: string; label: string; isVideo?: boolean }[] = [
+  const allFormats: { aspect: string; label: string; isVideo?: boolean }[] = [
     { aspect: "1.91:1", label: "Landscape" },
     { aspect: "1:1", label: "Square" },
     { aspect: "9:16", label: "Vertical" },
     { aspect: "16:9", label: "Horizontal video", isVideo: true },
   ]
+  const formats = hideVideo ? allFormats.filter((f) => !f.isVideo) : allFormats
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

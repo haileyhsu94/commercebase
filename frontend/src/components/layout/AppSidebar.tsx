@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Accordion } from "@base-ui/react/accordion"
-import { BarChart3, ChevronDown, Inbox, MessageSquare, Package, PenSquare, Pin, Settings, Workflow } from "lucide-react"
+import { BarChart3, Building2, ChevronDown, Inbox, MessageSquare, Package, PenSquare, Pin, Settings, Workflow } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -27,8 +27,6 @@ import { aiPresenceSubnav } from "@/lib/ai-presence-mock"
 import {
   analyticsSubnav,
   analyticsSubItemActive,
-  assetsSubnav,
-  assetsSubItemActive,
 } from "@/lib/sidebar-nav"
 import { useUnreadInboxCount } from "@/hooks/use-inbox-unread"
 import { navigationItems, currentUser } from "@/lib/mock-data"
@@ -77,13 +75,6 @@ export function AppSidebar() {
   const [analyticsOpen, setAnalyticsOpen] = useState<string[]>(() =>
     pathname.startsWith("/analytics") ? ["analytics"] : []
   )
-  const [assetsOpen, setAssetsOpen] = useState<string[]>(() =>
-    pathname.startsWith("/catalogs") ||
-    pathname.startsWith("/products") ||
-    pathname.startsWith("/publishers")
-      ? ["assets"]
-      : []
-  )
 
   useEffect(() => {
     setAiOpen(pathname.startsWith("/ai-presence") ? ["ai"] : [])
@@ -91,16 +82,6 @@ export function AppSidebar() {
 
   useEffect(() => {
     setAnalyticsOpen(pathname.startsWith("/analytics") ? ["analytics"] : [])
-  }, [pathname])
-
-  useEffect(() => {
-    setAssetsOpen(
-      pathname.startsWith("/catalogs") ||
-        pathname.startsWith("/products") ||
-        pathname.startsWith("/publishers")
-        ? ["assets"]
-        : []
-    )
   }, [pathname])
 
   const isActive = (href: string) => {
@@ -129,14 +110,6 @@ export function AppSidebar() {
     setAnalyticsOpen(v)
   }
 
-  const handleAssetsAccordionChange = (v: string[]) => {
-    if (!sidebarOpen) {
-      setSidebarOpen(true)
-      setAssetsOpen(["assets"])
-      return
-    }
-    setAssetsOpen(v)
-  }
 
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -318,40 +291,18 @@ export function AppSidebar() {
                     </Accordion.Item>
                   </Accordion.Root>
                 </SidebarMenuItem>
+                {/* Catalogs — top-level (all users) */}
                 <SidebarMenuItem>
-                  <Accordion.Root value={assetsOpen} onValueChange={handleAssetsAccordionChange} multiple={false}>
-                    <Accordion.Item value="assets" className="border-0">
-                      <Accordion.Header className="m-0 w-full p-0">
-                        <Accordion.Trigger
-                          className={cn(
-                            accordionTriggerClass,
-                            "h-8 text-sm data-[panel-open]:bg-sidebar-accent/80 [&[data-panel-open]_svg:last-child]:rotate-180"
-                          )}
-                        >
-                          <Package />
-                          <span className="truncate font-medium">Assets</span>
-                          <ChevronDown
-                            aria-hidden
-                            className="ml-auto shrink-0 transition-transform duration-200"
-                          />
-                        </Accordion.Trigger>
-                      </Accordion.Header>
-                      <Accordion.Panel className="overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-top-1">
-                        <SidebarMenuSub className="gap-1 pt-2 pb-0.5">
-                          {assetsSubnav.map(({ href, label }) => (
-                            <SidebarMenuSubItem key={href}>
-                              <SidebarMenuSubButton
-                                isActive={assetsSubItemActive(pathname, href)}
-                                render={<Link to={href} />}
-                              >
-                                <span className="truncate">{label}</span>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </Accordion.Panel>
-                    </Accordion.Item>
-                  </Accordion.Root>
+                  <SidebarMenuButton
+                    isActive={
+                      pathname.startsWith("/catalogs") || pathname.startsWith("/products")
+                    }
+                    tooltip="Catalogs"
+                    render={<Link to="/catalogs" />}
+                  >
+                    <Package />
+                    <span>Catalogs</span>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
 
                 {/* Autopilot — top-level standalone */}
@@ -365,8 +316,28 @@ export function AppSidebar() {
                   >
                     <Workflow />
                     <span>Autopilot</span>
+                    <span className="ml-auto rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-amber-700 group-data-[collapsible=icon]:hidden dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                      Next phase
+                    </span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+
+                {/* Publishers — admin only, below Autopilot */}
+                {currentUser.isAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={pathname.startsWith("/publishers")}
+                      tooltip="Publishers"
+                      render={<Link to="/publishers" />}
+                    >
+                      <Building2 />
+                      <span>Publishers</span>
+                      <span className="ml-auto rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-sky-700 group-data-[collapsible=icon]:hidden dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
+                        Internal
+                      </span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

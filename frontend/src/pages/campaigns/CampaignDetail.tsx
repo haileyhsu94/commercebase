@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
-import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowLeft, Copy, Play, Pause, Settings, Sparkles, TrendingUp, TrendingDown } from "lucide-react"
+import { useParams, Link, useSearchParams } from "react-router-dom"
+import { ArrowLeft, Play, Pause, Settings, TrendingUp, TrendingDown } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, Line, LineChart, XAxis, YAxis } from "recharts"
-import { useAIAssistant } from "@/contexts/AIAssistantContext"
 import { getMergedCampaigns } from "@/lib/campaign-storage"
 import { channelPerformance, revenueChartData } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
@@ -49,8 +48,6 @@ const statusClassNames = {
 
 export function CampaignDetail() {
   const { id } = useParams()
-  const navigate = useNavigate()
-  const { openPanelWithComposerText } = useAIAssistant()
   const [searchParams, setSearchParams] = useSearchParams()
   const [editOpen, setEditOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<AiPresenceTimeRange>(defaultAiPresenceTimeRange)
@@ -96,20 +93,6 @@ export function CampaignDetail() {
                   {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                 </Badge>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-fit shrink-0"
-                onClick={() =>
-                  openPanelWithComposerText(
-                    `Copy campaign "${campaign.name}" (${campaign.id}) with these changes: `
-                  )
-                }
-              >
-                <Sparkles className="mr-2 h-4 w-4" />
-                Copy with Aeris
-              </Button>
             </div>
             <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
           </div>
@@ -128,20 +111,12 @@ export function CampaignDetail() {
           )}
           <Button
             type="button"
-            variant="outline"
-            onClick={() => navigate(`/campaigns?duplicate=${encodeURIComponent(campaign.id)}`)}
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Copy campaign
-          </Button>
-          <Button
-            type="button"
             variant="default"
             onClick={() => setEditOpen(true)}
-            aria-label="Edit campaign settings"
+            aria-label="Open campaign settings"
           >
             <Settings className="mr-2 h-4 w-4" />
-            Edit
+            Campaign settings
           </Button>
         </div>
       </div>
@@ -280,28 +255,166 @@ export function CampaignDetail() {
       </div>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit campaign</DialogTitle>
+        <DialogContent className="max-h-[85vh] gap-0 overflow-y-auto p-0 sm:max-w-2xl">
+          <DialogHeader className="border-b px-6 py-4">
+            <DialogTitle>Campaign settings</DialogTitle>
             <DialogDescription>
-              Update name, budget, and targeting. In production this would save to your backend.
+              Update schedule, budget, targeting, brand identity, and tracking. Changes apply on
+              the next sync — running ads keep delivering until then.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="space-y-2">
-              <label htmlFor="campaign-edit-name" className="text-sm font-medium">
-                Campaign name
-              </label>
-              <Input id="campaign-edit-name" defaultValue={campaign.name} autoComplete="off" />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="campaign-edit-budget" className="text-sm font-medium">
-                Daily budget
-              </label>
-              <Input id="campaign-edit-budget" placeholder="$0.00" type="text" autoComplete="off" />
-            </div>
+
+          <div className="space-y-6 px-6 py-5">
+            {/* Basics */}
+            <SettingsSection title="Basics" description="Name and overall status of this campaign.">
+              <SettingsField label="Campaign name">
+                <Input defaultValue={campaign.name} autoComplete="off" />
+              </SettingsField>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <SettingsField label="Objective">
+                  <Input
+                    defaultValue={campaign.wizardSnapshot?.objective ?? campaign.goal ?? ""}
+                    placeholder="e.g. Drive discovery"
+                  />
+                </SettingsField>
+                <SettingsField label="Status">
+                  <Input defaultValue={campaign.status} disabled />
+                </SettingsField>
+              </div>
+            </SettingsSection>
+
+            {/* Schedule & budget */}
+            <SettingsSection
+              title="Schedule & budget"
+              description="When the campaign runs and how aggressively we spend."
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <SettingsField label="Start date">
+                  <Input type="date" defaultValue={campaign.wizardSnapshot?.startDate ?? ""} />
+                </SettingsField>
+                <SettingsField label="End date">
+                  <Input type="date" defaultValue={campaign.wizardSnapshot?.endDate ?? ""} />
+                </SettingsField>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <SettingsField label="Budget type">
+                  <Input defaultValue={campaign.wizardSnapshot?.budgetType ?? "daily"} />
+                </SettingsField>
+                <SettingsField label="Budget amount">
+                  <Input
+                    defaultValue={campaign.wizardSnapshot?.budget ?? ""}
+                    placeholder="500"
+                    inputMode="decimal"
+                  />
+                </SettingsField>
+                <SettingsField label="Currency">
+                  <Input defaultValue={campaign.wizardSnapshot?.currency ?? "USD"} />
+                </SettingsField>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <SettingsField label="Max CPC">
+                  <Input
+                    defaultValue={campaign.wizardSnapshot?.maxCpc ?? ""}
+                    placeholder="0.00"
+                    inputMode="decimal"
+                  />
+                </SettingsField>
+                <SettingsField label="Target CPS">
+                  <Input
+                    defaultValue={campaign.wizardSnapshot?.maxCps ?? ""}
+                    placeholder="0.00"
+                    inputMode="decimal"
+                  />
+                </SettingsField>
+              </div>
+            </SettingsSection>
+
+            {/* Targeting */}
+            <SettingsSection
+              title="Targeting"
+              description="Who and where this campaign reaches."
+            >
+              <SettingsField label="Countries">
+                <Input
+                  defaultValue={(campaign.wizardSnapshot?.regions ?? []).join(", ")}
+                  placeholder="e.g. United States, Canada"
+                />
+              </SettingsField>
+              <SettingsField label="Cities">
+                <Input
+                  defaultValue={(campaign.wizardSnapshot?.cities ?? []).join(", ")}
+                  placeholder="Optional — e.g. New York, Toronto"
+                />
+              </SettingsField>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <SettingsField label="Languages">
+                  <Input
+                    defaultValue={(campaign.wizardSnapshot?.languages ?? []).join(", ")}
+                    placeholder="en"
+                  />
+                </SettingsField>
+                <SettingsField label="Age bands">
+                  <Input
+                    defaultValue={(campaign.wizardSnapshot?.ageBands ?? []).join(", ")}
+                    placeholder="25-34, 35-44"
+                  />
+                </SettingsField>
+              </div>
+            </SettingsSection>
+
+            {/* Brand & creative */}
+            <SettingsSection
+              title="Brand & creative"
+              description="Identity used to render generated ads and product cards."
+            >
+              <SettingsField label="Business name">
+                <Input
+                  defaultValue={campaign.wizardSnapshot?.businessName ?? ""}
+                  placeholder="Your brand"
+                />
+              </SettingsField>
+              <SettingsField label="Final URL">
+                <Input
+                  defaultValue={campaign.wizardSnapshot?.finalUrl ?? ""}
+                  type="url"
+                  placeholder="https://yourbrand.com/landing"
+                />
+              </SettingsField>
+            </SettingsSection>
+
+            {/* Tracking & attribution */}
+            <SettingsSection
+              title="Tracking & attribution"
+              description="How clicks and conversions are stamped and credited."
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <SettingsField label="Attribution model">
+                  <Input
+                    defaultValue={campaign.wizardSnapshot?.attributionModel ?? "data_driven"}
+                  />
+                </SettingsField>
+                <SettingsField label="Bidding focus">
+                  <Input
+                    defaultValue={campaign.wizardSnapshot?.biddingFocus ?? "conversions"}
+                  />
+                </SettingsField>
+              </div>
+              <SettingsField label="UTM prefix">
+                <Input
+                  defaultValue={campaign.wizardSnapshot?.utmPrefix ?? ""}
+                  placeholder="ss26_launch_"
+                />
+              </SettingsField>
+              <SettingsField label="Tracking template">
+                <Input
+                  defaultValue={campaign.wizardSnapshot?.trackingTemplate ?? ""}
+                  placeholder="{lpurl}?utm_source={network}&utm_medium=cpc"
+                />
+              </SettingsField>
+            </SettingsSection>
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="sticky bottom-0 gap-2 border-t bg-background px-6 py-3">
             <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
               Cancel
             </Button>
@@ -312,5 +425,42 @@ export function CampaignDetail() {
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+function SettingsSection({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="space-y-3 rounded-lg border bg-card p-4">
+      <header>
+        <h3 className="text-sm font-semibold">{title}</h3>
+        {description && (
+          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        )}
+      </header>
+      <div className="space-y-3">{children}</div>
+    </section>
+  )
+}
+
+function SettingsField({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium">{label}</label>
+      {children}
+    </div>
   )
 }

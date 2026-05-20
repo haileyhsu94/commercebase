@@ -2,6 +2,7 @@ export type SkillType = "campaign" | "autopilot" | "widget" | "chat"
 
 export type ConnectorId =
   | "shopify"
+  | "woocommerce"
   | "google-ads"
   | "google-merchant"
   | "meta-ads"
@@ -9,11 +10,18 @@ export type ConnectorId =
   | "klaviyo"
   | "slack"
   | "hubspot"
+  | "salesforce"
+  | "attio"
+  | "x"
+  | "linkedin"
+  | "instagram"
+  | "facebook"
+  | "tiktok"
 
 export interface ConnectorDef {
   id: ConnectorId
   name: string
-  category: "store" | "ads" | "crm" | "messaging"
+  category: "store" | "ads" | "crm" | "messaging" | "social"
   description: string
   scopes: string[]
   brandColor: string

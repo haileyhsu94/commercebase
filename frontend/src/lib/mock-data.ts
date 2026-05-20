@@ -456,5 +456,7 @@ export const currentUser = {
   avatar: "https://github.com/shadcn.png",
   initials: "JD",
   company: "Realry Inc.",
+  /** Internal CommerceBase admin. Gates admin-only nav (e.g. Publishers). */
+  isAdmin: true,
 }
 

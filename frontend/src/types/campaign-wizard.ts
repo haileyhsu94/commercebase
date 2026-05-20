@@ -23,6 +23,8 @@ export interface CampaignWizardFormData {
   /** Selected surfaces per channel id (e.g. shopping → ["ai-search"]) */
   channelSurfaces: Record<string, string[]>
   regions: string[]
+  /** Optional finer-grained city targeting layered on top of country regions. */
+  cities: string[]
   ageBands: string[]
   interests: string[]
   devices: string[]
@@ -179,6 +181,7 @@ export const initialCampaignWizardForm: CampaignWizardFormData = {
   channels: [],
   channelSurfaces: {},
   regions: [],
+  cities: [],
   ageBands: [],
   interests: [],
   devices: [],
