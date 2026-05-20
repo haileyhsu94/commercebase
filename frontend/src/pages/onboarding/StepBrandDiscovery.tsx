@@ -2,6 +2,13 @@ import { useState } from "react"
 import { ArrowRight, Building2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { BrandMemoriesPanel } from "@/components/onboarding/BrandMemoriesPanel"
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell"
 import {
@@ -143,13 +150,18 @@ export function StepBrandDiscovery({ onContinue }: Props) {
           </Field>
 
           <Field label="Your role">
-            <div className="flex flex-wrap gap-1.5">
-              {ROLES.map((r) => (
-                <Chip key={r} active={role === r} onClick={() => setRole(r)}>
-                  {r}
-                </Chip>
-              ))}
-            </div>
+            <Select value={role} onValueChange={(v) => setRole(v ?? "")}>
+              <SelectTrigger className="h-9 w-full">
+                <SelectValue placeholder="Select your role" />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLES.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
 
           {memoriesReady && (
