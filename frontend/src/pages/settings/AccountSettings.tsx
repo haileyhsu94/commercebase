@@ -379,7 +379,7 @@ export function AccountSettings() {
             </CardContent>
           </Card>
           <ThemeAppearanceCard />
-          <SignOutCard />
+          <SignOutButton />
         </TabsContent>
 
         <TabsContent value="company" className="mt-0 min-w-0 flex-1 space-y-4">
@@ -1228,26 +1228,22 @@ export function AccountSettings() {
   )
 }
 
-function SignOutCard() {
+function SignOutButton() {
   const navigate = useNavigate()
-  function signOut() {
-    clearSession()
-    navigate("/signup")
-  }
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Sign out</CardTitle>
-        <CardDescription>
-          Sign out of CommerceBase on this device. Your company profile and onboarding stay saved —
-          signing in again drops you straight back into the dashboard.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button type="button" variant="outline" onClick={signOut}>
-          Sign out
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="flex justify-end pt-2">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="text-muted-foreground hover:text-destructive"
+        onClick={() => {
+          clearSession()
+          navigate("/signup")
+        }}
+      >
+        Sign out
+      </Button>
+    </div>
   )
 }
