@@ -20,6 +20,7 @@ import { LocationCombobox } from "@/components/ui/location-combobox"
 import { COUNTRIES, CITIES } from "@/lib/location-options"
 import { cn } from "@/lib/utils"
 import { currentUser, simpleIconSvgUrl } from "@/lib/mock-data"
+import { clearSession } from "@/lib/session"
 import { getCompanyProfile, saveCompanyProfile } from "@/lib/company-profile"
 import {
   buildPlanCatalog,
@@ -378,6 +379,7 @@ export function AccountSettings() {
             </CardContent>
           </Card>
           <ThemeAppearanceCard />
+          <SignOutCard />
         </TabsContent>
 
         <TabsContent value="company" className="mt-0 min-w-0 flex-1 space-y-4">
@@ -1223,5 +1225,29 @@ export function AccountSettings() {
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+function SignOutCard() {
+  const navigate = useNavigate()
+  function signOut() {
+    clearSession()
+    navigate("/signup")
+  }
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Sign out</CardTitle>
+        <CardDescription>
+          Sign out of CommerceBase on this device. Your company profile and onboarding stay saved —
+          signing in again drops you straight back into the dashboard.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button type="button" variant="outline" onClick={signOut}>
+          Sign out
+        </Button>
+      </CardContent>
+    </Card>
   )
 }

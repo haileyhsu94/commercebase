@@ -4,13 +4,16 @@ import { ArrowRight, Check, Mail, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { setSession } from "@/lib/session"
-import { saveOnboarding } from "@/lib/onboarding-storage"
+import { getOnboarding, saveOnboarding } from "@/lib/onboarding-storage"
+import { getCompanyProfile } from "@/lib/company-profile"
 import { cn } from "@/lib/utils"
 
 type Phase = "form" | "verify"
+type Mode = "signup" | "signin"
 
 export function Signup() {
   const navigate = useNavigate()
+  const [mode, setMode] = useState<Mode>("signup")
   const [phase, setPhase] = useState<Phase>("form")
   const [email, setEmail] = useState("")
   const [firstName, setFirstName] = useState("")
@@ -33,6 +36,32 @@ export function Signup() {
     e.preventDefault()
     if (!formValid) return
     setPhase("verify")
+  }
+
+  function submitSignIn(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email.includes("@") || password.length < 6) return
+    setSubmitting(true)
+    setTimeout(() => {
+      // Mockup: any email/password accepts. Restore name from the stored
+      // company profile if present (matches the prior signup); otherwise
+      // derive a name from the email local-part.
+      const profile = getCompanyProfile()
+      const derivedName = profile.companyName || email.split("@")[0]
+      setSession({
+        email,
+        name: derivedName,
+        signedUpAt: new Date().toISOString(),
+      })
+      // If onboarding was previously completed, route to dashboard.
+      // Otherwise resume onboarding from where the user left off.
+      const onboarding = getOnboarding()
+      if (onboarding.completed) {
+        navigate("/")
+      } else {
+        navigate("/onboarding")
+      }
+    }, 250)
   }
 
   function submitCode(e: React.FormEvent) {
@@ -70,7 +99,68 @@ export function Signup() {
 
       {/* Right — content */}
       <main className="flex flex-1 items-center justify-center p-6">
-        {phase === "form" ? (
+        {phase === "form" && mode === "signin" ? (
+          <form onSubmit={submitSignIn} className="w-full max-w-sm space-y-5">
+            <header>
+              <h2 className="text-2xl font-semibold">Welcome back</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Sign in to your account.
+              </p>
+            </header>
+
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="text-xs font-medium">
+                Email address <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@yourbrand.com"
+                autoComplete="email"
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="text-xs font-medium">
+                Password <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Mockup: any password 6+ characters accepts.
+              </p>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={!email.includes("@") || password.length < 6 || submitting}
+              className="w-full gap-1.5"
+            >
+              Sign in
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+
+            <p className="text-center text-xs text-muted-foreground">
+              New here?{" "}
+              <button
+                type="button"
+                onClick={() => setMode("signup")}
+                className="font-medium text-foreground underline-offset-2 hover:underline"
+              >
+                Create an account
+              </button>
+            </p>
+          </form>
+        ) : phase === "form" ? (
           <form onSubmit={submitForm} className="w-full max-w-sm space-y-5">
             <header>
               <h2 className="text-2xl font-semibold">Create your account</h2>
@@ -160,6 +250,17 @@ export function Signup() {
 
             <p className="text-center text-[11px] text-muted-foreground">
               By creating an account you agree to the Terms of Sale and Privacy Policy.
+            </p>
+
+            <p className="text-center text-xs text-muted-foreground">
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => setMode("signin")}
+                className="font-medium text-foreground underline-offset-2 hover:underline"
+              >
+                Sign in
+              </button>
             </p>
           </form>
         ) : (
