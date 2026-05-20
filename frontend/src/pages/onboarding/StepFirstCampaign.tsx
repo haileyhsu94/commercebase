@@ -66,11 +66,6 @@ export function StepFirstCampaign({ onBack }: Props) {
     }
   }
 
-  function skipForNow() {
-    saveOnboarding({ completed: true, firstCampaignSkipped: true })
-    navigate("/")
-  }
-
   return (
     <OnboardingShell
       step={5}
@@ -87,13 +82,9 @@ export function StepFirstCampaign({ onBack }: Props) {
             <ArrowLeft className="h-3.5 w-3.5" />
             Back
           </Button>
-          <button
-            type="button"
-            onClick={skipForNow}
-            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-          >
-            I'll do this later — go to dashboard
-          </button>
+          <span className="text-xs text-muted-foreground">
+            Pick a goal to continue — you can save & leave from the next screen.
+          </span>
         </>
       }
     >
