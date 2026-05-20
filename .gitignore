@@ -1,2 +1,10 @@
 .DS_Store
 .vercel
+
+# 테스트 산출물 (Playwright 탐색 스크린샷/JSON)
+.explore-out/
+**/.explore-out/
+
+# 브라우저 세션 쿠키
+**/.dailyclicks-session.json
+.claude/worktrees/

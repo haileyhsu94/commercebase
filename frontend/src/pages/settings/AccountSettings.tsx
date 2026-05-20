@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
 import {
   Select,
@@ -320,7 +321,10 @@ export function AccountSettings() {
   return (
     <>
       <div className="py-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+          <PageStatusBadge status="demo" />
+        </div>
         <p className="text-sm text-muted-foreground">
           Manage your account, billing, API keys, Aeris memory, and integrations.
         </p>

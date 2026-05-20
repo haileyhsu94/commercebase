@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react"
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import {
   ArrowUpDown,
   ChevronRight,
@@ -51,6 +51,8 @@ import { cn } from "@/lib/utils"
 import { useHomeMode } from "@/contexts/HomeModeContext"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { deleteCampaign, getMergedCampaigns } from "@/lib/campaign-storage"
+import { campaigns as seedCampaigns } from "@/lib/mock-data"
+import { useCampaignsQuery } from "@/hooks/api/useCampaigns"
 import { useCampaignPlanAllowance } from "@/hooks/use-campaign-plan-allowance"
 import {
   AiPresenceTimeRangeControl,
@@ -177,7 +179,6 @@ function SortableHead({
 }
 
 export function CampaignList() {
-  const location = useLocation()
   const navigate = useNavigate()
   const { setMode } = useHomeMode()
   const allowance = useCampaignPlanAllowance()
@@ -283,10 +284,16 @@ export function CampaignList() {
     window.addEventListener("commercebase-campaigns-updated", onUpdated)
     return () => window.removeEventListener("commercebase-campaigns-updated", onUpdated)
   }, [])
-  const campaigns = useMemo(
-    () => getMergedCampaigns(),
-    [location.key, location.pathname, storageTick],
-  )
+  const { data: apiCampaigns } = useCampaignsQuery()
+  const campaigns = useMemo(() => {
+    // Prefer API data when available; otherwise fall back to localStorage +
+    // seed campaigns via the storage helper (which already deduplicates).
+    if (apiCampaigns && apiCampaigns.length > 0) {
+      const ids = new Set(apiCampaigns.map((c: { id: string }) => c.id))
+      return [...apiCampaigns, ...seedCampaigns.filter((c) => !ids.has(c.id))]
+    }
+    return getMergedCampaigns()
+  }, [apiCampaigns, storageTick])
 
   const points = pointsForRange(timeRange)
   const spendTrend = useMemo(() => fullSpendData.slice(-points), [points])
@@ -461,6 +468,7 @@ export function CampaignList() {
       <PageHeader
         title="Campaigns"
         description="Manage and monitor your advertising campaigns."
+        status="working"
         actions={
           <>
             <Button

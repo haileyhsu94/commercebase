@@ -16,7 +16,9 @@ import { Input } from "@/components/ui/input"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, Line, LineChart, XAxis, YAxis } from "recharts"
 import { getMergedCampaigns } from "@/lib/campaign-storage"
-import { channelPerformance, revenueChartData } from "@/lib/mock-data"
+import { campaigns as seedCampaigns, channelPerformance, revenueChartData } from "@/lib/mock-data"
+import { useCampaignQuery, useCampaignsQuery } from "@/hooks/api/useCampaigns"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 import { cn } from "@/lib/utils"
 import {
   AiPresenceTimeRangeControl,
@@ -60,10 +62,16 @@ export function CampaignDetail() {
     setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams])
 
+  const { data: apiCampaign } = useCampaignQuery(id)
+  const { data: apiList } = useCampaignsQuery()
   const campaign = useMemo(() => {
-    const list = getMergedCampaigns()
-    return list.find((c) => c.id === id) ?? list[0]
-  }, [id])
+    if (apiCampaign) return apiCampaign
+    // Prefer API list, fall back to localStorage (user-created) + seed campaigns
+    const merged = apiList && apiList.length > 0
+      ? [...apiList, ...seedCampaigns]
+      : getMergedCampaigns()
+    return merged.find((c) => c.id === id) ?? merged[0]
+  }, [id, apiCampaign, apiList])
 
   const metrics = [
     { label: "Spent", value: campaign.spent, change: "+12%", trend: "up" },
@@ -89,6 +97,7 @@ export function CampaignDetail() {
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-semibold tracking-tight">{campaign.name}</h1>
+                <PageStatusBadge status="working" />
                 <Badge variant={statusVariants[campaign.status]} className={statusClassNames[campaign.status]}>
                   {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                 </Badge>

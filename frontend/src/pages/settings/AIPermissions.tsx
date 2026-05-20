@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
+import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 
 const permissions = [
   {
@@ -64,7 +65,10 @@ export function AIPermissions() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">AI Assistant Permissions</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">AI Assistant Permissions</h1>
+            <PageStatusBadge status="demo" />
+          </div>
           <p className="text-sm text-muted-foreground">
             Control what the AI assistant can do on your behalf.
           </p>
