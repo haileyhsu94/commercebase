@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ArrowLeft, ArrowRight, CreditCard, Plus } from "lucide-react"
+import { ArrowLeft, ArrowRight, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -14,13 +14,35 @@ import { OnboardingShell } from "@/components/onboarding/OnboardingShell"
 import { getCompanyProfile, patchCompanyProfile, type BillingInfo } from "@/lib/company-profile"
 import { saveOnboarding } from "@/lib/onboarding-storage"
 
-// Tiny per-country states map (mockup-grade; expand as needed).
-const COUNTRY_STATES: Record<string, string[]> = {
+// Per-country states/provinces (full name for display; code stored as value).
+interface RegionOption { value: string; label: string }
+const COUNTRY_STATES: Record<string, RegionOption[]> = {
   "United States": [
-    "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY",
+    {value:"AL",label:"Alabama"},{value:"AK",label:"Alaska"},{value:"AZ",label:"Arizona"},{value:"AR",label:"Arkansas"},
+    {value:"CA",label:"California"},{value:"CO",label:"Colorado"},{value:"CT",label:"Connecticut"},{value:"DE",label:"Delaware"},
+    {value:"FL",label:"Florida"},{value:"GA",label:"Georgia"},{value:"HI",label:"Hawaii"},{value:"ID",label:"Idaho"},
+    {value:"IL",label:"Illinois"},{value:"IN",label:"Indiana"},{value:"IA",label:"Iowa"},{value:"KS",label:"Kansas"},
+    {value:"KY",label:"Kentucky"},{value:"LA",label:"Louisiana"},{value:"ME",label:"Maine"},{value:"MD",label:"Maryland"},
+    {value:"MA",label:"Massachusetts"},{value:"MI",label:"Michigan"},{value:"MN",label:"Minnesota"},{value:"MS",label:"Mississippi"},
+    {value:"MO",label:"Missouri"},{value:"MT",label:"Montana"},{value:"NE",label:"Nebraska"},{value:"NV",label:"Nevada"},
+    {value:"NH",label:"New Hampshire"},{value:"NJ",label:"New Jersey"},{value:"NM",label:"New Mexico"},{value:"NY",label:"New York"},
+    {value:"NC",label:"North Carolina"},{value:"ND",label:"North Dakota"},{value:"OH",label:"Ohio"},{value:"OK",label:"Oklahoma"},
+    {value:"OR",label:"Oregon"},{value:"PA",label:"Pennsylvania"},{value:"RI",label:"Rhode Island"},{value:"SC",label:"South Carolina"},
+    {value:"SD",label:"South Dakota"},{value:"TN",label:"Tennessee"},{value:"TX",label:"Texas"},{value:"UT",label:"Utah"},
+    {value:"VT",label:"Vermont"},{value:"VA",label:"Virginia"},{value:"WA",label:"Washington"},{value:"WV",label:"West Virginia"},
+    {value:"WI",label:"Wisconsin"},{value:"WY",label:"Wyoming"},
   ],
-  Canada: ["AB","BC","MB","NB","NL","NS","NT","NU","ON","PE","QC","SK","YT"],
-  Australia: ["ACT","NSW","NT","QLD","SA","TAS","VIC","WA"],
+  Canada: [
+    {value:"AB",label:"Alberta"},{value:"BC",label:"British Columbia"},{value:"MB",label:"Manitoba"},
+    {value:"NB",label:"New Brunswick"},{value:"NL",label:"Newfoundland and Labrador"},{value:"NS",label:"Nova Scotia"},
+    {value:"NT",label:"Northwest Territories"},{value:"NU",label:"Nunavut"},{value:"ON",label:"Ontario"},
+    {value:"PE",label:"Prince Edward Island"},{value:"QC",label:"Quebec"},{value:"SK",label:"Saskatchewan"},{value:"YT",label:"Yukon"},
+  ],
+  Australia: [
+    {value:"ACT",label:"Australian Capital Territory"},{value:"NSW",label:"New South Wales"},{value:"NT",label:"Northern Territory"},
+    {value:"QLD",label:"Queensland"},{value:"SA",label:"South Australia"},{value:"TAS",label:"Tasmania"},
+    {value:"VIC",label:"Victoria"},{value:"WA",label:"Western Australia"},
+  ],
 }
 
 interface Props {
@@ -38,20 +60,24 @@ export function StepBilling({ onContinue, onBack }: Props) {
   const [postalCode, setPostalCode] = useState(existing?.postalCode ?? "")
   const [city, setCity] = useState(existing?.city ?? "")
   const [taxId, setTaxId] = useState(existing?.taxId ?? "")
-  const [showPayment, setShowPayment] = useState(!!existing?.paymentMethod)
   const [cardNumber, setCardNumber] = useState("")
   const [cardExpiry, setCardExpiry] = useState("")
   const [cardCvc, setCardCvc] = useState("")
 
   const statesForCountry = COUNTRY_STATES[country] ?? []
   const requiresState = statesForCountry.length > 0
+  const cardDigits = cardNumber.replace(/\D/g, "")
+  const expiryValid = /^\d{2}\/\d{2}$/.test(cardExpiry)
+  const cvcValid = /^\d{3,4}$/.test(cardCvc)
+  const paymentValid = cardDigits.length >= 12 && expiryValid && cvcValid
   const formValid =
     companyName.trim() &&
     country &&
     address.trim() &&
     postalCode.trim() &&
     city.trim() &&
-    (!requiresState || state)
+    (!requiresState || state) &&
+    paymentValid
 
   function handleContinue() {
     const billing: BillingInfo = {
@@ -63,12 +89,9 @@ export function StepBilling({ onContinue, onBack }: Props) {
       city: city.trim(),
       taxId: taxId.trim() || undefined,
     }
-    if (showPayment && cardNumber.replace(/\s/g, "").length >= 4) {
-      const digits = cardNumber.replace(/\D/g, "")
-      const last4 = digits.slice(-4)
-      const brand = digits.startsWith("4") ? "Visa" : digits.startsWith("5") ? "Mastercard" : "Card"
-      billing.paymentMethod = { last4, brand }
-    }
+    const last4 = cardDigits.slice(-4)
+    const brand = cardDigits.startsWith("4") ? "Visa" : cardDigits.startsWith("5") ? "Mastercard" : "Card"
+    billing.paymentMethod = { last4, brand }
     patchCompanyProfile({ billing })
     saveOnboarding({ step: 5 })
     onContinue()
@@ -101,7 +124,7 @@ export function StepBilling({ onContinue, onBack }: Props) {
         <header>
           <h2 className="text-2xl font-semibold">Billing</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your company billing address. Payment method is optional and can be added later.
+            Your company billing address and payment method. We won't charge you until you launch your first campaign.
           </p>
         </header>
 
@@ -124,12 +147,18 @@ export function StepBilling({ onContinue, onBack }: Props) {
               disabled={!requiresState}
             >
               <SelectTrigger className="h-9 w-full">
-                <SelectValue placeholder={requiresState ? "All states" : "Not applicable"} />
+                <SelectValue placeholder={requiresState ? "Select a state" : "Not applicable"}>
+                  {(value) => {
+                    if (!value) return null
+                    const match = statesForCountry.find((s) => s.value === value)
+                    return match?.label ?? String(value)
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {statesForCountry.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -158,51 +187,40 @@ export function StepBilling({ onContinue, onBack }: Props) {
           <Input value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="Optional" />
         </Field>
 
-        {/* Payment method (optional) */}
+        {/* Payment method (required) */}
         <section className="space-y-3 rounded-xl border bg-card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold">Payment method</div>
-              <p className="text-xs text-muted-foreground">
-                Optional — you can launch your first campaign without one.
-              </p>
-            </div>
-            {!showPayment && (
-              <Button variant="outline" size="sm" onClick={() => setShowPayment(true)} className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" />
-                Add payment method
-              </Button>
-            )}
+          <div>
+            <div className="text-sm font-semibold">Payment method</div>
+            <p className="text-xs text-muted-foreground">
+              We won't charge you until you launch your first campaign.
+            </p>
           </div>
-          {showPayment && (
-            <div className="space-y-3">
-              <Field label="Card number">
-                <Input
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                  placeholder="4242 4242 4242 4242"
-                  inputMode="numeric"
-                />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Expiry">
-                  <Input
-                    value={cardExpiry}
-                    onChange={(e) => setCardExpiry(e.target.value)}
-                    placeholder="MM/YY"
-                  />
-                </Field>
-                <Field label="CVC">
-                  <Input
-                    value={cardCvc}
-                    onChange={(e) => setCardCvc(e.target.value)}
-                    placeholder="123"
-                    inputMode="numeric"
-                  />
-                </Field>
-              </div>
-            </div>
-          )}
+          <Field label="Card number" required>
+            <Input
+              value={cardNumber}
+              onChange={(e) => setCardNumber(e.target.value)}
+              placeholder="4242 4242 4242 4242"
+              inputMode="numeric"
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Expiry" required>
+              <Input
+                value={cardExpiry}
+                onChange={(e) => setCardExpiry(e.target.value)}
+                placeholder="MM/YY"
+                inputMode="numeric"
+              />
+            </Field>
+            <Field label="CVC" required>
+              <Input
+                value={cardCvc}
+                onChange={(e) => setCardCvc(e.target.value)}
+                placeholder="123"
+                inputMode="numeric"
+              />
+            </Field>
+          </div>
         </section>
       </div>
     </OnboardingShell>

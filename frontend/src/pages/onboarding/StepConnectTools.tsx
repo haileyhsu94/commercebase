@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { ArrowLeft, ArrowRight, ChevronDown, MessageSquare, Plug } from "lucide-react"
+import { ArrowLeft, ArrowRight, ChevronDown, MessageSquare, Plug, ShoppingBag, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell"
 import { ConnectorCard } from "@/components/agent/ConnectorCard"
@@ -66,6 +66,7 @@ export function StepConnectTools({ onContinue, onBack }: Props) {
     onContinue()
   }
 
+  const store = CONNECTORS.filter((c) => c.category === "store")
   const messaging = CONNECTORS.filter((c) => c.category === "messaging")
   const social = CONNECTORS.filter((c) => c.category === "social")
   const crm = CONNECTORS.filter((c) => c.category === "crm")
@@ -110,6 +111,24 @@ export function StepConnectTools({ onContinue, onBack }: Props) {
           </p>
         </header>
 
+        {/* Store — the most important integrations */}
+        <Group
+          icon={<ShoppingBag className="h-3.5 w-3.5" />}
+          title="Store & catalog"
+          subtitle="The most important integration — we need a product feed to start running campaigns."
+          defaultOpen
+        >
+          {store.map((def) => (
+            <ConnectorCard
+              key={def.id}
+              def={def}
+              state={getState(def)}
+              onConnect={() => connect(def)}
+              onDisconnect={() => disconnect(def)}
+            />
+          ))}
+        </Group>
+
         {/* Messaging — always expanded, single tool */}
         <Group
           icon={<MessageSquare className="h-3.5 w-3.5" />}
@@ -132,7 +151,7 @@ export function StepConnectTools({ onContinue, onBack }: Props) {
         <Group
           title="Social accounts"
           subtitle="Publish posts on your behalf, fully automated or with your approval."
-          defaultOpen
+          defaultOpen={false}
         >
           {social.map((def) => (
             <ConnectorCard
@@ -145,11 +164,14 @@ export function StepConnectTools({ onContinue, onBack }: Props) {
           ))}
         </Group>
 
-        {/* CRM */}
+        {/* CRM — next phase */}
         <Group
+          icon={<Users className="h-3.5 w-3.5" />}
           title="CRM integration"
           subtitle="Sync contacts bidirectionally and let the AI enrich leads with marketing data."
           defaultOpen={false}
+          badge="Next phase"
+          disabled
         >
           {crm.map((def) => (
             <ConnectorCard
@@ -171,32 +193,50 @@ function Group({
   title,
   subtitle,
   defaultOpen,
+  badge,
+  disabled,
   children,
 }: {
   icon?: React.ReactNode
   title: string
   subtitle?: string
   defaultOpen: boolean
+  badge?: string
+  /** When true, the section can't be expanded and the body is rendered with reduced opacity. */
+  disabled?: boolean
   children: React.ReactNode
 }) {
-  const [open, setOpen] = useState(defaultOpen)
+  const [open, setOpen] = useState(defaultOpen && !disabled)
   return (
-    <section className="rounded-xl border bg-card">
+    <section className={cn("rounded-xl border bg-card", disabled && "bg-muted/30")}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-3 p-4 text-left"
+        onClick={() => !disabled && setOpen((o) => !o)}
+        disabled={disabled}
+        className={cn(
+          "flex w-full items-center justify-between gap-3 p-4 text-left",
+          disabled && "cursor-not-allowed",
+        )}
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-semibold">
             {icon}
             {title}
+            {badge && (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                {badge}
+              </span>
+            )}
           </div>
           {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
         </div>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+        {!disabled && (
+          <ChevronDown
+            className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")}
+          />
+        )}
       </button>
-      {open && <div className="space-y-2 border-t p-4">{children}</div>}
+      {open && !disabled && <div className="space-y-2 border-t p-4">{children}</div>}
     </section>
   )
 }

@@ -37,7 +37,7 @@ export function OnboardingShell({
   children,
 }: OnboardingShellProps) {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Left rail */}
       <aside className="hidden w-[360px] shrink-0 flex-col justify-between bg-muted/30 p-8 md:flex">
         <div className="flex items-center gap-2">
