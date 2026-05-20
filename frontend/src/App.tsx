@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import { RootLayout } from "@/components/layout"
 import { HomeRoute } from "@/pages/HomeRoute"
+import { Signup } from "@/pages/auth/Signup"
+import { Onboarding } from "@/pages/onboarding/Onboarding"
 import {
   OnboardingWizard,
   CampaignSkill,
@@ -45,6 +47,9 @@ import {
 } from "@/pages"
 
 const router = createBrowserRouter([
+  // Standalone routes (no RootLayout chrome)
+  { path: "/signup", element: <Signup /> },
+  { path: "/onboarding", element: <Onboarding /> },
   {
     path: "/",
     element: <RootLayout />,

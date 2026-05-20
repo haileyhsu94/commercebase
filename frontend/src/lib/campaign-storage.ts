@@ -41,6 +41,61 @@ export function addLaunchedCampaign(campaign: Campaign): void {
   write([campaign, ...read()])
 }
 
+/** Returns true when the wizard form has meaningful input worth saving as a draft. */
+export function isDraftworthy(form: CampaignWizardFormData): boolean {
+  return Boolean(
+    form.name?.trim() ||
+      form.budget?.trim() ||
+      form.maxCpc?.trim() ||
+      form.maxCps?.trim() ||
+      (form.objective && form.objective !== "") ||
+      form.assetImageUrls?.length ||
+      form.headline?.trim(),
+  )
+}
+
+/** Persist an in-progress campaign form as a draft Campaign row. */
+export function saveDraftCampaign(form: CampaignWizardFormData): Campaign {
+  const launchedAt = new Date().toISOString()
+  const draft: Campaign = {
+    id: `draft-${Date.now()}`,
+    name: form.name?.trim() || "Untitled draft",
+    status: "draft",
+    spent: "—",
+    revenue: "—",
+    cvr: "—",
+    roas: "—",
+    cpc: form.maxCpc?.trim() ? form.maxCpc.trim() : "—",
+    cps: form.maxCps?.trim() ? form.maxCps.trim() : "—",
+    launchedAt,
+    wizardSnapshot: { ...form },
+  }
+  write([draft, ...read()])
+  return draft
+}
+
+/** Update an existing draft Campaign in place. */
+export function updateCampaignDraft(id: string, form: CampaignWizardFormData): void {
+  const current = read()
+  const next = current.map((c) =>
+    c.id === id
+      ? {
+          ...c,
+          name: form.name?.trim() || c.name,
+          cpc: form.maxCpc?.trim() ? form.maxCpc.trim() : c.cpc,
+          cps: form.maxCps?.trim() ? form.maxCps.trim() : c.cps,
+          wizardSnapshot: { ...form },
+        }
+      : c,
+  )
+  write(next)
+}
+
+/** All draft campaigns (status === "draft"). */
+export function getDraftCampaigns(): Campaign[] {
+  return read().filter((c) => c.status === "draft")
+}
+
 /** Map V2 wizard objective → display label for the All Campaigns "Goal KPI" column. */
 function goalLabelFromObjective(objective?: string): string | undefined {
   switch (objective) {
@@ -80,13 +135,16 @@ export function makeNewCampaignRow(
   }
 }
 
-/** Pre-fill wizard for Copy campaign — uses saved snapshot when present. */
+/** Pre-fill wizard for Copy campaign — uses saved snapshot when present.
+ * Drafts resume in-place (no "(copy)" suffix). */
 export function wizardFormFromCampaign(c: Campaign): CampaignWizardFormData {
+  const isDraft = c.status === "draft"
   if (c.wizardSnapshot) {
+    const base = (c.wizardSnapshot.name || c.name).trim() || c.name
     const merged: Record<string, unknown> = {
       ...initialCampaignWizardForm,
       ...c.wizardSnapshot,
-      name: `${(c.wizardSnapshot.name || c.name).trim() || c.name} (copy)`,
+      name: isDraft ? base : `${base} (copy)`,
     }
     const { headlines: _h, longHeadlines: _lh, descriptions: _d, ...rest } = merged
     return {
@@ -96,7 +154,7 @@ export function wizardFormFromCampaign(c: Campaign): CampaignWizardFormData {
   }
   return {
     ...initialCampaignWizardForm,
-    name: `${c.name} (copy)`,
+    name: isDraft ? c.name : `${c.name} (copy)`,
   }
 }
 

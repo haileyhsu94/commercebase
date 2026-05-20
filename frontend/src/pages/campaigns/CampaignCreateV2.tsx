@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,7 +32,11 @@ import {
 import {
   addLaunchedCampaign,
   getMergedCampaigns,
+  getUserCampaigns,
+  isDraftworthy,
   makeNewCampaignRow,
+  saveDraftCampaign,
+  updateCampaignDraft,
   wizardFormFromCampaign,
 } from "@/lib/campaign-storage"
 import {
@@ -86,6 +90,34 @@ export function CampaignCreateV2({
   const [formData, setFormData] = useState<CampaignWizardFormData>(() =>
     buildInitialForm(duplicateSourceId),
   )
+  /** If this wizard was opened by resuming a draft, track that draft's id so
+   * we can update it in place on save (instead of creating a new draft). */
+  const resumingDraftId = useRef<string | null>(
+    duplicateSourceId && getUserCampaigns().find((c) => c.id === duplicateSourceId && c.status === "draft")
+      ? duplicateSourceId
+      : null,
+  )
+  /** Mirror the latest formData in a ref so the unmount cleanup can read it. */
+  const formDataRef = useRef(formData)
+  /** Set true on a deliberate launch — prevents unmount from also saving a draft. */
+  const launchedRef = useRef(false)
+  useEffect(() => {
+    formDataRef.current = formData
+  }, [formData])
+  // Save-as-draft on unmount (covers the dialog X / ESC paths that bypass our
+  // own Save & close button). Skipped if the wizard launched normally.
+  useEffect(() => {
+    return () => {
+      if (launchedRef.current) return
+      const latest = formDataRef.current
+      if (!isDraftworthy(latest)) return
+      if (resumingDraftId.current) {
+        updateCampaignDraft(resumingDraftId.current, { ...latest })
+      } else {
+        saveDraftCampaign({ ...latest })
+      }
+    }
+  }, [])
 
   function update<K extends keyof CampaignWizardFormData>(
     key: K,
@@ -143,6 +175,23 @@ export function CampaignCreateV2({
         { ...formData },
       ),
     )
+    launchedRef.current = true
+    onClose?.()
+  }
+
+  /** Save in-progress form as draft and close. Used when the user clicks Save & close. */
+  function saveAndClose() {
+    launchedRef.current = true  // suppress the unmount cleanup (we handle here)
+    if (!isDraftworthy(formData)) {
+      onClose?.()
+      return
+    }
+    if (resumingDraftId.current) {
+      updateCampaignDraft(resumingDraftId.current, { ...formData })
+    } else {
+      const draft = saveDraftCampaign({ ...formData })
+      resumingDraftId.current = draft.id
+    }
     onClose?.()
   }
 
@@ -217,8 +266,8 @@ export function CampaignCreateV2({
             </Button>
           ) : (
             onClose && (
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                Cancel
+              <Button variant="ghost" size="sm" onClick={saveAndClose}>
+                Save & close
               </Button>
             )
           )}

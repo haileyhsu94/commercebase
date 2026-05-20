@@ -728,6 +728,18 @@ export function CampaignList() {
                   </TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-0.5">
+                      {campaign.status === "draft" && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1.5 text-xs"
+                          onClick={() => openDuplicateModal(campaign.id)}
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Resume
+                        </Button>
+                      )}
                       <TooltipProvider delay={300}>
                         <Tooltip>
                           <TooltipTrigger>
