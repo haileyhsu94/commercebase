@@ -1,7 +1,12 @@
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, Heart, Rocket, Sparkles, Target, TrendingUp } from "lucide-react"
+import { ArrowLeft, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell"
+import {
+  GoalFunnelCard,
+  GOAL_OPTIONS,
+  type GoalOption,
+} from "@/components/campaigns/wizard/GoalFunnelCard"
 import { getCompanyProfile } from "@/lib/company-profile"
 import { saveOnboarding } from "@/lib/onboarding-storage"
 import { CAMPAIGN_WIZARD_AI_DRAFT_KEY } from "@/lib/campaign-ai-copy-mock"
@@ -20,48 +25,6 @@ import {
   type CampaignWizardFormData,
 } from "@/types/campaign-wizard"
 import { currencyForCountry } from "@/lib/mock-data"
-import { cn } from "@/lib/utils"
-
-type GoalKey = "launch" | "grow" | "nurture" | "thought-leadership"
-
-interface GoalOption {
-  key: GoalKey
-  label: string
-  description: string
-  icon: typeof Rocket
-  objective: "sales" | "leads" | "awareness_consideration"
-}
-
-const GOALS: GoalOption[] = [
-  {
-    key: "launch",
-    label: "Launch a Product",
-    description: "Make a splash with your next launch.",
-    icon: Rocket,
-    objective: "sales",
-  },
-  {
-    key: "grow",
-    label: "Grow Your Audience",
-    description: "Expand your reach and build a following.",
-    icon: TrendingUp,
-    objective: "awareness_consideration",
-  },
-  {
-    key: "nurture",
-    label: "Nurture Your Leads",
-    description: "Turn warm prospects into happy customers.",
-    icon: Heart,
-    objective: "leads",
-  },
-  {
-    key: "thought-leadership",
-    label: "Thought Leadership",
-    description: "Establish your team as voices worth following.",
-    icon: Target,
-    objective: "awareness_consideration",
-  },
-]
 
 interface Props {
   onBack: () => void
@@ -75,7 +38,7 @@ export function StepFirstCampaign({ onBack }: Props) {
     const profile = getCompanyProfile()
     const draft: CampaignWizardFormData = {
       ...initialCampaignWizardForm,
-      objective: goal.objective,
+      objective: goal.value,
       campaignType: "performance_max",
       name: `${profile.companyName} — ${goal.label}`,
       currency:
@@ -134,37 +97,24 @@ export function StepFirstCampaign({ onBack }: Props) {
         </>
       }
     >
-      <div className="mx-auto w-full max-w-3xl space-y-6 p-8">
+      <div className="mx-auto w-full max-w-2xl space-y-6 p-8">
         <header>
-          <h2 className="text-2xl font-semibold">Start your first campaign</h2>
+          <h2 className="text-2xl font-semibold">What's your goal?</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pick a goal — we'll seed the campaign wizard with what we already know about your brand.
+            Selecting a goal will help set up the rest of your campaign — we'll seed the wizard
+            with what we already know about your brand.
           </p>
         </header>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {GOALS.map((g) => {
-            const Icon = g.icon
-            return (
-              <button
-                key={g.key}
-                type="button"
-                onClick={() => pickGoal(g)}
-                className={cn(
-                  "flex h-full flex-col items-start gap-3 rounded-2xl border bg-card p-5 text-left transition-all",
-                  "hover:border-foreground/30 hover:bg-accent/30",
-                )}
-              >
-                <span className="flex size-9 items-center justify-center rounded-full bg-foreground/10">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <div className="min-w-0">
-                  <div className="text-base font-semibold">{g.label}</div>
-                  <p className="mt-1 text-sm text-muted-foreground">{g.description}</p>
-                </div>
-              </button>
-            )
-          })}
+        <div className="space-y-3">
+          {GOAL_OPTIONS.map((opt) => (
+            <GoalFunnelCard
+              key={opt.value}
+              option={opt}
+              selected={false}
+              onClick={() => pickGoal(opt)}
+            />
+          ))}
         </div>
 
         <p className="text-center text-xs text-muted-foreground">
