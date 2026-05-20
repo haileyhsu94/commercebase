@@ -2,6 +2,7 @@ export type SkillType = "campaign" | "autopilot" | "widget" | "chat"
 
 export type ConnectorId =
   | "shopify"
+  | "woocommerce"
   | "google-ads"
   | "google-merchant"
   | "meta-ads"

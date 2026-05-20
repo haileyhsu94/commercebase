@@ -10,6 +10,14 @@ export const CONNECTORS: ConnectorDef[] = [
     brandColor: "#95BF47",
   },
   {
+    id: "woocommerce",
+    name: "WooCommerce",
+    category: "store",
+    description: "Sync products, orders, and customers from your WordPress store.",
+    scopes: ["read_products", "read_orders", "read_customers"],
+    brandColor: "#7F54B3",
+  },
+  {
     id: "google-merchant",
     name: "Google Merchant Center",
     category: "store",
