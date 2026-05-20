@@ -41,6 +41,11 @@ export function addLaunchedCampaign(campaign: Campaign): void {
   write([campaign, ...read()])
 }
 
+/** Remove a user-stored campaign (draft or launched) by id. */
+export function deleteCampaign(id: string): void {
+  write(read().filter((c) => c.id !== id))
+}
+
 /** Returns true when the wizard form has meaningful input worth saving as a draft. */
 export function isDraftworthy(form: CampaignWizardFormData): boolean {
   return Boolean(

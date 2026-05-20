@@ -94,11 +94,22 @@ export function GenerateWithAIPanel({
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-violet-200 bg-violet-50/30 p-4 dark:border-violet-900 dark:bg-violet-950/20">
-      <div className="flex items-center gap-2 text-sm font-medium text-violet-700 dark:text-violet-200">
+    <div
+      className="rounded-lg p-px"
+      style={{
+        backgroundImage:
+          "linear-gradient(110deg, rgb(251,146,60) 0%, rgb(244,114,182) 50%, rgb(45,212,191) 100%)",
+      }}
+    >
+    <div className="relative space-y-4 rounded-[7px] bg-card p-4">
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
         <Sparkles className="h-4 w-4" />
-        Generate images with AI
+        Generate ad images with AI
       </div>
+      <p className="text-xs text-muted-foreground">
+        Only the ad images are generated here. Your logo, brand colors, and brand fonts stay as
+        detected — manage them in the Upload source or under Advanced.
+      </p>
 
       {phase === "review" && (
         <ReviewBrandInfo
@@ -138,6 +149,7 @@ export function GenerateWithAIPanel({
         </>
       )}
     </div>
+    </div>
   )
 }
 
@@ -158,20 +170,6 @@ function ReviewBrandInfo({
         edit anything that's off.
       </p>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <BrandField
-          label="Logo URL"
-          value={formData.assetLogoUrls[0] ?? profile.logoUrl ?? ""}
-          onChange={(v) =>
-            patch({ assetLogoUrls: v ? [v] : [] })
-          }
-          placeholder="https://yourbrand.com/logo.svg"
-        />
-        <BrandField
-          label="Accent color"
-          value={formData.brandAccentColor}
-          onChange={(v) => patch({ brandAccentColor: v })}
-          placeholder="#7C3AED"
-        />
         <BrandField
           label="Business name"
           value={formData.businessName || profile.companyName}
@@ -194,7 +192,7 @@ function ReviewBrandInfo({
         />
       </div>
       <div className="flex justify-end pt-1">
-        <Button onClick={onGenerate} className="gap-1.5 bg-violet-600 hover:bg-violet-700">
+        <Button onClick={onGenerate} className="gap-1.5">
           <Sparkles className="h-3.5 w-3.5" />
           Generate images
         </Button>

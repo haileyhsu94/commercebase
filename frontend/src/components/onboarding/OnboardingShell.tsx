@@ -12,7 +12,6 @@ export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
   { id: 2, label: "Business" },
   { id: 3, label: "Tools" },
   { id: 4, label: "Billing" },
-  { id: 5, label: "First campaign" },
 ]
 
 interface OnboardingShellProps {
@@ -25,6 +24,14 @@ interface OnboardingShellProps {
   leftIllustration?: ReactNode
   /** Footer slot — typically Back / Continue buttons + secondary links. */
   footer?: ReactNode
+  /**
+   * When true, the body becomes a flex container that fills the available
+   * space with no overflow scroll of its own — useful when the child (e.g.
+   * the campaign wizard) manages its own internal scroll + footer.
+   */
+  bodyFill?: boolean
+  /** Hide the top progress stepper entirely (e.g. on the post-onboarding screen). */
+  hideStepper?: boolean
   children: ReactNode
 }
 
@@ -34,6 +41,8 @@ export function OnboardingShell({
   leftDescription,
   leftIllustration,
   footer,
+  bodyFill = false,
+  hideStepper = false,
   children,
 }: OnboardingShellProps) {
   return (
@@ -49,12 +58,17 @@ export function OnboardingShell({
           <h1 className="text-2xl font-semibold tracking-tight">{leftTitle}</h1>
           <p className="text-sm leading-relaxed text-muted-foreground">{leftDescription}</p>
         </div>
-        <div className="text-[11px] text-muted-foreground">Step {step} of {ONBOARDING_STEPS.length}</div>
+        <div className="text-[11px] text-muted-foreground">
+          {step > ONBOARDING_STEPS.length
+            ? "Onboarding complete"
+            : `Step ${step} of ${ONBOARDING_STEPS.length}`}
+        </div>
       </aside>
 
       {/* Main */}
       <main className="flex min-w-0 flex-1 flex-col">
         {/* Top stepper */}
+        {!hideStepper && (
         <div className="flex shrink-0 items-center justify-center gap-3 border-b bg-background px-6 py-3 text-sm">
           {ONBOARDING_STEPS.map((s, i) => {
             const done = step > s.id
@@ -84,12 +98,14 @@ export function OnboardingShell({
             )
           })}
         </div>
+        )}
 
         {/* Body — force white field backgrounds across the whole onboarding
             flow so inputs stand out from the muted page background. */}
         <div
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto",
+            "min-h-0 flex-1",
+            bodyFill ? "flex overflow-hidden" : "overflow-y-auto",
             "[&_input:not([type=checkbox]):not([type=radio])]:bg-card",
             "[&_textarea]:bg-card",
             "[&_button[data-slot=select-trigger]]:bg-card",

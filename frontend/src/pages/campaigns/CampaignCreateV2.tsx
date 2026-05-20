@@ -5,6 +5,7 @@ import {
   Check,
   ChevronRight,
   Image as ImageIcon,
+  Package,
   Rocket,
   Sparkles,
   Upload,
@@ -55,9 +56,11 @@ import {
 } from "@/components/campaigns/wizard/BudgetWithRatesFields"
 import { EstimatedPerformancePanel } from "@/components/campaigns/wizard/EstimatedPerformancePanel"
 import { CountryMultiSelect } from "@/components/campaigns/wizard/CountryMultiSelect"
+import { CityMultiSelect } from "@/components/campaigns/wizard/CityMultiSelect"
 import { LanguageMultiSelect } from "@/components/campaigns/wizard/LanguageMultiSelect"
 import { AssetUrlList } from "@/components/campaigns/wizard/AssetUrlList"
 import { AdGalleryByFormat } from "@/components/campaigns/wizard/AdGalleryByFormat"
+import { CatalogAdGallery } from "@/components/campaigns/wizard/CatalogAdGallery"
 import { GenerateWithAIPanel } from "@/components/campaigns/wizard/GenerateWithAIPanel"
 import { AdPreview } from "@/components/campaigns/AdPreview"
 import { CampaignPlanAllowanceBanner } from "@/components/campaigns/CampaignPlanAllowanceBanner"
@@ -66,6 +69,12 @@ export type CampaignCreateV2Props = {
   embedded?: boolean
   onClose?: () => void
   duplicateSourceId?: string | null
+  /** Pre-seed the wizard form (e.g. from onboarding handoff). */
+  initialFormOverride?: Partial<CampaignWizardFormData>
+  /** Override the Save & close button label on Step 1. */
+  saveAndCloseLabel?: string
+  /** Override the Launch button label on Step 5. */
+  launchLabel?: string
 }
 
 const AGE_BAND_OPTIONS = ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"] as const
@@ -82,14 +91,18 @@ export function CampaignCreateV2({
   embedded = false,
   onClose,
   duplicateSourceId = null,
+  initialFormOverride,
+  saveAndCloseLabel = "Save & close",
+  launchLabel = "Launch campaign",
 }: CampaignCreateV2Props = {}) {
   const [step, setStep] = useState(1)
   const [maxVisited, setMaxVisited] = useState(1)
   const [error, setError] = useState("")
 
-  const [formData, setFormData] = useState<CampaignWizardFormData>(() =>
-    buildInitialForm(duplicateSourceId),
-  )
+  const [formData, setFormData] = useState<CampaignWizardFormData>(() => ({
+    ...buildInitialForm(duplicateSourceId),
+    ...(initialFormOverride ?? {}),
+  }))
   /** If this wizard was opened by resuming a draft, track that draft's id so
    * we can update it in place on save (instead of creating a new draft). */
   const resumingDraftId = useRef<string | null>(
@@ -267,7 +280,7 @@ export function CampaignCreateV2({
           ) : (
             onClose && (
               <Button variant="ghost" size="sm" onClick={saveAndClose}>
-                Save & close
+                {saveAndCloseLabel}
               </Button>
             )
           )}
@@ -281,7 +294,7 @@ export function CampaignCreateV2({
           ) : (
             <Button size="sm" onClick={launch} className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
               <Rocket className="h-3.5 w-3.5" />
-              Launch campaign
+              {launchLabel}
             </Button>
           )}
         </div>
@@ -542,6 +555,12 @@ function StepAudience({
             onChange={(next) => update("regions", next)}
           />
         </FormRow>
+        <FormRow label="Cities">
+          <CityMultiSelect
+            value={formData.cities}
+            onChange={(next) => update("cities", next)}
+          />
+        </FormRow>
         <FormRow label="Languages">
           <LanguageMultiSelect
             value={formData.languages}
@@ -638,7 +657,7 @@ function StepAudience({
 /* Step 4 — Creative                                                          */
 /* -------------------------------------------------------------------------- */
 
-type CreativeRoute = "upload" | "existing" | "ai"
+type CreativeRoute = "catalog" | "upload" | "existing" | "ai"
 
 function StepCreative({
   formData,
@@ -652,7 +671,7 @@ function StepCreative({
   ) => void
   patch: (p: Partial<CampaignWizardFormData>) => void
 }) {
-  const [route, setRoute] = useState<CreativeRoute>("upload")
+  const [route, setRoute] = useState<CreativeRoute>("catalog")
   // Track the URLs the AI panel most recently contributed, so we can swap
   // them in/out of assetImageUrls without disturbing manually-uploaded ones.
   const [aiContributedUrls, setAiContributedUrls] = useState<string[]>([])
@@ -738,8 +757,16 @@ function StepCreative({
           </p>
         </header>
 
-        {/* 3-way source picker — vertical stack */}
+        {/* Source picker — vertical stack. Catalog is the no-effort option
+            and sits at the top so it gets noticed first. */}
         <div className="grid grid-cols-1 gap-3">
+          <SourceCard
+            active={route === "catalog"}
+            icon={Package}
+            title="Use product catalog"
+            description="Skip image upload entirely — we'll auto-build creative from your synced product catalog (titles, images, prices)."
+            onClick={() => setRoute("catalog")}
+          />
           <SourceCard
             active={route === "upload"}
             icon={Upload}
@@ -769,6 +796,23 @@ function StepCreative({
         </div>
 
         {/* Source body */}
+        {route === "catalog" && (
+          <div className="space-y-2 rounded-lg border bg-card p-4 text-sm">
+            <div className="flex items-center gap-2 font-medium">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              Synced product catalog
+            </div>
+            <p className="text-muted-foreground">
+              We'll automatically pull product images, titles, and prices from your synced
+              catalog and render the right format per placement. No upload needed.
+            </p>
+            <ul className="ml-1 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+              <li>Products refresh whenever your catalog re-syncs.</li>
+              <li>Out-of-stock items are filtered out automatically.</li>
+              <li>You can still add a logo and headline below to brand the ad.</li>
+            </ul>
+          </div>
+        )}
         {route === "upload" && (
           <div className="space-y-3 rounded-lg border bg-card p-4">
             <AssetUrlList
@@ -776,13 +820,16 @@ function StepCreative({
               values={formData.assetLogoUrls}
               onChange={(next) => update("assetLogoUrls", next)}
               max={1}
+              kind="image"
               placeholder="https://yourbrand.com/logo.svg"
+              hint="Detected from your website — replace it if you want to use a different version."
             />
             <AssetUrlList
               label="Images"
               values={formData.assetImageUrls}
               onChange={(next) => update("assetImageUrls", next)}
               max={5}
+              kind="image"
               placeholder="https://yourbrand.com/hero.jpg"
             />
             <AssetUrlList
@@ -790,6 +837,7 @@ function StepCreative({
               values={formData.assetVideoUrls}
               onChange={(next) => update("assetVideoUrls", next)}
               max={3}
+              kind="video"
               placeholder="https://yourbrand.com/promo.mp4"
             />
           </div>
@@ -808,13 +856,33 @@ function StepCreative({
           />
         )}
 
-        {/* Text inputs that drive the AdPreview gallery — vertical stack */}
+        {/* Text inputs that drive the AdPreview gallery — vertical stack.
+            Hidden when the catalog source is selected: each ad's headline,
+            description, and destination URL come from the product itself. */}
+        {route === "catalog" ? (
+          <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+            <p>
+              Headline, description, and destination URL are pulled from each product in your
+              catalog automatically — no need to fill them in here. You can still tweak brand
+              colors and tracking under <span className="font-medium">Advanced</span> below.
+            </p>
+          </div>
+        ) : (
         <div className="space-y-3 rounded-lg border bg-card p-4">
           <FormRow label="Headline">
             <Input
               value={formData.headline}
               onChange={(e) => patch({ headline: e.target.value })}
               placeholder="Primary headline"
+              className="h-8 text-sm"
+            />
+          </FormRow>
+          <FormRow label="Final URL">
+            <Input
+              type="url"
+              value={formData.finalUrl}
+              onChange={(e) => patch({ finalUrl: e.target.value })}
+              placeholder={defaultCompanyProfile.website}
               className="h-8 text-sm"
             />
           </FormRow>
@@ -843,75 +911,73 @@ function StepCreative({
             />
           </FormRow>
         </div>
+        )}
 
-        {/* Format-based gallery */}
-        <AdGalleryByFormat
-          headline={formData.headline || formData.headlinePrimary}
-          headlineSecondary={formData.headlineSecondary}
-          description={formData.adDescription || formData.description}
-          imageUrl={formData.assetImageUrls[0] ?? formData.imageUrl}
-          videoUrl={formData.assetVideoUrls[0]}
-          domainLabel={
-            formData.finalUrl ? new URL(safeUrl(formData.finalUrl)).hostname : undefined
-          }
-        />
+        {/* Format-based gallery (catalog mode uses product samples instead) */}
+        {route === "catalog" ? (
+          <CatalogAdGallery
+            domainLabel={
+              formData.finalUrl ? new URL(safeUrl(formData.finalUrl)).hostname : undefined
+            }
+          />
+        ) : (
+          <AdGalleryByFormat
+            headline={formData.headline || formData.headlinePrimary}
+            headlineSecondary={formData.headlineSecondary}
+            description={formData.adDescription || formData.description}
+            imageUrl={formData.assetImageUrls[0] ?? formData.imageUrl}
+            videoUrl={formData.assetVideoUrls[0]}
+            domainLabel={
+              formData.finalUrl ? new URL(safeUrl(formData.finalUrl)).hostname : undefined
+            }
+            hideVideo={route === "ai"}
+          />
+        )}
 
         <details className="group rounded-lg border bg-card">
           <summary className="flex cursor-pointer list-none items-center justify-between p-3 text-sm font-medium">
-            Advanced — brand, sitelinks, listing groups, tracking
+            Advanced — search themes & tracking
             <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
           </summary>
           <div className="space-y-4 border-t p-4 text-sm">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <FormRow label="Accent color">
-                <Input
-                  value={formData.brandAccentColor}
-                  onChange={(e) => patch({ brandAccentColor: e.target.value })}
-                  placeholder="#7C3AED"
-                  className="h-8 text-sm"
-                />
-              </FormRow>
-              <FormRow label="Font">
-                <Input
-                  value={formData.brandFont}
-                  onChange={(e) => patch({ brandFont: e.target.value })}
-                  placeholder="Geist"
-                  className="h-8 text-sm"
-                />
-              </FormRow>
-            </div>
-            <FormRow label="Final URL">
-              <Input
-                type="url"
-                value={formData.finalUrl}
-                onChange={(e) => patch({ finalUrl: e.target.value })}
-                placeholder={defaultCompanyProfile.website}
-                className="h-8 text-sm"
-              />
-            </FormRow>
             <FormRow label="Search themes">
               <Input
                 value={formData.searchThemes}
                 onChange={(e) => patch({ searchThemes: e.target.value })}
-                placeholder="Comma-separated themes"
+                placeholder="e.g. spring dresses, linen shirts, summer sandals"
                 className="h-8 text-sm"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Comma-separated keywords/topics that tell the AI what queries this campaign
+                should show up for. Used as a hint when our matcher can't infer intent from your
+                creative alone.
+              </p>
             </FormRow>
             <FormRow label="UTM prefix">
               <Input
                 value={formData.utmPrefix}
                 onChange={(e) => patch({ utmPrefix: e.target.value })}
-                placeholder="campaign_"
+                placeholder="ss26_launch_"
                 className="h-8 text-sm"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Prepended to <code>utm_campaign</code> on every outbound click so you can
+                identify this campaign's traffic in Google Analytics, Shopify, etc.
+              </p>
             </FormRow>
             <FormRow label="Tracking template">
               <Input
                 value={formData.trackingTemplate}
                 onChange={(e) => patch({ trackingTemplate: e.target.value })}
-                placeholder="{lpurl}?utm_source={network}"
+                placeholder="{lpurl}?utm_source={network}&utm_medium=cpc"
                 className="h-8 text-sm"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Advanced URL template that wraps every click. <code>{`{lpurl}`}</code> expands
+                to your Final URL, and tokens like <code>{`{network}`}</code> /{" "}
+                <code>{`{device}`}</code> are filled in at click time. Leave blank unless you
+                need custom server-side tracking.
+              </p>
             </FormRow>
           </div>
         </details>
@@ -1009,6 +1075,7 @@ function StepReview({
         <KeyValueGrid
           pairs={[
             ["Countries", formData.regions.join(", ") || "—"],
+            ["Cities", formData.cities.join(", ") || "—"],
             ["Languages", formData.languages.join(", ") || "—"],
             ["Age bands", formData.ageBands.join(", ") || "—"],
           ]}

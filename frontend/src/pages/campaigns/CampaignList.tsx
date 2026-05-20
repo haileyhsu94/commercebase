@@ -50,7 +50,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils"
 import { useHomeMode } from "@/contexts/HomeModeContext"
 import { PageHeader } from "@/components/shared/PageHeader"
-import { getMergedCampaigns } from "@/lib/campaign-storage"
+import { deleteCampaign, getMergedCampaigns } from "@/lib/campaign-storage"
 import { useCampaignPlanAllowance } from "@/hooks/use-campaign-plan-allowance"
 import {
   AiPresenceTimeRangeControl,
@@ -275,7 +275,18 @@ export function CampaignList() {
 
   const [sort, setSort] = useState<{ col: SortColumn; dir: SortDir } | null>(null)
 
-  const campaigns = useMemo(() => getMergedCampaigns(), [location.key, location.pathname])
+  // Re-read campaigns whenever the storage layer fires its updated event
+  // (covers delete / save-draft / launch from elsewhere in the app).
+  const [storageTick, setStorageTick] = useState(0)
+  useEffect(() => {
+    const onUpdated = () => setStorageTick((t) => t + 1)
+    window.addEventListener("commercebase-campaigns-updated", onUpdated)
+    return () => window.removeEventListener("commercebase-campaigns-updated", onUpdated)
+  }, [])
+  const campaigns = useMemo(
+    () => getMergedCampaigns(),
+    [location.key, location.pathname, storageTick],
+  )
 
   const points = pointsForRange(timeRange)
   const spendTrend = useMemo(() => fullSpendData.slice(-points), [points])
@@ -729,16 +740,39 @@ export function CampaignList() {
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-0.5">
                       {campaign.status === "draft" && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 gap-1.5 text-xs"
-                          onClick={() => openDuplicateModal(campaign.id)}
-                        >
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Resume
-                        </Button>
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs"
+                            onClick={() => openDuplicateModal(campaign.id)}
+                          >
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Resume
+                          </Button>
+                          <TooltipProvider delay={300}>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  className="min-h-11 min-w-11 text-muted-foreground hover:text-destructive"
+                                  aria-label="Delete this draft"
+                                  onClick={() => {
+                                    if (confirm(`Delete draft "${campaign.name}"? This can't be undone.`)) {
+                                      deleteCampaign(campaign.id)
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">Delete draft</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </>
                       )}
                       <TooltipProvider delay={300}>
                         <Tooltip>
@@ -791,7 +825,15 @@ export function CampaignList() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive">
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => {
+                            const noun = campaign.status === "draft" ? "draft" : "campaign"
+                            if (confirm(`Delete ${noun} "${campaign.name}"? This can't be undone.`)) {
+                              deleteCampaign(campaign.id)
+                            }
+                          }}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
