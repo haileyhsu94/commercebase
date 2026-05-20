@@ -98,7 +98,7 @@ export function Signup() {
       </aside>
 
       {/* Right — content */}
-      <main className="flex flex-1 items-center justify-center p-6">
+      <main className="flex flex-1 items-center justify-center p-6 [&_input:not([type=checkbox]):not([type=radio])]:bg-card">
         {phase === "form" && mode === "signin" ? (
           <form onSubmit={submitSignIn} className="w-full max-w-sm space-y-5">
             <header>

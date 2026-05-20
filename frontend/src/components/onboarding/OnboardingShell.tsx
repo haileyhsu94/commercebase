@@ -85,8 +85,18 @@ export function OnboardingShell({
           })}
         </div>
 
-        {/* Body */}
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        {/* Body — force white field backgrounds across the whole onboarding
+            flow so inputs stand out from the muted page background. */}
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto",
+            "[&_input:not([type=checkbox]):not([type=radio])]:bg-card",
+            "[&_textarea]:bg-card",
+            "[&_button[data-slot=select-trigger]]:bg-card",
+          )}
+        >
+          {children}
+        </div>
 
         {/* Footer */}
         {footer && (

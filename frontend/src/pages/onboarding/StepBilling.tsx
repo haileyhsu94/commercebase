@@ -207,9 +207,10 @@ export function StepBilling({ onContinue, onBack }: Props) {
             <Field label="Expiry" required>
               <Input
                 value={cardExpiry}
-                onChange={(e) => setCardExpiry(e.target.value)}
+                onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
                 placeholder="MM/YY"
                 inputMode="numeric"
+                maxLength={5}
               />
             </Field>
             <Field label="CVC" required>
@@ -245,4 +246,16 @@ function Field({
       {children}
     </div>
   )
+}
+
+/**
+ * Format card expiry input: strip non-digits, insert "/" after the month
+ * (so "1225" → "12/25", "12" → "12", "1" → "1"). Allows backspace to
+ * naturally remove the slash by re-running the formatter on the cleaned digits.
+ */
+function formatExpiry(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 4)
+  if (digits.length === 0) return ""
+  if (digits.length <= 2) return digits
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`
 }
