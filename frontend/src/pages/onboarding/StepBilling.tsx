@@ -198,9 +198,10 @@ export function StepBilling({ onContinue, onBack }: Props) {
           <Field label="Card number" required>
             <Input
               value={cardNumber}
-              onChange={(e) => setCardNumber(e.target.value)}
+              onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
               placeholder="4242 4242 4242 4242"
               inputMode="numeric"
+              maxLength={19}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
@@ -258,4 +259,10 @@ function formatExpiry(raw: string): string {
   if (digits.length === 0) return ""
   if (digits.length <= 2) return digits
   return `${digits.slice(0, 2)}/${digits.slice(2)}`
+}
+
+/** Format card number with a space every 4 digits (max 16 digits → 19 chars). */
+function formatCardNumber(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 16)
+  return digits.replace(/(.{4})/g, "$1 ").trim()
 }

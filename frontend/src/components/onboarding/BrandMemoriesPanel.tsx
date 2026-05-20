@@ -15,7 +15,7 @@ interface MemoryCard {
 
 const CARDS: MemoryCard[] = [
   { key: "companyOverview", label: "Company Overview" },
-  { key: "icp", label: "ICP" },
+  { key: "icp", label: "Ideal Customer Profile" },
   { key: "messagingPositioning", label: "Messaging & Positioning" },
 ]
 
