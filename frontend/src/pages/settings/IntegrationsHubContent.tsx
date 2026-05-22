@@ -1,215 +1,204 @@
-import { useState } from "react"
-import { CheckCircle2, Plus, Settings } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { simpleIconSvgUrl } from "@/lib/mock-data"
+import { useEffect, useState } from "react"
+import { ChevronDown, MessageSquare, ShoppingBag, Share2, Users } from "lucide-react"
+import { ConnectorCard } from "@/components/agent/ConnectorCard"
+import { CONNECTORS } from "@/lib/agent/connectors"
+import type { ConnectorDef, ConnectorState } from "@/types/agent"
 import { cn } from "@/lib/utils"
 
-/** Simple Icons slugs — https://simpleicons.org */
-const connectedIntegrations = [
-  {
-    name: "Shopify",
-    description: "E-commerce platform",
-    status: "connected",
-    lastSync: "2 hours ago",
-    iconSlug: "shopify",
-    fallback: "S",
-  },
-  {
-    name: "Google Merchant Center",
-    description: "Product feed management",
-    status: "connected",
-    lastSync: "1 hour ago",
-    /** No dedicated GMC icon in Simple Icons — Google mark reads clearly for feeds/Shopping. */
-    iconSlug: "google",
-    fallback: "G",
-  },
-  {
-    name: "Google Analytics 4",
-    description: "Website analytics",
-    status: "connected",
-    lastSync: "Real-time",
-    iconSlug: "googleanalytics",
-    fallback: "GA",
-  },
-]
+/** Shared storage key — same as `StepConnectTools` so onboarding ↔ settings stay in sync. */
+const STORAGE_KEY = "commercebase_onboarding_connectors_v1"
 
-const availableIntegrations = [
-  {
-    name: "Meta Catalog",
-    description: "Facebook & Instagram shopping",
-    category: "Advertising",
-    iconSlug: "meta",
-    fallback: "M",
-  },
-  {
-    name: "TikTok Shop",
-    description: "TikTok commerce integration",
-    category: "Advertising",
-    iconSlug: "tiktok",
-    fallback: "T",
-  },
-  {
-    name: "WooCommerce",
-    description: "WordPress e-commerce",
-    category: "E-commerce",
-    iconSlug: "woocommerce",
-    fallback: "W",
-  },
-  {
-    name: "Klaviyo",
-    description: "Email marketing automation",
-    category: "Marketing",
-    fallback: "K",
-  },
-  {
-    name: "Slack",
-    description: "Team notifications",
-    category: "Notifications",
-    iconSlug: "slack",
-    fallback: "S",
-  },
-  {
-    name: "Zapier",
-    description: "Workflow automation",
-    category: "Automation",
-    iconSlug: "zapier",
-    fallback: "Z",
-  },
-]
+function loadStates(): Record<string, ConnectorState> {
+  if (typeof window === "undefined") return {}
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return {}
+    return JSON.parse(raw) as Record<string, ConnectorState>
+  } catch {
+    return {}
+  }
+}
+function saveStates(s: Record<string, ConnectorState>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+}
 
-function IntegrationBrandIcon({
-  name,
-  iconSlug,
-  fallback,
-  variant,
-}: {
-  name: string
-  /** Simple Icons slug — omit if no icon in the pinned CDN set (avoids a failed request). */
-  iconSlug?: string
-  fallback: string
-  variant: "connected" | "available"
-}) {
-  const [failed, setFailed] = useState(false)
+/**
+ * Settings → Integrations tab. Mirrors the onboarding "Connect your tools" step
+ * (same data + UI) so users see a consistent list whether they're onboarding or
+ * managing connections later.
+ */
+export function IntegrationsHubContent() {
+  const [states, setStates] = useState<Record<string, ConnectorState>>(loadStates)
 
-  if (!iconSlug || failed) {
-    return (
-      <div
-        className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg font-bold",
-          variant === "connected"
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted text-muted-foreground"
-        )}
-        aria-hidden
-      >
-        {fallback}
-      </div>
-    )
+  useEffect(() => {
+    saveStates(states)
+  }, [states])
+
+  function setStatus(def: ConnectorDef, status: ConnectorState["status"], accountLabel?: string) {
+    setStates((prev) => ({
+      ...prev,
+      [def.id]: {
+        id: def.id,
+        status,
+        accountLabel,
+        connectedAt: status === "connected" ? new Date().toISOString() : prev[def.id]?.connectedAt,
+      },
+    }))
   }
 
+  function connect(def: ConnectorDef) {
+    setStatus(def, "connecting")
+    // Mock OAuth round-trip
+    setTimeout(() => setStatus(def, "connected", `${def.name} (demo workspace)`), 600)
+  }
+  function disconnect(def: ConnectorDef) {
+    setStatus(def, "disconnected")
+  }
+
+  function getState(def: ConnectorDef): ConnectorState {
+    return states[def.id] ?? { id: def.id, status: "disconnected" }
+  }
+
+  const store = CONNECTORS.filter((c) => c.category === "store")
+  const messaging = CONNECTORS.filter((c) => c.category === "messaging")
+  const social = CONNECTORS.filter((c) => c.category === "social")
+  const crm = CONNECTORS.filter((c) => c.category === "crm")
+
+  const connectedCount = Object.values(states).filter((s) => s.status === "connected").length
+
   return (
-    <div
-      className={cn(
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1 ring-border/60",
-        variant === "connected" ? "bg-primary/10" : "bg-muted/50"
-      )}
-      title={name}
-    >
-      <img
-        src={simpleIconSvgUrl(iconSlug)}
-        alt=""
-        className="h-6 w-6 object-contain dark:invert"
-        loading="lazy"
-        decoding="async"
-        onError={() => setFailed(true)}
-      />
+    <div className="space-y-4">
+      <div className="flex items-center justify-end">
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {connectedCount} connected
+        </span>
+      </div>
+
+      {/* Store — the most important integrations */}
+      <Group
+        icon={<ShoppingBag className="h-3.5 w-3.5" />}
+        title="Store & catalog"
+        subtitle="Connect a product feed to start running campaigns."
+        defaultOpen
+      >
+        {store.map((def) => (
+          <ConnectorCard
+            key={def.id}
+            def={def}
+            state={getState(def)}
+            onConnect={() => connect(def)}
+            onDisconnect={() => disconnect(def)}
+          />
+        ))}
+      </Group>
+
+      {/* Messaging */}
+      <Group
+        icon={<MessageSquare className="h-3.5 w-3.5" />}
+        title="Messaging"
+        subtitle="Chat with your AI marketing agent directly from Slack."
+        defaultOpen
+      >
+        {messaging.map((def) => (
+          <ConnectorCard
+            key={def.id}
+            def={def}
+            state={getState(def)}
+            onConnect={() => connect(def)}
+            onDisconnect={() => disconnect(def)}
+          />
+        ))}
+      </Group>
+
+      {/* Social */}
+      <Group
+        icon={<Share2 className="h-3.5 w-3.5" />}
+        title="Social accounts"
+        subtitle="Publish posts on your behalf, fully automated or with your approval."
+        defaultOpen={false}
+      >
+        {social.map((def) => (
+          <ConnectorCard
+            key={def.id}
+            def={def}
+            state={getState(def)}
+            onConnect={() => connect(def)}
+            onDisconnect={() => disconnect(def)}
+          />
+        ))}
+      </Group>
+
+      {/* CRM — next phase */}
+      <Group
+        icon={<Users className="h-3.5 w-3.5" />}
+        title="CRM integration"
+        subtitle="Sync contacts bidirectionally and let the AI enrich leads with marketing data."
+        defaultOpen={false}
+        badge="Next phase"
+        disabled
+      >
+        {crm.map((def) => (
+          <ConnectorCard
+            key={def.id}
+            def={def}
+            state={getState(def)}
+            onConnect={() => connect(def)}
+            onDisconnect={() => disconnect(def)}
+          />
+        ))}
+      </Group>
     </div>
   )
 }
 
-/** Shared integrations hub — used in Settings “Integrations” tab and kept in sync with any standalone route. */
-export function IntegrationsHubContent() {
+function Group({
+  icon,
+  title,
+  subtitle,
+  defaultOpen,
+  badge,
+  disabled,
+  children,
+}: {
+  icon?: React.ReactNode
+  title: string
+  subtitle?: string
+  defaultOpen: boolean
+  badge?: string
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen && !disabled)
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Connected</CardTitle>
-          <CardDescription>Services currently integrated with your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {connectedIntegrations.map((integration) => (
-              <div
-                key={integration.name}
-                className="flex items-center justify-between rounded-lg border p-4"
-              >
-                <div className="flex items-center gap-4">
-                  <IntegrationBrandIcon
-                    name={integration.name}
-                    iconSlug={integration.iconSlug}
-                    fallback={integration.fallback}
-                    variant="connected"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{integration.name}</p>
-                      <Badge variant="outline" className="border-green-600 text-green-600">
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Connected
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{integration.description}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    Last sync: {integration.lastSync}
-                  </span>
-                  <Button variant="ghost" size="icon-sm">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+    <section className={cn("rounded-xl border bg-card", disabled && "bg-muted/30")}>
+      <button
+        type="button"
+        onClick={() => !disabled && setOpen((o) => !o)}
+        disabled={disabled}
+        className={cn(
+          "flex w-full items-center justify-between gap-3 p-4 text-left",
+          disabled && "cursor-not-allowed",
+        )}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            {icon}
+            {title}
+            {badge && (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                {badge}
+              </span>
+            )}
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">Available integrations</CardTitle>
-          <CardDescription>Connect more services to enhance your workflow</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {availableIntegrations.map((integration) => (
-              <div
-                key={integration.name}
-                className="flex items-center justify-between rounded-lg border p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <IntegrationBrandIcon
-                    name={integration.name}
-                    iconSlug={integration.iconSlug}
-                    fallback={integration.fallback}
-                    variant="available"
-                  />
-                  <div>
-                    <p className="font-medium">{integration.name}</p>
-                    <p className="text-xs text-muted-foreground">{integration.description}</p>
-                  </div>
-                </div>
-                <Button size="sm" variant="outline">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Connect
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
+        {!disabled && (
+          <ChevronDown
+            className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")}
+          />
+        )}
+      </button>
+      {open && !disabled && <div className="space-y-2 border-t p-4">{children}</div>}
+    </section>
   )
 }

@@ -447,7 +447,7 @@ export const efficiencyMetricSummaries: EfficiencyMetricSummary[] = [
   { key: "cpc", label: "CPC", value: "$0.52", change: "-10.3%", trend: "down" },
   { key: "cps", label: "CPS", value: "$16.00", change: "-13.0%", trend: "down" },
   { key: "ctr", label: "CTR", value: "2.40%", change: "+0.3pp", trend: "up" },
-  { key: "cvr", label: "Conv. rate", value: "1.80%", change: "+0.2pp", trend: "up" },
+  { key: "cvr", label: "CVR", value: "1.80%", change: "+0.2pp", trend: "up" },
 ]
 
 export const currentUser = {

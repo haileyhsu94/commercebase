@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Accordion } from "@base-ui/react/accordion"
-import { BarChart3, Building2, ChevronDown, Inbox, MessageSquare, Package, PenSquare, Pin, Settings, Workflow } from "lucide-react"
+import {
+  BarChart3,
+  Building2,
+  ChevronDown,
+  Inbox,
+  MessageSquare,
+  Package,
+  PenSquare,
+  Pin,
+  Settings,
+  Workflow,
+} from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +22,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -20,7 +30,7 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAccountMenu } from "./UserAccountMenu"
 import { SidebarTrialCard } from "./SidebarTrialCard"
 import { cn } from "@/lib/utils"
 import { aiPresenceSubnav } from "@/lib/ai-presence-mock"
@@ -322,22 +332,29 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
 
-                {/* Publishers — admin only, below Autopilot */}
-                {currentUser.isAdmin && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={pathname.startsWith("/publishers")}
-                      tooltip="Publishers"
-                      render={<Link to="/publishers" />}
-                    >
-                      <Building2 />
-                      <span>Publishers</span>
-                      <span className="ml-auto rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-sky-700 group-data-[collapsible=icon]:hidden dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
-                        Internal
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Publishers — admin only, under its own "Internal" group */}
+        {currentUser.isAdmin && (
+          <SidebarGroup className="p-1.5">
+            <SidebarGroupLabel className="px-2 text-xs font-medium text-muted-foreground">
+              Internal
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname.startsWith("/publishers")}
+                    tooltip="Publishers"
+                    render={<Link to="/publishers" />}
+                  >
+                    <Building2 />
+                    <span>Publishers</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -380,29 +397,11 @@ export function AppSidebar() {
             )}
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              tooltip="Account & settings"
-              render={<Link to="/settings" />}
-              isActive={isActive("/settings")}
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={currentUser.avatar} />
-                <AvatarFallback className="rounded-lg">{currentUser.initials}</AvatarFallback>
-              </Avatar>
-              <span className="min-w-0 flex-1 truncate text-left text-sm font-semibold leading-tight">
-                {currentUser.name}
-              </span>
-            </SidebarMenuButton>
-            <SidebarMenuAction
-              render={<Link to="/settings" aria-label="Settings" />}
-              title="Settings"
-            >
-              <Settings />
-            </SidebarMenuAction>
+            <UserAccountMenu />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   )
 }
+

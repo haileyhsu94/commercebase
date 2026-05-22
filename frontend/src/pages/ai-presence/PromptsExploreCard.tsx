@@ -572,126 +572,130 @@ export function PromptsExploreCard({
                 </TableRow>
                 {expandedId === row.id ? (
                   <TableRow key={`${row.id}-detail`} className="border-t-0 bg-muted/30 hover:bg-muted/30">
-                    <TableCell colSpan={colSpan} className="p-6">
-                      <div className="grid gap-8 lg:grid-cols-2">
-                        <div className="space-y-6">
-                          <div className="grid gap-6 sm:grid-cols-2">
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                                SoV by engine
-                              </p>
-                              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                                <span className="flex items-center gap-1.5">
-                                  <span className="text-muted-foreground">ChatGPT</span>
-                                  <strong className="tabular-nums">{row.sovChatgpt}%</strong>
-                                </span>
-                                <span className="flex items-center gap-1.5">
-                                  <span className="text-muted-foreground">Perplexity</span>
-                                  <strong className="tabular-nums">{row.sovPerplexity}%</strong>
-                                </span>
-                                <span className="flex items-center gap-1.5">
-                                  <span className="text-muted-foreground">Google AI</span>
-                                  <strong className="tabular-nums">{row.sovGoogleAi}%</strong>
-                                </span>
+                    <TableCell colSpan={colSpan} className="whitespace-normal bg-background p-0">
+                      <div className="space-y-4 p-6">
+                        {/* Diagnostic panel — what's wrong, at a glance */}
+                        <div className="grid gap-4 rounded-xl border bg-card p-5 lg:grid-cols-5">
+                          {/* SoV by engine — visual bar chart with engine colors (3/5) */}
+                          <section className="lg:col-span-3">
+                            <div className="flex items-baseline justify-between">
+                              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                Share of voice by engine
+                              </h3>
+                              <span className="text-[11px] text-muted-foreground">Lower = bigger gap</span>
+                            </div>
+                            <ul className="mt-3 space-y-2.5">
+                              {[
+                                { name: "ChatGPT", value: row.sovChatgpt, color: "bg-emerald-500" },
+                                { name: "Perplexity", value: row.sovPerplexity, color: "bg-violet-500" },
+                                { name: "Google AI", value: row.sovGoogleAi, color: "bg-sky-500" },
+                              ].map((engine) => (
+                                <li key={engine.name} className="flex items-center gap-3">
+                                  <span className="w-20 shrink-0 text-sm text-muted-foreground">
+                                    {engine.name}
+                                  </span>
+                                  <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                                    <div
+                                      className={cn("h-full rounded-full", engine.color)}
+                                      style={{ width: `${Math.min(100, engine.value)}%` }}
+                                    />
+                                  </div>
+                                  <span className="w-10 shrink-0 text-right text-sm font-semibold tabular-nums">
+                                    {engine.value}%
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+
+                          {/* Meta facts as a vertical key-value list (2/5) */}
+                          <section className="lg:col-span-2 lg:border-l lg:pl-5">
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Context
+                            </h3>
+                            <dl className="mt-3 space-y-2 text-sm">
+                              <div className="flex items-center justify-between gap-3">
+                                <dt className="text-muted-foreground">Placement</dt>
+                                <dd className="font-medium">{PLACEMENT_LABEL[row.placement]}</dd>
                               </div>
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                                Answer placement
-                              </p>
-                              <p className="mt-1.5 text-sm font-medium">{PLACEMENT_LABEL[row.placement]}</p>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-6 sm:grid-cols-2">
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                                Shopping journey
-                              </p>
-                              <p className="mt-1.5 text-sm font-medium">{journeyLabel(row.shoppingJourneyStage)}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                                Data as of
-                              </p>
-                              <p className="mt-1.5 text-sm font-medium tabular-nums">{row.lastUpdated}</p>
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                              Sample answer (illustrative)
-                            </p>
-                            <blockquote className="mt-2 border-l-2 border-primary/20 pl-4 text-sm italic leading-relaxed text-foreground/80">
-                              "{row.sampleAnswerLine}"
-                            </blockquote>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 pt-2">
-                            <Link
-                              to="/products"
-                              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex h-8 gap-1.5")}
-                            >
-                              View products
-                              <ChevronRight className="size-3.5" />
-                            </Link>
-                            <Link
-                              to="/ai-presence/optimize"
-                              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "inline-flex h-8 gap-1.5")}
-                            >
-                              Open SEO / GEO
-                              <ExternalLink className="size-3.5" />
-                            </Link>
-                          </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <dt className="text-muted-foreground">Journey</dt>
+                                <dd className="font-medium">{journeyLabel(row.shoppingJourneyStage)}</dd>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <dt className="text-muted-foreground">Catalog impact</dt>
+                                <dd className="font-medium">
+                                  {row.affectedSkusApprox > 0
+                                    ? `~${row.affectedSkusApprox.toLocaleString()} SKUs`
+                                    : "Content-only"}
+                                </dd>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <dt className="text-muted-foreground">Data as of</dt>
+                                <dd className="font-medium tabular-nums">{row.lastUpdated}</dd>
+                              </div>
+                            </dl>
+                          </section>
                         </div>
 
-                        <div className="space-y-6">
-                          <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 shadow-sm">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Sparkles className="size-4 text-primary" />
-                              <p className="text-[10px] font-extrabold uppercase tracking-widest text-primary">
-                                Aeris Recommendation
-                              </p>
-                            </div>
-                            <p className="text-sm font-semibold leading-relaxed text-foreground">
-                              {row.recommendedFix}
-                            </p>
-                            
-                            <div className="mt-5 flex flex-wrap gap-3">
-                              <Link
-                                to="/ai-presence/auto-agent"
-                                className={cn(buttonVariants({ variant: "default", size: "sm" }), "h-9 gap-2 shadow-sm")}
-                              >
-                                <Wrench className="size-4" />
-                                Fix with Aeris
-                              </Link>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-9 gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-colors"
-                                onClick={() =>
-                                  openPanelWithComposerText(
-                                    `Explain this prompt and fix: "${row.prompt}". Recommended fix: ${row.recommendedFix}`
-                                  )
-                                }
-                              >
-                                <MessageSquare className="size-4 text-primary" />
-                                Ask Aeris about this prompt
-                              </Button>
-                            </div>
-                          </div>
+                        {/* Sample answer — inline quote, not a card */}
+                        <section className="px-1">
+                          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            What AI is currently saying
+                          </h3>
+                          <blockquote className="mt-2 border-l-2 border-amber-400 pl-4 text-sm italic leading-relaxed text-foreground/85">
+                            “{row.sampleAnswerLine}”
+                          </blockquote>
+                        </section>
 
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                              Affected catalog (est.)
-                            </p>
-                            <p className="mt-1.5 text-sm font-medium">
-                              {row.affectedSkusApprox > 0
-                                ? `~${row.affectedSkusApprox.toLocaleString()} SKUs potentially impacted`
-                                : "General content optimization — not SKU-specific"}
-                            </p>
+                        {/* Aeris recommendation — compact primary surface */}
+                        <section className="flex flex-wrap items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
+                          <Sparkles className="size-4 shrink-0 text-primary" />
+                          <p className="min-w-0 flex-1 text-sm leading-snug">
+                            <span className="font-semibold text-primary">Aeris recommends: </span>
+                            {row.recommendedFix}
+                          </p>
+                          <div className="flex shrink-0 gap-1.5">
+                            <Link
+                              to="/ai-presence/auto-agent"
+                              className={cn(buttonVariants({ variant: "default", size: "sm" }), "gap-1.5")}
+                            >
+                              <Wrench className="size-3.5" />
+                              Fix with Aeris
+                            </Link>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1.5"
+                              onClick={() =>
+                                openPanelWithComposerText(
+                                  `Explain this prompt and fix: "${row.prompt}". Recommended fix: ${row.recommendedFix}`
+                                )
+                              }
+                            >
+                              <MessageSquare className="size-3.5" />
+                              Ask Aeris
+                            </Button>
                           </div>
+                        </section>
+
+                        {/* Secondary nav links */}
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          <Link
+                            to="/products"
+                            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-1.5 text-muted-foreground hover:text-foreground")}
+                          >
+                            View affected products
+                            <ChevronRight className="size-3.5" />
+                          </Link>
+                          <Link
+                            to="/ai-presence/optimize"
+                            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-1.5 text-muted-foreground hover:text-foreground")}
+                          >
+                            Open SEO / GEO
+                            <ExternalLink className="size-3.5" />
+                          </Link>
                         </div>
                       </div>
                     </TableCell>

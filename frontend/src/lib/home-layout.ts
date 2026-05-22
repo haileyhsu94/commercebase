@@ -6,6 +6,7 @@ export type HomeWidgetId =
   | "healthAi"
   | "efficiency"
   | "campaignSummary"
+  | "recentlyVisited"
 
 export const ALL_HOME_WIDGET_IDS: HomeWidgetId[] = [
   "quickActions",
@@ -13,14 +14,16 @@ export const ALL_HOME_WIDGET_IDS: HomeWidgetId[] = [
   "healthAi",
   "efficiency",
   "campaignSummary",
+  "recentlyVisited",
 ]
 
 export const HOME_WIDGET_LABELS: Record<HomeWidgetId, string> = {
-  quickActions: "Quick actions",
-  alerts: "Alerts",
+  quickActions: "Today (alerts & next steps)",
+  alerts: "Alerts (legacy panel)",
   healthAi: "Health & AI visibility scores",
   efficiency: "Efficiency metrics",
   campaignSummary: "Campaign summary",
+  recentlyVisited: "Recently visited",
 }
 
 export type HomeLayoutState = {
@@ -36,7 +39,7 @@ function isWidgetId(x: string): x is HomeWidgetId {
 function defaultState(): HomeLayoutState {
   return {
     order: [...ALL_HOME_WIDGET_IDS],
-    hidden: [],
+    hidden: ["alerts"],
   }
 }
 

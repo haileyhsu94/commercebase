@@ -11,6 +11,9 @@ import {
   Circle,
   ExternalLink,
   Filter,
+  FileText,
+  FolderOpen,
+  Image as ImageIcon,
   Mail,
   MessageSquare,
   Plus,
@@ -41,21 +44,21 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { AdPreview } from "@/components/campaigns/AdPreview"
+import { GOAL_OPTIONS } from "@/components/campaigns/wizard/GoalFunnelCard"
 import { SkillSidePanel } from "@/components/agent/SkillSidePanel"
 import type { CampaignArtifactAdCopy } from "@/types/agent"
 import {
   ATTRIBUTION_OPTIONS,
   BID_STRATEGY_OPTIONS,
   BUDGET_TYPE_OPTIONS,
-  CAMPAIGN_OBJECTIVE_OPTIONS,
-  CAMPAIGN_TYPE_OPTIONS,
   CURRENCY_OPTIONS,
   LANGUAGE_OPTIONS,
 } from "@/types/campaign-wizard"
 import { CountryMultiSelect } from "@/components/campaigns/wizard/CountryMultiSelect"
+import { SearchableMultiSelect } from "@/components/campaigns/wizard/SearchableMultiSelect"
+import { CITIES } from "@/lib/location-options"
 import { cn } from "@/lib/utils"
 
-const DEVICE_OPTIONS = ["mobile", "tablet", "desktop"] as const
 const AGE_BAND_OPTIONS = ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"] as const
 
 type AdAspect = NonNullable<CampaignArtifactAdCopy["aspectRatio"]>
@@ -72,43 +75,23 @@ const CHANNEL_ASPECT_RATIO: Record<string, AdAspect> = {
   "Paid search": "1.91:1",
 }
 
-const AUDIENCE_OPTIONS = [
-  "All shoppers",
-  "VIP / loyalty members",
-  "High-intent shoppers",
-  "Cart abandoners",
-  "Lapsed customers (90+ days)",
-  "New visitors",
-  "Email subscribers",
-]
-
-const CHANNEL_OPTIONS = [
-  "Email",
-  "LinkedIn",
-  "Instagram",
-  "TikTok",
-  "X",
-  "Blog",
-  "Newsletter",
-  "Paid social",
-  "Paid search",
-]
-
 const OWNER_OPTIONS = ["Hailey Hsu", "Aeris", "Marketing team", "John Doe"]
 
-const CADENCE_OPTIONS = ["Daily", "Weekly", "Bi-weekly", "Monthly", "One-off"]
+const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly", "Total"] as const
 
-type Tab = "brief" | "tasks" | "activation" | "deliverables" | "chats"
+type Tab = "brief" | "tasks" | "activation" | "deliverables" | "assets" | "chats"
 
 const TABS: { id: Tab; label: string; icon: typeof Sparkles }[] = [
   { id: "brief", label: "Brief", icon: StickyNote },
   // Tasks tab hidden until we have a concrete use case. TasksTab component
   // and Tab type entry are kept so we can flip it back on by uncommenting.
   // { id: "tasks", label: "Tasks", icon: ClipboardList }, // re-import ClipboardList from lucide-react to re-enable
-  { id: "activation", label: "Activation", icon: Radio },
+  // Activation tab hidden — re-enable by uncommenting and re-importing Radio.
+  // { id: "activation", label: "Activation", icon: Radio },
   // Deliverables tab hidden — its job is folded into Brief (Ad preview) and
   // Activation. Re-enable by uncommenting and re-importing Send if removed.
   // { id: "deliverables", label: "Deliverables", icon: Send },
+  { id: "assets", label: "Assets", icon: FolderOpen },
   { id: "chats", label: "Chats", icon: MessageSquare },
 ]
 
@@ -224,6 +207,7 @@ export function CampaignSkill() {
           {tab === "tasks" && <TasksTab artifact={artifact} onChange={update} />}
           {tab === "activation" && <ActivationTab artifact={artifact} />}
           {tab === "deliverables" && <DeliverablesTab artifact={artifact} onChange={update} />}
+          {tab === "assets" && <AssetsTab artifact={artifact} />}
           {tab === "chats" && <ChatsTab artifact={artifact} />}
         </div>
       </div>
@@ -256,12 +240,6 @@ function BriefTab({
   function toDateInput(iso: string) {
     if (!iso) return ""
     return format(new Date(iso), "yyyy-MM-dd")
-  }
-
-  function toggleChannel(channel: string) {
-    const has = artifact.channels.includes(channel)
-    const next = has ? artifact.channels.filter((c) => c !== channel) : [...artifact.channels, channel]
-    onChange({ channels: next })
   }
 
   function addGoal() {
@@ -437,22 +415,7 @@ function BriefTab({
                 <SelectValue placeholder="Pick an objective" />
               </SelectTrigger>
               <SelectContent>
-                {CAMPAIGN_OBJECTIVE_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </BriefField>
-
-          <BriefField icon={Sparkles} label="Campaign type">
-            <Select value={artifact.campaignType ?? ""} onValueChange={(v) => onChange({ campaignType: v ?? "" })}>
-              <SelectTrigger className="h-8 w-full">
-                <SelectValue placeholder="Pick a campaign type" />
-              </SelectTrigger>
-              <SelectContent>
-                {CAMPAIGN_TYPE_OPTIONS.map((o) => (
+                {GOAL_OPTIONS.map((o) => (
                   <SelectItem key={o.value} value={o.value}>
                     {o.label}
                   </SelectItem>
@@ -510,58 +473,54 @@ function BriefTab({
             </div>
           </BriefField>
 
-          <BriefField icon={Radio} label="Channels">
-            <div className="flex flex-wrap gap-1.5">
-              {CHANNEL_OPTIONS.map((c) => {
-                const active = artifact.channels.includes(c)
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => toggleChannel(c)}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
-                      active
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-input bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
-                    )}
-                  >
-                    {active && <X className="h-3 w-3" />}
-                    {c}
-                  </button>
-                )
-              })}
+          <BriefField icon={Target} label="Audience">
+            <Input
+              value={artifact.audience}
+              onChange={(e) => onChange({ audience: e.target.value })}
+              placeholder="Who are we targeting?"
+              className="h-8"
+            />
+          </BriefField>
+
+          <BriefField icon={CalendarDays} label="Frequency">
+            <Select value={artifact.cadence || "Total"} onValueChange={(v) => onChange({ cadence: v ?? "" })}>
+              <SelectTrigger className="h-8 w-full">
+                <SelectValue placeholder="Pick frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                {FREQUENCY_OPTIONS.map((f) => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </BriefField>
+
+          <BriefField icon={DollarSign} label="Max CPC">
+            <div className="flex items-center gap-2">
+              <Input
+                value={artifact.maxCpc ?? ""}
+                onChange={(e) => onChange({ maxCpc: e.target.value })}
+                placeholder="0.00"
+                inputMode="decimal"
+                className="h-8 w-28"
+              />
+              <span className="text-xs text-muted-foreground">USD per click</span>
             </div>
           </BriefField>
 
-          <BriefField icon={Target} label="Audience preset">
-            <Select value={artifact.audience} onValueChange={(v) => onChange({ audience: v ?? "" })}>
-              <SelectTrigger className="h-8 w-full">
-                <SelectValue placeholder="Pick an audience" />
-              </SelectTrigger>
-              <SelectContent>
-                {AUDIENCE_OPTIONS.map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {o}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </BriefField>
-
-          <BriefField icon={CalendarDays} label="Cadence">
-            <Select value={artifact.cadence} onValueChange={(v) => onChange({ cadence: v ?? "" })}>
-              <SelectTrigger className="h-8 w-full">
-                <SelectValue placeholder="Pick cadence" />
-              </SelectTrigger>
-              <SelectContent>
-                {CADENCE_OPTIONS.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <BriefField icon={DollarSign} label="Target CPS">
+            <div className="flex items-center gap-2">
+              <Input
+                value={artifact.targetCps ?? ""}
+                onChange={(e) => onChange({ targetCps: e.target.value })}
+                placeholder="0.00"
+                inputMode="decimal"
+                className="h-8 w-28"
+              />
+              <span className="text-xs text-muted-foreground">USD per sale</span>
+            </div>
           </BriefField>
 
           <BriefField icon={ExternalLink} label="Final URL">
@@ -639,21 +598,13 @@ function BriefTab({
                   onChange={(next) => onChange({ regions: next })}
                 />
               </BriefField>
-              <BriefField icon={Target} label="Devices">
-                <div className="flex flex-wrap gap-1.5">
-                  {DEVICE_OPTIONS.map((d) => {
-                    const active = (artifact.devices ?? []).includes(d)
-                    return (
-                      <ChipToggle
-                        key={d}
-                        active={active}
-                        onClick={() => toggleArrayValue("devices", d)}
-                      >
-                        {d}
-                      </ChipToggle>
-                    )
-                  })}
-                </div>
+              <BriefField icon={Target} label="Cities">
+                <SearchableMultiSelect
+                  value={artifact.cities ?? []}
+                  onChange={(next) => onChange({ cities: next })}
+                  options={CITIES.map((c) => ({ value: c, label: c }))}
+                  placeholder="Search cities…"
+                />
               </BriefField>
               <BriefField icon={Target} label="Age bands">
                 <div className="flex flex-wrap gap-1.5">
@@ -672,26 +623,19 @@ function BriefTab({
                 </div>
               </BriefField>
               <BriefField icon={Target} label="Languages">
-                <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
-                  {LANGUAGE_OPTIONS.slice(0, 20).map((l) => {
-                    const active = (artifact.languages ?? []).includes(l.value)
-                    return (
-                      <ChipToggle
-                        key={l.value}
-                        active={active}
-                        onClick={() => toggleArrayValue("languages", l.value)}
-                      >
-                        {l.label}
-                      </ChipToggle>
-                    )
-                  })}
-                </div>
+                <SearchableMultiSelect
+                  value={artifact.languages ?? []}
+                  onChange={(next) => onChange({ languages: next })}
+                  options={LANGUAGE_OPTIONS}
+                  placeholder="Search languages…"
+                />
               </BriefField>
             </div>
           </Accordion>
 
           <Accordion summary="Creative & brand">
             <div className="space-y-4 text-sm">
+              <AdAssetsFromChat artifact={artifact} />
               <AdPreviewSection artifact={artifact} onChange={onChange} />
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 <BrandField
@@ -833,6 +777,48 @@ function BriefField({
         {label}
       </div>
       <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * Surfaces chat-uploaded assets that the user flagged as ad creative.
+ * Mockup pulls from `getChatAssets()` (defined near AssetsTab) and shows the
+ * subset earmarked for ad preview. In production, we'd track per-asset "use as
+ * ad creative" toggles in the artifact.
+ */
+function AdAssetsFromChat({ artifact }: { artifact: CampaignArtifact }) {
+  // Mock: pretend the first image asset was tagged "use as ad creative" by the user.
+  const assets = getChatAssets(artifact.id).filter((a) => a.kind === "image")
+  if (assets.length === 0) return null
+  return (
+    <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3">
+      <div className="flex items-center gap-2 text-xs">
+        <Sparkles className="size-3.5 text-primary" />
+        <p>
+          <span className="font-semibold text-primary">From chat: </span>
+          <span className="text-muted-foreground">
+            You marked the following {assets.length === 1 ? "asset" : "assets"} as ad creative.
+          </span>
+        </p>
+      </div>
+      <ul className="mt-2 grid gap-2 sm:grid-cols-3">
+        {assets.map((a) => (
+          <li key={a.id} className="flex items-center gap-2 rounded-md border bg-card p-2">
+            <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted/40">
+              {a.thumbUrl ? (
+                <img src={a.thumbUrl} alt="" className="size-full object-cover" />
+              ) : (
+                <ImageIcon className="size-4 text-muted-foreground" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium">{a.name}</p>
+              <p className="text-[10px] text-muted-foreground">{a.size}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
@@ -1157,6 +1143,101 @@ function DeliverablesTab({
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+// ── Assets tab ──────────────────────────────────────────────────────────────
+
+type ChatAsset = {
+  id: string
+  name: string
+  size: string
+  kind: "image" | "doc"
+  uploadedAt: string
+  thumbUrl?: string
+}
+
+/** Mock chat-uploaded assets per artifact. Replace with real attachments later. */
+function getChatAssets(artifactId: string): ChatAsset[] {
+  return [
+    {
+      id: `${artifactId}-a1`,
+      name: "Brand-voice-guidelines.pdf",
+      size: "1.4 MB",
+      kind: "doc",
+      uploadedAt: "Today",
+    },
+    {
+      id: `${artifactId}-a2`,
+      name: "Hero-spring-collection.jpg",
+      size: "820 KB",
+      kind: "image",
+      uploadedAt: "Today",
+      thumbUrl:
+        "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=240&q=80",
+    },
+    {
+      id: `${artifactId}-a3`,
+      name: "Q2-positioning-deck.pdf",
+      size: "3.2 MB",
+      kind: "doc",
+      uploadedAt: "Yesterday",
+    },
+  ]
+}
+
+function AssetsTab({ artifact }: { artifact: CampaignArtifact }) {
+  const assets = getChatAssets(artifact.id)
+  return (
+    <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
+      <header className="flex items-baseline justify-between gap-2">
+        <div>
+          <h2 className="text-base font-semibold">Assets</h2>
+          <p className="text-sm text-muted-foreground">
+            Files you've shared with Aeris in this chat. Aeris uses them when drafting copy and creative.
+          </p>
+        </div>
+        <span className="text-xs text-muted-foreground tabular-nums">{assets.length} files</span>
+      </header>
+
+      {assets.length === 0 ? (
+        <div className="rounded-xl border border-dashed bg-muted/20 p-8 text-center">
+          <FolderOpen className="mx-auto size-6 text-muted-foreground" />
+          <p className="mt-2 text-sm font-medium">No assets yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Attach a file in the chat panel and it'll show up here.
+          </p>
+        </div>
+      ) : (
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {assets.map((a) => (
+            <li
+              key={a.id}
+              className="flex items-center gap-3 rounded-lg border bg-card p-3"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted/40">
+                {a.kind === "image" && a.thumbUrl ? (
+                  <img src={a.thumbUrl} alt="" className="size-full object-cover" />
+                ) : a.kind === "image" ? (
+                  <ImageIcon className="size-4 text-muted-foreground" />
+                ) : (
+                  <FileText className="size-4 text-muted-foreground" />
+                )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{a.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {a.size} · Uploaded {a.uploadedAt}
+                </p>
+              </div>
+              <Button variant="ghost" size="icon-sm" aria-label={`Remove ${a.name}`}>
+                <Trash2 className="size-4" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

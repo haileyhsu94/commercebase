@@ -122,7 +122,7 @@ export function AgentLayout() {
           isAgentRoute(pathname)
             ? ownsInternalScroll(pathname)
               ? "overflow-hidden"
-              : "overflow-y-auto"
+              : "overflow-y-auto p-4"
             : "overflow-y-auto p-4 pt-0",
         )}
       >

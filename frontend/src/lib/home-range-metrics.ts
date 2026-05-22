@@ -74,7 +74,7 @@ export function deriveEfficiencySummariesFromSlice(
     },
     {
       key: "cvr",
-      label: "Conv. rate",
+      label: "CVR",
       value: `${(last.cvr * 100).toFixed(2)}%`,
       change: `${cvrPp >= 0 ? "+" : ""}${cvrPp.toFixed(1)}pp`,
       trend: cvrPct >= 0 ? "up" : "down",

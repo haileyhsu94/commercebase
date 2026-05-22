@@ -45,16 +45,33 @@ export interface OnboardingState {
   completedSteps: number[]
 }
 
+export interface AgentChatChoice {
+  /** Short button label */
+  label: string
+  /** Optional hint shown beneath the label (e.g. "Recommended", a shortcut) */
+  hint?: string
+  /** Visually emphasize this option (primary CTA style) */
+  recommended?: boolean
+}
+
 export interface AgentChatMessage {
   id: string
   role: "user" | "assistant" | "system"
   content: string
-  kind?: "text" | "thinking" | "memory" | "skill-activated" | "result"
+  kind?: "text" | "thinking" | "memory" | "skill-activated" | "result" | "question"
   timestamp: string
   meta?: {
     skillName?: string
     artifactRef?: { type: SkillType; id: string }
     memoryItems?: string[]
+    /** For kind="question" — small tag shown at top-right of the card */
+    questionTag?: string
+    /** For kind="question" — context preview shown in monospaced box */
+    questionContext?: string
+    /** For kind="question" — choices rendered as stacked buttons */
+    questionChoices?: AgentChatChoice[]
+    /** Set after the user picks a choice; disables the buttons. */
+    questionAnswered?: string
   }
 }
 
@@ -122,6 +139,10 @@ export interface CampaignArtifact {
   objective?: string
   campaignType?: string
   finalUrl?: string
+  /** Max bid per click (USD) — drives CPC ceiling */
+  maxCpc?: string
+  /** Target cost per sale (USD) */
+  targetCps?: string
 
   // Advanced — Bidding & attribution
   bidStrategy?: string
@@ -131,6 +152,8 @@ export interface CampaignArtifact {
 
   // Advanced — Targeting
   regions?: string[]
+  cities?: string[]
+  /** @deprecated Removed from UI; kept on the type so older artifacts deserialize cleanly. */
   devices?: string[]
   ageBands?: string[]
   languages?: string[]

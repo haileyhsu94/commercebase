@@ -4,10 +4,9 @@ import { ArrowRight, Brain, ExternalLink, Shield, Trash2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { PageStatusBadge } from "@/components/shared/PageStatusBadge"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
 import {
@@ -21,14 +20,8 @@ import { LocationCombobox } from "@/components/ui/location-combobox"
 import { COUNTRIES, CITIES } from "@/lib/location-options"
 import { cn } from "@/lib/utils"
 import { currentUser, simpleIconSvgUrl } from "@/lib/mock-data"
-import { clearSession } from "@/lib/session"
 import { getCompanyProfile, saveCompanyProfile } from "@/lib/company-profile"
-import {
-  buildPlanCatalog,
-  CURRENT_PLAN_ID,
-  getMediaPlan,
-  planBulletsLine,
-} from "@/lib/media-plans"
+import { CURRENT_PLAN_ID, getMediaPlan } from "@/lib/media-plans"
 import {
   Dialog,
   DialogContent,
@@ -39,6 +32,7 @@ import {
 } from "@/components/ui/dialog"
 import { ThemeAppearanceCard } from "@/components/theme-appearance-card"
 import { IntegrationsHubContent } from "@/pages/settings/IntegrationsHubContent"
+import { BillingTab, UsageSection } from "@/pages/settings/BillingTab"
 import { SettingsTabNav } from "@/pages/settings/SettingsTabNav"
 
 const companySizeOptions = ["1-10", "11-50", "51-200", "201-500", "501+"] as const
@@ -165,12 +159,12 @@ const initialApiKeys: ApiKeyRow[] = [
 ]
 
 const currentMediaPlan = getMediaPlan(CURRENT_PLAN_ID)!
-const allMediaPlansCatalog = buildPlanCatalog(CURRENT_PLAN_ID)
 
 const SETTINGS_MAIN_TABS = new Set([
   "profile",
   "company",
   "billing",
+  "usage",
   "api-keys",
   "notifications",
   "memory",
@@ -340,18 +334,16 @@ export function AccountSettings() {
               <CardDescription>Your personal information and contact details.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={currentUser.avatar} />
-                  <AvatarFallback>{currentUser.initials}</AvatarFallback>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-muted text-base font-semibold">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{currentUser.name}</p>
                   <p className="text-sm text-muted-foreground">{currentUser.email}</p>
                 </div>
-                <Button variant="outline" size="sm" className="sm:ml-auto">
-                  Change Photo
-                </Button>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
@@ -383,7 +375,6 @@ export function AccountSettings() {
             </CardContent>
           </Card>
           <ThemeAppearanceCard />
-          <SignOutButton />
         </TabsContent>
 
         <TabsContent value="company" className="mt-0 min-w-0 flex-1 space-y-4">
@@ -757,79 +748,12 @@ export function AccountSettings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="billing" className="mt-0 min-w-0 flex-1 space-y-4">
-          <Card>
-            <CardHeader className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Current plan
-              </p>
-              <CardTitle className="text-2xl font-semibold">{currentMediaPlan.name}</CardTitle>
-              <CardDescription className="text-pretty">{currentMediaPlan.tagline}</CardDescription>
-              <p className="text-sm text-muted-foreground">{planBulletsLine(currentMediaPlan)}</p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="rounded-lg border border-border/80 bg-muted/30 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Monthly spend
-                </p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">
-                  {currentMediaPlan.priceDisplay}
-                </p>
-                <p className="text-xs text-muted-foreground">Billed monthly</p>
-              </div>
-              <Button variant="outline" type="button" onClick={() => setBillingDialogOpen(true)}>
-                Manage billing
-              </Button>
-            </CardContent>
-          </Card>
+        <TabsContent value="billing" className="mt-0 min-w-0 flex-1">
+          <BillingTab />
+        </TabsContent>
 
-          <div>
-            <h3 className="mb-3 text-sm font-medium">All plans</h3>
-            <p className="mb-4 text-xs text-muted-foreground">
-              No lock-in. No minimums after onboarding. Scale from free to enterprise as you grow.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {allMediaPlansCatalog.map((plan) => (
-                <Card key={plan.id} className={plan.relation === "current" ? "ring-2 ring-primary" : ""}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-base">{plan.name}</CardTitle>
-                      {plan.relation === "current" && <Badge>Current</Badge>}
-                    </div>
-                    <CardDescription className="text-foreground">
-                      <span className="text-lg font-semibold tabular-nums">{plan.priceDisplay}</span>
-                      {plan.period}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-xs text-muted-foreground">{plan.tagline}</p>
-                    <ul className="space-y-1">
-                      {plan.highlights.map((h) => (
-                        <li key={h} className="text-xs text-muted-foreground">
-                          &bull; {h}
-                        </li>
-                      ))}
-                    </ul>
-                    {plan.relation === "current" && (
-                      <Button size="sm" variant="outline" className="w-full" disabled>
-                        Current plan
-                      </Button>
-                    )}
-                    {plan.relation === "upgrade" && (
-                      <Button size="sm" type="button" className="w-full">
-                        {plan.id === "enterprise" ? "Contact sales" : `Upgrade to ${plan.name}`}
-                      </Button>
-                    )}
-                    {plan.relation === "downgrade" && (
-                      <Button size="sm" variant="outline" type="button" className="w-full">
-                        Downgrade
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+        <TabsContent value="usage" className="mt-0 min-w-0 flex-1">
+          <UsageSection />
         </TabsContent>
 
         <TabsContent value="api-keys" className="mt-0 min-w-0 flex-1 space-y-4">
@@ -1232,22 +1156,3 @@ export function AccountSettings() {
   )
 }
 
-function SignOutButton() {
-  const navigate = useNavigate()
-  return (
-    <div className="flex justify-end pt-2">
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="text-muted-foreground hover:text-destructive"
-        onClick={() => {
-          clearSession()
-          navigate("/signup")
-        }}
-      >
-        Sign out
-      </Button>
-    </div>
-  )
-}

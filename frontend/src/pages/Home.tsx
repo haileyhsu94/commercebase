@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react"
-import { GripVertical, Pencil } from "lucide-react"
+import { GripVertical, Plus } from "lucide-react"
+import { Link } from "react-router-dom"
 import { currentUser } from "@/lib/mock-data"
 import { useAuth } from "@/contexts/AuthContext"
 import {
@@ -17,9 +18,10 @@ import { EfficiencyMetricsCard } from "@/components/shared/EfficiencyMetricsCard
 import { HealthScoreCard } from "@/components/shared/HealthScoreCard"
 import { AIVisibilityScoreCard } from "@/components/shared/AIVisibilityScoreCard"
 import { QuickActions } from "@/components/shared/QuickActions"
+import { RecentlyVisited } from "@/components/shared/RecentlyVisited"
 import { CampaignSummary } from "@/components/shared/CampaignSummary"
 import { AIHomeView } from "@/components/shared/AIHomeView"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -110,15 +112,13 @@ export function Home() {
           status="working"
           actions={
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setCustomizeOpen(true)}
-                aria-label="Customize home"
+              <Link
+                to="/campaigns?create=1"
+                className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
               >
-                <Pencil className="size-4" />
-              </Button>
+                <Plus className="size-4" />
+                New campaign
+              </Link>
               <AiPresenceTimeRangeControl value={timeRange} onChange={setTimeRange} />
             </>
           }
@@ -268,6 +268,8 @@ function HomeWidgetBlock({
       return <EfficiencyMetricsCard timeRange={timeRange} />
     case "campaignSummary":
       return <CampaignSummary timeRange={timeRange} />
+    case "recentlyVisited":
+      return <RecentlyVisited />
     default:
       return null
   }

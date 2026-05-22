@@ -81,12 +81,30 @@ export function activateSkillFromPrompt(
       msg("assistant", "Drafted the campaign brief, 24 tasks, and 6 deliverables. Opening it now.", "result", {
         artifactRef: { type: "campaign", id: artifact.id },
       }),
+      msg(
+        "assistant",
+        "Should I target returning customers too, or focus on net-new acquisition?",
+        "question",
+        {
+          questionTag: "audience",
+          questionContext:
+            "Your last 3 campaigns reached new customers only.\nLifetime-value data suggests a 1.8× lift if returning shoppers are included.",
+          questionChoices: [
+            { label: "New customers only", hint: "Match prior campaigns" },
+            { label: "Include returning customers", hint: "1.8× projected lift", recommended: true },
+            { label: "Let me decide later" },
+          ],
+        },
+      ),
     )
     result = {
       chatId,
       skill,
       artifactRef: { type: "campaign", id: artifact.id },
-      route: `/agent/campaign/${artifact.id}`,
+      // Land in the chat so the user can answer Aeris's follow-up questions before
+      // the brief opens. The brief is reachable via the "Open brief" CTA that appears
+      // once the questions are answered (see ChatView).
+      route: `/agent/chats/${chatId}`,
     }
   } else if (skill === "autopilot") {
     const artifact =

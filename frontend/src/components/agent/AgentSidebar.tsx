@@ -4,12 +4,12 @@ import {
   BarChart3,
   Home,
   Inbox as InboxIcon,
+  Megaphone,
   MessageSquare,
   PenSquare,
   Pin,
-  Settings,
-  Sparkles,
   Workflow,
+  Wrench,
 } from "lucide-react"
 import {
   Sidebar,
@@ -20,16 +20,14 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SidebarTrialCard } from "@/components/layout/SidebarTrialCard"
+import { UserAccountMenu } from "@/components/layout/UserAccountMenu"
 import { useUnreadInboxCount } from "@/hooks/use-inbox-unread"
-import { currentUser } from "@/lib/mock-data"
 import { getAgentChats, AGENT_STORAGE_EVENT } from "@/lib/agent/storage"
 import type { AgentChat } from "@/types/agent"
 import { cn } from "@/lib/utils"
@@ -42,9 +40,10 @@ const PRIMARY_NAV: {
   badge?: string
 }[] = [
   { title: "Home", href: "/", icon: Home, match: (p: string) => p === "/" },
-  { title: "Campaigns", href: "/agent/campaigns", icon: Sparkles, match: (p: string) => p.startsWith("/agent/campaign") },
+  { title: "Campaigns", href: "/agent/campaigns", icon: Megaphone, match: (p: string) => p.startsWith("/agent/campaign") },
+  { title: "Fix with Aeris", href: "/agent/fix-with-aeris", icon: Wrench, match: (p: string) => p.startsWith("/agent/fix-with-aeris") },
   { title: "Autopilot", href: "/agent/flows", icon: Workflow, match: (p: string) => p.startsWith("/agent/flow"), badge: "Next phase" },
-  { title: "Widgets", href: "/agent/widgets", icon: BarChart3, match: (p: string) => p.startsWith("/agent/widget") },
+  { title: "Widgets", href: "/agent/widgets", icon: BarChart3, match: (p: string) => p.startsWith("/agent/widget"), badge: "Next phase" },
 ]
 
 export function AgentSidebar() {
@@ -219,26 +218,7 @@ export function AgentSidebar() {
             )}
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              tooltip="Account & settings"
-              render={<Link to="/settings" />}
-              isActive={pathname.startsWith("/settings")}
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={currentUser.avatar} />
-                <AvatarFallback className="rounded-lg">{currentUser.initials}</AvatarFallback>
-              </Avatar>
-              <span className="min-w-0 flex-1 truncate text-left text-sm font-semibold leading-tight">
-                {currentUser.name}
-              </span>
-            </SidebarMenuButton>
-            <SidebarMenuAction
-              render={<Link to="/settings" aria-label="Settings" />}
-              title="Settings"
-            >
-              <Settings />
-            </SidebarMenuAction>
+            <UserAccountMenu />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

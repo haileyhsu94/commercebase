@@ -13,6 +13,7 @@ import {
   WidgetsList as AgentWidgetsList,
   ChatsList,
   ChatView,
+  FixWithAerisPage,
 } from "@/pages/agent"
 import {
   CampaignList,
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
           { index: true, element: <HomeRoute /> },
           { path: "agent/onboarding", element: <OnboardingWizard /> },
           { path: "agent/chats", element: <ChatsList /> },
+          { path: "agent/fix-with-aeris", element: <FixWithAerisPage /> },
           { path: "agent/chats/:id", element: <ChatView /> },
           { path: "agent/campaigns", element: <AgentCampaignsList /> },
           { path: "agent/campaign/:id", element: <CampaignSkill /> },

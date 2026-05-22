@@ -4,6 +4,7 @@ export const SETTINGS_SECTIONS = [
   { id: "company", label: "Company", href: "/settings?tab=company" },
   { id: "team", label: "Team", href: "/settings/team" },
   { id: "billing", label: "Billing", href: "/settings?tab=billing" },
+  { id: "usage", label: "Usage", href: "/settings?tab=usage" },
   { id: "api-keys", label: "API Keys", href: "/settings?tab=api-keys" },
   { id: "notifications", label: "Notifications", href: "/settings?tab=notifications" },
   { id: "memory", label: "Memory", href: "/settings?tab=memory" },

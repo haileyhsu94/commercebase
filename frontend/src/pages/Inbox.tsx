@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { ArrowRight, CheckCheck, Inbox as InboxIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -41,12 +41,13 @@ function InboxRow({
         <p className="text-sm text-muted-foreground">{item.body}</p>
         <div className="flex flex-wrap items-center gap-2 pt-1">
           {item.actionHref && item.actionLabel && (
-            <Button variant="outline" size="sm" className="gap-1.5" asChild>
-              <Link to={item.actionHref}>
-                {item.actionLabel}
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
+            <Link
+              to={item.actionHref}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
+            >
+              {item.actionLabel}
+              <ArrowRight className="size-3.5" />
+            </Link>
           )}
           {!read && (
             <Button type="button" variant="ghost" size="sm" onClick={() => onMarkRead(item.id)}>
