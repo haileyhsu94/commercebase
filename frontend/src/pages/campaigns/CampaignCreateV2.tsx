@@ -103,10 +103,10 @@ export function CampaignCreateV2({
     duplicateSourceId &&
     getUserCampaigns().find((c) => c.id === duplicateSourceId && c.status === "draft")
   )
-  const lastStep = STEPS[STEPS.length - 1].id
+  const lastStep: number = STEPS[STEPS.length - 1].id
 
-  const [step, setStep] = useState(isDraftResume ? lastStep : 1)
-  const [maxVisited, setMaxVisited] = useState(isDraftResume ? lastStep : 1)
+  const [step, setStep] = useState<number>(isDraftResume ? lastStep : 1)
+  const [maxVisited, setMaxVisited] = useState<number>(isDraftResume ? lastStep : 1)
   const [error, setError] = useState("")
 
   const [formData, setFormData] = useState<CampaignWizardFormData>(() => ({
