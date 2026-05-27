@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, ArrowRight, Check, Globe, Mail, Plus, Sparkles, X } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Mail, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -9,16 +9,6 @@ import { getOnboarding, saveOnboarding } from "@/lib/agent/storage"
 import type { ConnectorDef, ConnectorId, OnboardingState } from "@/types/agent"
 import { ConnectorCard } from "@/components/agent/ConnectorCard"
 import { OAuthDialog } from "@/components/agent/OAuthDialog"
-
-const INDUSTRIES = [
-  "Apparel & Fashion",
-  "Beauty & Personal Care",
-  "Home & Lifestyle",
-  "Health & Wellness",
-  "Food & Beverage",
-  "Electronics",
-  "Other",
-]
 
 const GOAL_CHIPS = [
   "Grow revenue",
@@ -32,12 +22,11 @@ const GOAL_CHIPS = [
 ]
 
 const STEPS = [
-  { id: 0, title: "Your store", description: "Tell us where to look." },
-  { id: 1, title: "Your goals", description: "What should the agent prioritize?" },
-  { id: 2, title: "Connect your store", description: "Plug in catalog and orders." },
-  { id: 3, title: "Connect ad platforms", description: "Let the agent read performance." },
-  { id: 4, title: "Connect CRM & messaging", description: "Email, alerts, and approvals." },
-  { id: 5, title: "Invite your team", description: "Optional — you can skip this." },
+  { id: 0, title: "Your goals", description: "What should the agent prioritize?" },
+  { id: 1, title: "Connect your store", description: "Plug in catalog and orders." },
+  { id: 2, title: "Connect ad platforms", description: "Let the agent read performance." },
+  { id: 3, title: "Connect CRM & messaging", description: "Email, alerts, and approvals." },
+  { id: 4, title: "Invite your team", description: "Optional — you can skip this." },
 ]
 
 export function OnboardingWizard() {
@@ -113,33 +102,14 @@ export function OnboardingWizard() {
     navigate("/")
   }
 
-  const storeConnectors = ["shopify", "google-merchant"] as ConnectorId[]
+  const storeConnectors = CONNECTORS.filter((c) => c.category === "store").map((c) => c.id)
   const adsConnectors = ["google-ads", "meta-ads", "tiktok-ads"] as ConnectorId[]
   const messagingConnectors = ["klaviyo", "hubspot", "slack"] as ConnectorId[]
-
-  const canAdvance = useMemo(() => {
-    if (step === 0) return state.storeUrl.trim().length > 3 && state.brandName.trim().length > 0
-    return true
-  }, [step, state])
 
   const oauthState = oauthFor ? state.connectors.find((c) => c.id === oauthFor.id) : undefined
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b px-6 py-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-foreground" />
-          <span className="text-sm font-medium">Welcome to CommerceBase</span>
-        </div>
-        <button
-          type="button"
-          onClick={finish}
-          className="text-xs text-muted-foreground hover:text-foreground"
-        >
-          Skip onboarding for now
-        </button>
-      </div>
-
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* Steps rail */}
         <aside className="hidden border-r p-6 lg:block">
@@ -193,48 +163,6 @@ export function OnboardingWizard() {
 
             <div className="mt-6 space-y-6">
               {step === 0 && (
-                <div className="space-y-4">
-                  <Field label="Store URL" hint="We'll crawl this to learn your catalog and brand voice.">
-                    <div className="relative">
-                      <Globe className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        className="pl-8"
-                        placeholder="realry.com"
-                        value={state.storeUrl}
-                        onChange={(e) => patch({ storeUrl: e.target.value })}
-                      />
-                    </div>
-                  </Field>
-                  <Field label="Brand name">
-                    <Input
-                      placeholder="Realry"
-                      value={state.brandName}
-                      onChange={(e) => patch({ brandName: e.target.value })}
-                    />
-                  </Field>
-                  <Field label="Industry">
-                    <div className="flex flex-wrap gap-1.5">
-                      {INDUSTRIES.map((ind) => (
-                        <button
-                          key={ind}
-                          type="button"
-                          onClick={() => patch({ industry: ind })}
-                          className={cn(
-                            "rounded-full border px-3 py-1 text-xs transition-colors",
-                            state.industry === ind
-                              ? "border-foreground bg-foreground text-background"
-                              : "border-input text-muted-foreground hover:bg-accent hover:text-foreground",
-                          )}
-                        >
-                          {ind}
-                        </button>
-                      ))}
-                    </div>
-                  </Field>
-                </div>
-              )}
-
-              {step === 1 && (
                 <div className="flex flex-wrap gap-2">
                   {GOAL_CHIPS.map((g) => {
                     const active = state.goals.includes(g)
@@ -262,7 +190,7 @@ export function OnboardingWizard() {
                 </div>
               )}
 
-              {step === 2 && (
+              {step === 1 && (
                 <ConnectorList
                   ids={storeConnectors}
                   state={state}
@@ -271,7 +199,7 @@ export function OnboardingWizard() {
                 />
               )}
 
-              {step === 3 && (
+              {step === 2 && (
                 <ConnectorList
                   ids={adsConnectors}
                   state={state}
@@ -280,7 +208,7 @@ export function OnboardingWizard() {
                 />
               )}
 
-              {step === 4 && (
+              {step === 3 && (
                 <ConnectorList
                   ids={messagingConnectors}
                   state={state}
@@ -289,7 +217,7 @@ export function OnboardingWizard() {
                 />
               )}
 
-              {step === 5 && (
+              {step === 4 && (
                 <div className="space-y-3">
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -350,12 +278,12 @@ export function OnboardingWizard() {
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </Button>
               <div className="flex items-center gap-2">
-                {step >= 2 && step <= 5 && (
+                {step >= 1 && (
                   <Button variant="ghost" onClick={skip} className="text-muted-foreground">
                     Skip
                   </Button>
                 )}
-                <Button onClick={next} disabled={!canAdvance}>
+                <Button onClick={next}>
                   {step === STEPS.length - 1 ? "Finish" : "Continue"}
                   {step !== STEPS.length - 1 && <ArrowRight className="h-3.5 w-3.5" />}
                 </Button>
@@ -378,24 +306,6 @@ export function OnboardingWizard() {
 
       {oauthState?.status === "connecting" && null}
     </div>
-  )
-}
-
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string
-  hint?: string
-  children: React.ReactNode
-}) {
-  return (
-    <label className="block">
-      <div className="mb-1.5 text-sm font-medium">{label}</div>
-      {children}
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-    </label>
   )
 }
 

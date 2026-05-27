@@ -137,6 +137,7 @@ export function PromptsPage() {
       {/* Action queue */}
       <Card
         ref={actionsRef}
+        data-tour="pr-action-queue"
         className={cn("min-w-0 transition-all duration-700", shouldHighlight && "animate-pulse ring-2 ring-primary/50")}
       >
         <CardHeader>
@@ -189,7 +190,7 @@ export function PromptsPage() {
       </Card>
 
       {/* Explore */}
-      <Card ref={exploreRef} className="min-w-0">
+      <Card ref={exploreRef} data-tour="pr-explore" className="min-w-0">
         <CardHeader>
           <CardTitle className="text-base">Explore</CardTitle>
           <CardDescription>

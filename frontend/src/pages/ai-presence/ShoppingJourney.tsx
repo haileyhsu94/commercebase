@@ -57,7 +57,7 @@ export function ShoppingJourneyPage() {
 
   return (
     <>
-      <Card>
+      <Card data-tour="sj-funnel">
         <CardHeader>
           <CardTitle className="text-base">AI shopping journey</CardTitle>
           <CardDescription>
@@ -70,7 +70,7 @@ export function ShoppingJourneyPage() {
         </CardContent>
       </Card>
 
-      <Card size="sm" className="mt-6">
+      <Card size="sm" className="mt-6" data-tour="sj-dropoff">
         <CardHeader className="pb-2">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-2">

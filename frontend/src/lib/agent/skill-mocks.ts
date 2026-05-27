@@ -26,7 +26,7 @@ export function buildSampleCampaign(
     owner: "Hailey Hsu",
     overview:
       "A 6-week content program designed to grow an engaged audience by establishing the brand as the authoritative voice at the intersection of AI and commerce. Content runs weekly across blog, newsletter, LinkedIn, and X — organized around a deliberate narrative arc that moves from problem definition through vision.",
-    cadence: "1 blog post + 1 newsletter + 1 LinkedIn post + 1 X post per week",
+    cadence: "Weekly",
     goals: [
       "Build a credible, consistent public voice across LinkedIn and X",
       "Grow the newsletter subscriber base through high-value weekly sends",

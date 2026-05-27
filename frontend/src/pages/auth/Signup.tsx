@@ -82,7 +82,7 @@ export function Signup() {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Left rail — branding */}
-      <aside className="hidden w-[420px] shrink-0 flex-col justify-between bg-muted/30 p-8 md:flex">
+      <aside className="hidden w-[460px] shrink-0 flex-col justify-between bg-muted/30 px-16 py-8 md:flex">
         <div className="flex items-center gap-2">
           <img src="/commercebase-logo.svg" alt="" className="size-6 dark:invert" />
           <span className="text-sm font-semibold">CommerceBase</span>
@@ -98,7 +98,11 @@ export function Signup() {
       </aside>
 
       {/* Right — content */}
-      <main className="flex flex-1 items-center justify-center p-6 [&_input:not([type=checkbox]):not([type=radio])]:bg-card">
+      <main className="relative flex flex-1 items-center justify-center p-6 pt-20 md:pt-6 [&_input:not([type=checkbox]):not([type=radio])]:bg-card">
+        <div className="absolute left-6 top-6 flex items-center gap-2 md:hidden">
+          <img src="/commercebase-logo.svg" alt="" className="size-6 dark:invert" />
+          <span className="text-sm font-semibold">CommerceBase</span>
+        </div>
         {phase === "form" && mode === "signin" ? (
           <form onSubmit={submitSignIn} className="w-full max-w-sm space-y-5">
             <header>

@@ -312,7 +312,7 @@ export function OptimizePage() {
   return (
     <div className="space-y-8">
       <div ref={scoresRef} className={cn("grid gap-6 lg:grid-cols-2 lg:items-stretch transition-all duration-700", shouldHighlight && "animate-pulse ring-2 ring-primary/50 rounded-lg")}>
-      <Card className="min-w-0 h-full">
+      <Card className="min-w-0 h-full" data-tour="opt-snapshot">
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <CardTitle className="text-base">Optimization snapshot</CardTitle>
@@ -572,7 +572,7 @@ export function OptimizePage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tour="opt-geo-citations">
         <CardHeader>
           <CardTitle className="text-base">GEO: AI engine citation status</CardTitle>
           <CardDescription>
@@ -627,7 +627,7 @@ export function OptimizePage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tour="opt-products">
         <CardHeader>
           <CardTitle className="text-base">Product-level optimization</CardTitle>
           <CardDescription>SEO and GEO scores for individual products — top products by revenue</CardDescription>
@@ -734,7 +734,7 @@ export function OptimizePage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tour="opt-content-gaps">
         <CardHeader>
           <CardTitle className="text-base">Content gap analysis</CardTitle>
           <CardDescription>
@@ -850,7 +850,7 @@ export function OptimizePage() {
       </Card>
 
       <div ref={auditSectionRef} id="technical-audit" className="scroll-mt-6">
-        <Card>
+        <Card data-tour="opt-technical">
           <CardHeader className="space-y-4">
             <CardTitle className="text-base">Technical audit</CardTitle>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">

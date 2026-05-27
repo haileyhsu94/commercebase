@@ -281,8 +281,8 @@ function BriefTab({
       {/* Header chips: date range + owner pill */}
       <div className="mt-5 space-y-3 rounded-lg border bg-card p-4 text-sm">
         <BriefField icon={CalendarDays} label="Date range">
-          <div className="flex flex-1 items-center gap-2">
-            <div className="min-w-0 flex-1">
+          <div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
+            <div className="min-w-[150px] flex-1">
               <DatePickerField
                 value={toDateInput(artifact.dateRange.start)}
                 onChange={(v) =>
@@ -292,7 +292,7 @@ function BriefTab({
               />
             </div>
             <span className="text-xs text-muted-foreground">→</span>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-[150px] flex-1">
               <DatePickerField
                 value={toDateInput(artifact.dateRange.end)}
                 onChange={(v) =>

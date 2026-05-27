@@ -13,19 +13,20 @@ export function SidebarTrialCard() {
         }}
       />
       <div className="relative rounded-lg border bg-muted/30 p-3 shadow-sm">
-        <div className="flex items-center gap-1.5 text-xs font-semibold">
-          <Layers className="h-3.5 w-3.5" />
-          CommerceBase Pro Trial
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold">
+            <Layers className="h-3.5 w-3.5" />
+            CommerceBase Pro
+          </div>
+          <span className="rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+            Coming soon
+          </span>
         </div>
-        <p className="mt-1 text-[11px] leading-tight text-muted-foreground">
-          Upgrade to keep unlimited skills, connectors, and approvals.
+        <p className="mt-1.5 text-[11px] leading-tight text-muted-foreground">
+          Plans &amp; billing are coming soon — everything's unlocked while we're in preview.
         </p>
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div className="h-full w-3/4 rounded-full bg-foreground" />
-        </div>
-        <p className="mt-1 text-[10px] text-muted-foreground">14 of 14 days remaining</p>
-        <Button size="sm" className="mt-2 h-7 w-full text-xs">
-          Upgrade
+        <Button size="sm" disabled className="mt-2 h-7 w-full text-xs">
+          Upgrade — coming soon
         </Button>
       </div>
     </div>

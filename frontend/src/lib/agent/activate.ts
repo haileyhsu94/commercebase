@@ -17,6 +17,7 @@ import {
   newId,
 } from "./skill-mocks"
 import { defaultMemoryItems, describeSkill, detectSkill } from "./skill-detect"
+import { firstIntakeQuestion, guessProductUrl } from "./campaign-intake"
 
 export interface ActivationResult {
   chatId: string
@@ -75,27 +76,21 @@ export function activateSkillFromPrompt(
   if (skill === "campaign") {
     const artifact = buildSampleCampaign(prompt, chatId, {
       name: titleFromPrompt(prompt).replace(/^create (a|an)? ?/i, ""),
+      // Seed a best-effort destination from the prompt; the intake URL question
+      // lets the user confirm or change it.
+      finalUrl: guessProductUrl(prompt).url,
     })
     upsertCampaignArtifact(artifact)
+    const intro = firstIntakeQuestion(prompt)
     messages.push(
-      msg("assistant", "Drafted the campaign brief, 24 tasks, and 6 deliverables. Opening it now.", "result", {
+      msg("assistant", "Drafted a starting brief. Let me lock down a few essentials so it's ready to launch.", "result", {
         artifactRef: { type: "campaign", id: artifact.id },
       }),
-      msg(
-        "assistant",
-        "Should I target returning customers too, or focus on net-new acquisition?",
-        "question",
-        {
-          questionTag: "audience",
-          questionContext:
-            "Your last 3 campaigns reached new customers only.\nLifetime-value data suggests a 1.8× lift if returning shoppers are included.",
-          questionChoices: [
-            { label: "New customers only", hint: "Match prior campaigns" },
-            { label: "Include returning customers", hint: "1.8× projected lift", recommended: true },
-            { label: "Let me decide later" },
-          ],
-        },
-      ),
+      msg("assistant", intro.content, "question", {
+        questionTag: intro.tag,
+        questionContext: intro.context,
+        questionChoices: intro.choices,
+      }),
     )
     result = {
       chatId,

@@ -203,7 +203,7 @@ export function CompetitorInsightsPage() {
     <Tabs value={tab} onValueChange={handleTabChange}>
       <TabsList className="mb-3">
         <TabsTrigger value="competitors">Competitors</TabsTrigger>
-        <TabsTrigger value="opportunities">
+        <TabsTrigger value="opportunities" data-tour="ci-opps-tab">
           Opportunities
           {newOpportunities > 0 && (
             <span className="ml-1.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold leading-none text-primary-foreground tabular-nums">
@@ -216,7 +216,7 @@ export function CompetitorInsightsPage() {
       {/* ── Competitors tab ──────────────────────────────────────────────── */}
       <TabsContent value="competitors">
         {/* SoV leaderboard */}
-        <Card className="mb-6 overflow-hidden py-0">
+        <Card className="mb-6 overflow-hidden py-0" data-tour="ci-leaderboard">
           <CardHeader className="bg-muted/40 px-3 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="min-w-0">
@@ -344,7 +344,7 @@ export function CompetitorInsightsPage() {
         </Card>
 
         {/* Platform comparison */}
-        <Card className="mb-6">
+        <Card className="mb-6" data-tour="ci-platform">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Platform comparison</CardTitle>
             <CardDescription className="text-pretty">
@@ -381,7 +381,7 @@ export function CompetitorInsightsPage() {
         </Card>
 
         {/* Query-level comparison */}
-        <Card className="mb-6">
+        <Card className="mb-6" data-tour="ci-query">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Query-level comparison</CardTitle>
             <CardDescription className="text-pretty">
@@ -486,7 +486,7 @@ export function CompetitorInsightsPage() {
         </div>
 
         {/* Opportunity list — wrapped in Card to hold the header filters */}
-        <Card>
+        <Card data-tour="ci-opportunities">
           <CardHeader className="space-y-4">
             <CardTitle className="text-base font-medium">Market Opportunities</CardTitle>
             

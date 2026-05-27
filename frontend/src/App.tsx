@@ -45,6 +45,7 @@ import {
   AutoAgentPage,
   CompetitorInsightsPage,
   Inbox,
+  HelpCenter,
 } from "@/pages"
 
 const router = createBrowserRouter([
@@ -68,6 +69,7 @@ const router = createBrowserRouter([
           { path: "agent/widget/:id", element: <WidgetSkill /> },
           { path: "autopilot", element: <AutopilotPage /> },
           { path: "inbox", element: <Inbox /> },
+          { path: "help", element: <HelpCenter /> },
           { path: "campaigns", element: <CampaignList /> },
           { path: "campaigns/new", element: <Navigate to="/campaigns?create=1" replace /> },
           { path: "campaigns/:id", element: <CampaignDetail /> },

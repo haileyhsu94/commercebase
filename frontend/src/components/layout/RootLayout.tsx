@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom"
+import { Navigate, Outlet, useLocation } from "react-router-dom"
 import { Toaster } from "sonner"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AIAssistantProvider, useAIAssistant } from "@/contexts/AIAssistantContext"
@@ -11,6 +11,7 @@ import { AIAssistantPanel } from "./AIAssistantPanel"
 import { GlobalSearchDialog } from "./GlobalSearchDialog"
 import { AgentSidebar } from "@/components/agent/AgentSidebar"
 import { AgentLayout } from "@/components/agent/AgentLayout"
+import { PageTutorial } from "@/components/shared/PageTutorial"
 
 function DashboardSurface() {
   const { isOpen, panelWidth } = useAIAssistant()
@@ -33,6 +34,7 @@ function DashboardSurface() {
           isAgentHome ? "flex flex-col overflow-hidden" : "overflow-y-auto p-4 pt-0",
         )}
       >
+        {!isAgentHome && <PageTutorial />}
         <Outlet />
       </main>
     </SidebarInset>
@@ -42,6 +44,17 @@ function DashboardSurface() {
 function InnerLayout() {
   const { mode } = useHomeMode()
   const isAgent = mode === "ai"
+  const { pathname, search } = useLocation()
+
+  // In agent mode, the dashboard-only Campaigns list shouldn't render inside the
+  // agent shell — send users to the agent campaigns experience instead. The
+  // create/duplicate wizard deep-links are preserved so those still open.
+  if (isAgent && pathname === "/campaigns") {
+    const params = new URLSearchParams(search)
+    if (!params.has("create") && !params.has("duplicate")) {
+      return <Navigate to="/agent/campaigns" replace />
+    }
+  }
 
   return (
     <SidebarProvider className={isAgent ? "!h-svh !min-h-0" : undefined}>

@@ -144,7 +144,7 @@ export function CatalogsPage() {
   return (
     <div className="space-y-6 pb-8">
       {/* ... KPI strip ... */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" data-tour="cat-metrics">
         {catalogMetrics.map((metric) => {
           const Icon = metric.icon
           const isPositive = metric.trend === "up"
@@ -176,7 +176,7 @@ export function CatalogsPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* ... Product Feeds ... */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2" data-tour="cat-feeds">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div>
               <CardTitle className="text-base font-semibold">Product feeds</CardTitle>
@@ -368,7 +368,7 @@ export function CatalogsPage() {
       </div>
 
       {/* ── Feed Issues ─────────────────────────────────────────────────── */}
-      <Card id="feed-issues">
+      <Card id="feed-issues" data-tour="cat-issues">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle className="text-base font-semibold">Feed issues & optimisation</CardTitle>

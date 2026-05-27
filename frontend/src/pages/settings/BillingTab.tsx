@@ -323,9 +323,12 @@ function SubscriptionSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Subscription</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base">Subscription</CardTitle>
+          <Badge variant="outline">Coming soon</Badge>
+        </div>
         <CardDescription>
-          Your CommerceBase plan. Includes core dashboard features and publisher network access.
+          Paid plans and billing are coming soon. You have full access during preview — you won't be charged yet.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -337,18 +340,16 @@ function SubscriptionSection() {
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">{currentMediaPlan.tagline}</p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Renews <span className="font-medium text-foreground">Jun 1, 2026</span> ·{" "}
-              <span className="font-medium text-foreground">
-                {currentMediaPlan.priceDisplay}
-              </span>
-              {currentMediaPlan.period}
+              Billing begins when plans launch — no charges during preview.
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled>
               Manage subscription
             </Button>
-            <Button size="sm">Upgrade</Button>
+            <Button size="sm" disabled>
+              Upgrade
+            </Button>
           </div>
         </div>
       </CardContent>

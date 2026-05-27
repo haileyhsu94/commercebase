@@ -95,8 +95,18 @@ export function CampaignCreateV2({
   saveAndCloseLabel = "Save & close",
   launchLabel = "Launch campaign",
 }: CampaignCreateV2Props = {}) {
-  const [step, setStep] = useState(1)
-  const [maxVisited, setMaxVisited] = useState(1)
+  // True when opened by resuming a saved draft (vs. a fresh start or a true
+  // duplicate of an active campaign). Resuming jumps straight to Review & launch
+  // so the user sees everything they've filled and can edit any section via the
+  // step rail — easier than re-walking the wizard linearly.
+  const isDraftResume = !!(
+    duplicateSourceId &&
+    getUserCampaigns().find((c) => c.id === duplicateSourceId && c.status === "draft")
+  )
+  const lastStep = STEPS[STEPS.length - 1].id
+
+  const [step, setStep] = useState(isDraftResume ? lastStep : 1)
+  const [maxVisited, setMaxVisited] = useState(isDraftResume ? lastStep : 1)
   const [error, setError] = useState("")
 
   const [formData, setFormData] = useState<CampaignWizardFormData>(() => ({
@@ -105,11 +115,7 @@ export function CampaignCreateV2({
   }))
   /** If this wizard was opened by resuming a draft, track that draft's id so
    * we can update it in place on save (instead of creating a new draft). */
-  const resumingDraftId = useRef<string | null>(
-    duplicateSourceId && getUserCampaigns().find((c) => c.id === duplicateSourceId && c.status === "draft")
-      ? duplicateSourceId
-      : null,
-  )
+  const resumingDraftId = useRef<string | null>(isDraftResume ? duplicateSourceId : null)
   /** Mirror the latest formData in a ref so the unmount cleanup can read it. */
   const formDataRef = useRef(formData)
   /** Set true on a deliberate launch — prevents unmount from also saving a draft. */

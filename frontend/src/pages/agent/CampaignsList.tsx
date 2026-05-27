@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowUp, ChevronRight, Megaphone, Mic, Search, Sparkles } from "lucide-react"
+import { ArrowUp, ChevronRight, Megaphone, Mic, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
   SkillFilterChip,
@@ -182,10 +182,6 @@ function Launchpad({
       {/* Chat input — mirrors Autopilot's "What do you want to build?" box */}
       <section>
         <div className="mx-auto max-w-2xl">
-          <div className="mb-3 flex items-center justify-center gap-1.5 text-sm font-medium">
-            <Sparkles className="h-4 w-4" />
-            What campaign do you want to launch?
-          </div>
           <div className="relative">
             <div
               aria-hidden
@@ -259,12 +255,7 @@ function Launchpad({
                     <Icon className="h-4 w-4" style={{ color: t.iconColor }} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium">{t.name}</span>
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
-                        {t.category}
-                      </span>
-                    </div>
+                    <span className="text-sm font-medium">{t.name}</span>
                     <p className="mt-0.5 text-xs text-muted-foreground">{t.description}</p>
                   </div>
                   <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />

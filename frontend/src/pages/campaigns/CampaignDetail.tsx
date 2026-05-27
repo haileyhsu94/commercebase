@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useParams, Link, useSearchParams } from "react-router-dom"
+import { useParams, Link, Navigate, useSearchParams } from "react-router-dom"
 import { ArrowLeft, Play, Pause, Settings, TrendingUp, TrendingDown } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -13,6 +13,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { GOAL_OPTIONS } from "@/components/campaigns/wizard/GoalFunnelCard"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Bar, BarChart, Line, LineChart, XAxis, YAxis } from "recharts"
 import { getMergedCampaigns } from "@/lib/campaign-storage"
@@ -72,6 +80,11 @@ export function CampaignDetail() {
       : getMergedCampaigns()
     return merged.find((c) => c.id === id) ?? merged[0]
   }, [id, apiCampaign, apiList])
+
+  // Draft campaigns aren't viewable as a dashboard — resume them in the wizard.
+  if (campaign && campaign.id === id && campaign.status === "draft") {
+    return <Navigate to={`/campaigns?duplicate=${id}`} replace />
+  }
 
   const metrics = [
     { label: "Spent", value: campaign.spent, change: "+12%", trend: "up" },
@@ -281,10 +294,22 @@ export function CampaignDetail() {
               </SettingsField>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <SettingsField label="Objective">
-                  <Input
-                    defaultValue={campaign.wizardSnapshot?.objective ?? campaign.goal ?? ""}
-                    placeholder="e.g. Drive discovery"
-                  />
+                  <Select defaultValue={campaign.wizardSnapshot?.objective ?? campaign.goal ?? undefined}>
+                    <SelectTrigger className="h-8 w-full">
+                      <SelectValue placeholder="Pick an objective">
+                        {(value: string) =>
+                          GOAL_OPTIONS.find((o) => o.value === value)?.label ?? value
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GOAL_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </SettingsField>
                 <SettingsField label="Status">
                   <Input defaultValue={campaign.status} disabled />

@@ -7,6 +7,7 @@ export {
   AutopilotListPage as AutopilotPage,
 } from "./autopilot/index"
 export { Inbox } from "./Inbox"
+export { HelpCenter } from "./HelpCenter"
 export * from "./campaigns"
 export * from "./ai-presence"
 export * from "./ai-visibility"

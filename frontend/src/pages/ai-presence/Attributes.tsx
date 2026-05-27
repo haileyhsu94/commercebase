@@ -130,7 +130,7 @@ export function AttributesPage() {
   return (
     <div className="space-y-6">
       {/* ── Summary KPIs (each card opens a dialog) ── */}
-      <Card>
+      <Card data-tour="at-coverage">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium">Coverage health</CardTitle>
           <CardDescription>
@@ -354,6 +354,7 @@ export function AttributesPage() {
       {/* ── Needs attention ── */}
       <Card
         ref={cardRef}
+        data-tour="at-needs-attention"
         className={cn(
           "transition-all duration-700",
           shouldHighlight && "animate-pulse ring-2 ring-primary/50"
@@ -444,7 +445,7 @@ export function AttributesPage() {
       </Card>
 
       {/* ── Looking good ── */}
-      <Card>
+      <Card data-tour="at-healthy">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40">

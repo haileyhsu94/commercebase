@@ -39,7 +39,7 @@ export function MerchantsPage() {
   return (
     <>
       {/* AI Mentions & sentiment — Top of funnel detail */}
-      <Card className="mb-6">
+      <Card className="mb-6" data-tour="mr-mentions">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">AI Mentions & sentiment</CardTitle>
@@ -111,6 +111,7 @@ export function MerchantsPage() {
       {/* Merchant checkout share — horizontal bar chart */}
       <Card
         ref={shareRef}
+        data-tour="mr-checkout-share"
         className={cn(
           "mb-6 transition-all duration-700",
           shouldHighlight && "animate-pulse ring-2 ring-primary/50"
@@ -165,7 +166,7 @@ export function MerchantsPage() {
       </Card>
 
       {/* Your share by category — comparative bars */}
-      <Card className="mb-6">
+      <Card className="mb-6" data-tour="mr-by-category">
         <CardHeader>
           <CardTitle className="text-base">Your share by category</CardTitle>
           <CardDescription>
@@ -217,7 +218,7 @@ export function MerchantsPage() {
       </Card>
 
       {/* Your share by AI engine */}
-      <Card>
+      <Card data-tour="mr-by-engine">
         <CardHeader>
           <CardTitle className="text-base">Your share by AI engine</CardTitle>
           <CardDescription>

@@ -16,6 +16,7 @@ function isAgentRoute(pathname: string) {
 function ownsInternalScroll(pathname: string) {
   if (pathname === "/") return true
   return (
+    pathname === "/agent/onboarding" ||
     /^\/agent\/flow\/[^/]+$/.test(pathname) ||
     /^\/agent\/campaign\/[^/]+$/.test(pathname) ||
     /^\/agent\/widget\/[^/]+$/.test(pathname) ||

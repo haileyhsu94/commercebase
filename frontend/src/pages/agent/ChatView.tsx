@@ -5,10 +5,17 @@ import { Button } from "@/components/ui/button"
 import {
   AGENT_STORAGE_EVENT,
   getAgentChats,
+  getCampaignArtifacts,
   upsertAgentChat,
+  upsertCampaignArtifact,
 } from "@/lib/agent/storage"
 import type { AgentChat, AgentChatChoice, AgentChatMessage } from "@/types/agent"
 import { newId } from "@/lib/agent/skill-mocks"
+import {
+  applyIntakeAnswer,
+  intakeAck,
+  nextIntakeQuestion,
+} from "@/lib/agent/campaign-intake"
 import { SkillChatMessages } from "@/components/agent/SkillChatMessages"
 
 /**
@@ -46,6 +53,8 @@ export function ChatView() {
 
   function answerQuestion(messageId: string, choice: AgentChatChoice) {
     if (!chat) return
+    const answered = chat.messages.find((m) => m.id === messageId)
+    const tag = answered?.meta?.questionTag
     const updated = chat.messages.map((m) =>
       m.id === messageId
         ? { ...m, meta: { ...(m.meta ?? {}), questionAnswered: choice.label } }
@@ -58,17 +67,57 @@ export function ChatView() {
       kind: "text",
       timestamp: new Date().toISOString(),
     }
+
+    // Apply the answer to the campaign artifact and advance the intake.
+    let ackContent =
+      "Noted — I'll factor that in. Your brief is ready when you are."
+    let nextQuestion: AgentChatMessage | null = null
+    if (tag && chat.artifactRef?.type === "campaign") {
+      const artifact = getCampaignArtifacts().find(
+        (a) => a.id === chat.artifactRef!.id,
+      )
+      if (artifact) {
+        const updatedArtifact = applyIntakeAnswer(artifact, tag, {
+          label: choice.label,
+          value: choice.value,
+        })
+        upsertCampaignArtifact(updatedArtifact)
+        const nq = nextIntakeQuestion(tag, chat.preview)
+        if (nq) {
+          ackContent = intakeAck(tag, updatedArtifact)
+          nextQuestion = {
+            id: newId("msg"),
+            role: "assistant",
+            content: nq.content,
+            kind: "question",
+            timestamp: new Date().toISOString(),
+            meta: {
+              questionTag: nq.tag,
+              questionContext: nq.context,
+              questionChoices: nq.choices,
+            },
+          }
+        } else {
+          ackContent = `${intakeAck(tag, updatedArtifact)} That's everything I need — your brief is ready.`
+        }
+      }
+    }
+
     const ackMsg: AgentChatMessage = {
       id: newId("msg"),
       role: "assistant",
-      content:
-        "Noted — I'll factor that in. Your brief is ready when you are.",
+      content: ackContent,
       kind: "text",
       timestamp: new Date().toISOString(),
     }
     const next: AgentChat = {
       ...chat,
-      messages: [...updated, userMsg, ackMsg],
+      messages: [
+        ...updated,
+        userMsg,
+        ackMsg,
+        ...(nextQuestion ? [nextQuestion] : []),
+      ],
       updatedAt: new Date().toISOString(),
     }
     setChat(next)
@@ -77,6 +126,13 @@ export function ChatView() {
 
   function sendDraft() {
     if (!draft.trim() || !chat) return
+    // If a question is open, treat the typed message as its answer so the
+    // intake keeps advancing.
+    if (openQuestion) {
+      answerQuestion(openQuestion.id, { label: draft.trim() })
+      setDraft("")
+      return
+    }
     const userMsg: AgentChatMessage = {
       id: newId("msg"),
       role: "user",

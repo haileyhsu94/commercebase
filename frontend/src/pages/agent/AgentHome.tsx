@@ -12,9 +12,10 @@ import {
 } from "lucide-react"
 import { currentUser } from "@/lib/mock-data"
 import { activateSkillFromPrompt } from "@/lib/agent/activate"
-import { AGENT_STORAGE_EVENT, getAgentChats, getOnboarding } from "@/lib/agent/storage"
+import { AGENT_STORAGE_EVENT, getOnboarding } from "@/lib/agent/storage"
 import { describeSkill, detectSkill } from "@/lib/agent/skill-detect"
-import type { AgentChat, OnboardingState } from "@/types/agent"
+import { CAMPAIGN_TEMPLATES } from "@/lib/agent/campaign-templates"
+import type { OnboardingState } from "@/types/agent"
 import { CONNECTORS } from "@/lib/agent/connectors"
 import { cn } from "@/lib/utils"
 
@@ -24,8 +25,8 @@ const SUGGESTIONS = [
     skill: "campaign" as const,
   },
   {
-    text: "Set up an autopilot welcome flow for new email subscribers.",
-    skill: "autopilot" as const,
+    text: "Launch a retargeting campaign to win back cart abandoners.",
+    skill: "campaign" as const,
   },
   {
     text: "Show me a chart of revenue trends over the last 12 weeks.",
@@ -41,13 +42,11 @@ export function AgentHome() {
   const navigate = useNavigate()
   const [draft, setDraft] = useState("")
   const [onboarding, setOnboarding] = useState<OnboardingState>(() => getOnboarding())
-  const [chats, setChats] = useState<AgentChat[]>(() => getAgentChats())
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const refresh = () => {
       setOnboarding(getOnboarding())
-      setChats(getAgentChats())
     }
     window.addEventListener(AGENT_STORAGE_EVENT, refresh)
     window.addEventListener("storage", refresh)
@@ -76,19 +75,17 @@ export function AgentHome() {
     }, 120)
   }
 
-  const recentChats = chats.slice(0, 5)
   const connectedCount = onboarding.connectors.filter((c) => c.status === "connected").length
   const onboardingProgress = Math.min(
-    6,
-    (onboarding.storeUrl ? 1 : 0) +
-      (onboarding.brandName ? 1 : 0) +
-      (onboarding.goals.length ? 1 : 0) +
+    5,
+    (onboarding.goals.length ? 1 : 0) +
       (connectedCount > 0 ? 1 : 0) +
+      (connectedCount >= 2 ? 1 : 0) +
       (connectedCount >= 3 ? 1 : 0) +
       (onboarding.invitedEmails.length ? 1 : 0),
   )
 
-  const showGettingStarted = !onboarding.completed || onboardingProgress < 6
+  const showGettingStarted = !onboarding.completed || onboardingProgress < 5
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto">
@@ -116,7 +113,6 @@ export function AgentHome() {
               <SkillIcon skill={s.skill} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm">{s.text}</div>
-                <div className="mt-0.5 text-[11px] text-muted-foreground">{describeSkill(s.skill)}</div>
               </div>
               <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </button>
@@ -127,32 +123,38 @@ export function AgentHome() {
           <GettingStarted onboarding={onboarding} progress={onboardingProgress} navigate={navigate} />
         )}
 
-        {recentChats.length > 0 && (
-          <div className="mt-10">
-            <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Recent skills
-            </div>
-            <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-              {recentChats.map((c) => (
-                <li key={c.id}>
+        <div className="mt-10">
+          <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Start from a Campaign template
+          </div>
+          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            {CAMPAIGN_TEMPLATES.map((t) => {
+              const Icon = t.icon
+              return (
+                <li key={t.id}>
                   <button
                     type="button"
-                    onClick={() => navigate(routeForChat(c))}
-                    className="flex w-full items-start gap-3 rounded-lg border bg-card px-3 py-2.5 text-left transition-colors hover:border-foreground/30 hover:bg-accent/40"
+                    onClick={() => submit(t.prompt)}
+                    disabled={submitting}
+                    className="group flex h-full w-full items-start gap-3 rounded-xl border bg-card p-3 text-left transition-colors hover:border-foreground/30 hover:bg-accent/40 disabled:opacity-60"
                   >
-                    <SkillIcon skill={c.artifactRef?.type ?? "chat"} />
+                    <span
+                      className="flex size-8 shrink-0 items-center justify-center rounded-md"
+                      style={{ backgroundColor: `${t.iconColor}15` }}
+                    >
+                      <Icon className="h-4 w-4" style={{ color: t.iconColor }} />
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">{c.title}</div>
-                      <div className="truncate text-[11px] text-muted-foreground">
-                        {describeSkill(c.artifactRef?.type ?? "chat")} · {new Date(c.updatedAt).toLocaleDateString()}
-                      </div>
+                      <span className="text-sm font-medium">{t.name}</span>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{t.description}</p>
                     </div>
+                    <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                   </button>
                 </li>
-              ))}
-            </ul>
-          </div>
-        )}
+              )
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   )
@@ -265,7 +267,6 @@ function GettingStarted({
 }) {
   const connectedCount = onboarding.connectors.filter((c) => c.status === "connected").length
   const items = [
-    { done: !!onboarding.storeUrl, label: "Tell us about your store" },
     { done: onboarding.goals.length > 0, label: "Pick your goals" },
     { done: connectedCount > 0, label: "Connect your store" },
     { done: connectedCount >= 2, label: "Connect ad platforms" },
@@ -277,7 +278,7 @@ function GettingStarted({
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm font-medium">Getting started</div>
-          <div className="text-xs text-muted-foreground">{progress} / 6 complete</div>
+          <div className="text-xs text-muted-foreground">{progress} / 5 complete</div>
         </div>
         <button
           type="button"
@@ -291,7 +292,7 @@ function GettingStarted({
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className="h-full rounded-full bg-foreground transition-all"
-          style={{ width: `${(progress / 6) * 100}%` }}
+          style={{ width: `${(progress / 5) * 100}%` }}
         />
       </div>
       <ul className="mt-3 grid grid-cols-1 gap-1.5 md:grid-cols-2">
@@ -333,11 +334,4 @@ function GettingStarted({
       )}
     </div>
   )
-}
-
-function routeForChat(chat: AgentChat) {
-  if (chat.artifactRef?.type === "campaign") return `/agent/campaign/${chat.artifactRef.id}`
-  if (chat.artifactRef?.type === "autopilot") return `/agent/flow/${chat.artifactRef.id}`
-  if (chat.artifactRef?.type === "widget") return `/agent/widget/${chat.artifactRef.id}`
-  return `/agent/chats/${chat.id}`
 }

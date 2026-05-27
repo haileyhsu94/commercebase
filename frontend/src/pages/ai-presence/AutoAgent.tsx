@@ -147,7 +147,9 @@ export function AutoAgentPage() {
     <div className="space-y-6">
 
       {/* ── 1. Permission tier (compact) ────────────────────────────────────── */}
-      <div className={cn(
+      <div
+        data-tour="aa-mode"
+        className={cn(
         "flex items-center justify-between gap-4 rounded-xl border px-4 py-2.5",
         currentTierCfg.borderClass,
         "bg-primary/[0.02] backdrop-blur-sm"
@@ -174,7 +176,7 @@ export function AutoAgentPage() {
       </div>
 
       {/* ── 2. Cumulative impact (hero proof) ──────────────────────────────── */}
-      <Card>
+      <Card data-tour="aa-delivered">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
@@ -213,7 +215,7 @@ export function AutoAgentPage() {
       {/* ── 3. Pending review ──────────────────────────────────────────────── */}
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" data-tour="aa-pending">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
               <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             </div>
@@ -353,7 +355,7 @@ export function AutoAgentPage() {
       </Card>
 
       {/* ── 4. Drafting pipeline ───────────────────────────────────────────── */}
-      <Card>
+      <Card data-tour="aa-pipeline">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Drafting pipeline</CardTitle>
           <CardDescription>

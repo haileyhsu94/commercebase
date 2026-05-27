@@ -80,12 +80,9 @@ export function UserAccountMenu() {
             ))}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        <DropdownMenuItem
-          onClick={() => window.open("https://help.realry.com", "_blank")}
-          className="gap-2"
-        >
+        <DropdownMenuItem onClick={() => navigate("/help")} className="gap-2">
           <HelpCircle className="size-4" />
-          Get help
+          Help Center
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate("/settings?tab=billing")} className="gap-2">

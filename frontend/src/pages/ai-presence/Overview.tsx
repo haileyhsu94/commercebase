@@ -71,7 +71,7 @@ export function AIPresenceOverview() {
   return (
     <>
       <div className="grid gap-6 md:grid-cols-3 mb-6">
-        <Card className="md:col-span-1">
+        <Card className="md:col-span-1" data-tour="aiv-sov">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">{SOV_LABEL_WITH_ABBR}</CardTitle>
             <CardDescription className="text-xs">{SOV_DESCRIPTION}</CardDescription>
@@ -85,7 +85,7 @@ export function AIPresenceOverview() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-2" data-tour="aiv-platforms">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Platform Breakdown</CardTitle>
             <CardDescription>SoV by AI platform — where you win or lag</CardDescription>
@@ -96,7 +96,7 @@ export function AIPresenceOverview() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3 mb-6">
+      <div className="grid gap-6 md:grid-cols-3 mb-6" data-tour="aiv-kpis">
         <Link to="/ai-presence/shopping-journey" className="block group/card h-full">
           <Card className="h-full transition-all hover:bg-muted/50 hover:shadow-sm cursor-pointer">
             <CardHeader className="pb-2">
@@ -229,6 +229,7 @@ export function AIPresenceOverview() {
 
         <Card
           ref={recsRef}
+          data-tour="aiv-recommendations"
           className={
             shouldHighlight
               ? "animate-pulse ring-2 ring-primary/50 transition-all duration-700"

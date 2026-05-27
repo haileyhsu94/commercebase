@@ -474,6 +474,7 @@ export function CampaignList() {
             <Button
               type="button"
               variant="outline"
+              data-tour="campaigns-aeris"
               onClick={() => {
                 setMode("ai")
                 navigate("/agent/campaigns?focus=1")
@@ -482,7 +483,7 @@ export function CampaignList() {
               <Sparkles className="mr-2 h-4 w-4" />
               Create with Aeris
             </Button>
-            <Button type="button" onClick={openCreateModal}>
+            <Button type="button" data-tour="campaigns-new" onClick={openCreateModal}>
               <Plus className="mr-2 h-4 w-4" />
               New Campaign
             </Button>
@@ -491,7 +492,7 @@ export function CampaignList() {
         }
       />
 
-      <div className="@container mb-6">
+      <div className="@container mb-6" data-tour="campaigns-metrics">
       <div className="grid gap-4 @sm:grid-cols-2 @3xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
@@ -595,7 +596,7 @@ export function CampaignList() {
       </div>
       </div>
 
-      <Card>
+      <Card data-tour="campaigns-table">
         <CardHeader className="space-y-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">All Campaigns</CardTitle>
@@ -692,7 +693,11 @@ export function CampaignList() {
                 <TableRow
                   key={campaign.id}
                   className="group/row cursor-pointer hover:bg-muted/60"
-                  onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                  onClick={() =>
+                    campaign.status === "draft"
+                      ? openDuplicateModal(campaign.id)
+                      : navigate(`/campaigns/${campaign.id}`)
+                  }
                 >
                   <TableCell>
                     <div className="flex items-center gap-2">

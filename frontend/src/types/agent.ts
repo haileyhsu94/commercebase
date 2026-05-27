@@ -52,6 +52,8 @@ export interface AgentChatChoice {
   hint?: string
   /** Visually emphasize this option (primary CTA style) */
   recommended?: boolean
+  /** Canonical value applied to the artifact when picked (e.g. a URL or "42"). Falls back to parsing the label. */
+  value?: string
 }
 
 export interface AgentChatMessage {
