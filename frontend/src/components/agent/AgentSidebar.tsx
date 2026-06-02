@@ -6,8 +6,10 @@ import {
   Inbox as InboxIcon,
   Megaphone,
   MessageSquare,
+  MoreHorizontal,
   PenSquare,
   Pin,
+  Trash2,
   Workflow,
   Wrench,
 } from "lucide-react"
@@ -20,15 +22,22 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { SidebarTrialCard } from "@/components/layout/SidebarTrialCard"
 import { UserAccountMenu } from "@/components/layout/UserAccountMenu"
 import { useUnreadInboxCount } from "@/hooks/use-inbox-unread"
-import { getAgentChats, AGENT_STORAGE_EVENT } from "@/lib/agent/storage"
+import { getAgentChats, deleteAgentChat, AGENT_STORAGE_EVENT } from "@/lib/agent/storage"
 import type { AgentChat } from "@/types/agent"
 import { cn } from "@/lib/utils"
 
@@ -64,6 +73,12 @@ export function AgentSidebar() {
       window.removeEventListener("storage", onUpdate)
     }
   }, [])
+
+  const handleDeleteChat = (chat: AgentChat) => {
+    deleteAgentChat(chat.id)
+    // If we're viewing the chat we just deleted, leave its (now dead) route.
+    if (pathname === chatRoute(chat)) navigate("/agent/chats")
+  }
 
   const pinned = chats.filter((c) => c.pinned).slice(0, 5)
   const recents = chats.filter((c) => !c.pinned).slice(0, 8)
@@ -142,15 +157,7 @@ export function AgentSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {pinned.map((c) => (
-                  <SidebarMenuItem key={c.id}>
-                    <SidebarMenuButton
-                      tooltip={c.title}
-                      render={<Link to={chatRoute(c)} />}
-                    >
-                      <MessageSquare className="shrink-0" />
-                      <span className="truncate">{c.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <ChatRow key={c.id} chat={c} onDelete={handleDeleteChat} />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -165,15 +172,7 @@ export function AgentSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {recents.map((c) => (
-                  <SidebarMenuItem key={c.id}>
-                    <SidebarMenuButton
-                      tooltip={c.title}
-                      render={<Link to={chatRoute(c)} />}
-                    >
-                      <MessageSquare className="shrink-0" />
-                      <span className="truncate">{c.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <ChatRow key={c.id} chat={c} onDelete={handleDeleteChat} />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -231,4 +230,28 @@ function chatRoute(chat: AgentChat) {
   if (chat.artifactRef?.type === "autopilot") return `/agent/flow/${chat.artifactRef.id}`
   if (chat.artifactRef?.type === "widget") return `/agent/widget/${chat.artifactRef.id}`
   return `/agent/chats/${chat.id}`
+}
+
+function ChatRow({ chat, onDelete }: { chat: AgentChat; onDelete: (chat: AgentChat) => void }) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton tooltip={chat.title} render={<Link to={chatRoute(chat)} />}>
+        <MessageSquare className="shrink-0" />
+        <span className="truncate">{chat.title}</span>
+      </SidebarMenuButton>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuAction showOnHover aria-label={`Options for ${chat.title}`}>
+            <MoreHorizontal />
+          </SidebarMenuAction>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start" className="min-w-36">
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(chat)}>
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </SidebarMenuItem>
+  )
 }

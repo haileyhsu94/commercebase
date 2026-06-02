@@ -71,6 +71,9 @@ export function upsertAgentChat(chat: AgentChat) {
   list.unshift(chat)
   saveAgentChats(list)
 }
+export function deleteAgentChat(id: string) {
+  saveAgentChats(getAgentChats().filter((c) => c.id !== id))
+}
 
 export function getCampaignArtifacts(): CampaignArtifact[] {
   return readJSON<CampaignArtifact[]>(KEY_CAMPAIGNS, [])

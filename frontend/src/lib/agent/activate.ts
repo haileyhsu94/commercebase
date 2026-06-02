@@ -3,17 +3,16 @@ import type {
   AgentChatMessage,
   SkillType,
 } from "@/types/agent"
+import type { AssistantCard } from "@/lib/assistant-cards"
 import {
   upsertAgentChat,
   upsertCampaignArtifact,
   upsertFlowArtifact,
-  upsertWidgetArtifact,
 } from "./storage"
 import {
   buildCommerceFlow,
   buildSampleCampaign,
   buildSampleFlow,
-  buildSampleWidget,
   newId,
 } from "./skill-mocks"
 import { defaultMemoryItems, describeSkill, detectSkill } from "./skill-detect"
@@ -45,12 +44,60 @@ function titleFromPrompt(prompt: string): string {
   return clean.slice(0, 56).replace(/[,.;:!\-\s]+$/, "") + "…"
 }
 
+/** Inline chart card for data-viz requests (rendered in-chat via the generated-UI template). */
+function buildChartCard(prompt: string): AssistantCard {
+  const series = Array.from({ length: 12 }, (_, i) => ({
+    label: `W${i + 1}`,
+    value: 14000 + i * 1050 + (i % 3) * 350,
+  }))
+  return {
+    kind: "chart",
+    title: titleFromPrompt(prompt),
+    subtitle: "Weekly attributed revenue, trailing 12 weeks",
+    chartType: "line",
+    series,
+    unitPrefix: "$",
+  }
+}
+
 export function activateSkillFromPrompt(
   prompt: string,
   options: { templateId?: string } = {},
 ): ActivationResult {
   const skill = options.templateId ? "autopilot" : detectSkill(prompt)
   const chatId = newId("chat")
+
+  // Chart / data-viz requests render the chart inline in the chat using the
+  // generated-UI template. Dashboard widgets (pin to dashboard / export) ship
+  // in a later iteration, so we don't activate a Widget Skill or build a widget
+  // artifact here.
+  if (skill === "widget") {
+    const widgetMemory = defaultMemoryItems("widget")
+    const chartMessages: AgentChatMessage[] = [
+      msg("user", prompt),
+      msg(
+        "assistant",
+        `Listed memory contents.\nRead ${widgetMemory.map((m) => `**${m}**`).join(", ")}`,
+        "memory",
+        { memoryItems: widgetMemory },
+      ),
+      msg("assistant", "Here's what your data shows:", "text", {
+        card: buildChartCard(prompt),
+      }),
+    ]
+    const chartChat: AgentChat = {
+      id: chatId,
+      title: titleFromPrompt(prompt),
+      preview: prompt,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+      pinned: false,
+      messages: chartMessages,
+    }
+    upsertAgentChat(chartChat)
+    return { chatId, skill, route: `/agent/chats/${chatId}` }
+  }
+
   const memory = defaultMemoryItems(skill)
   const skillLabel = describeSkill(skill)
 
@@ -119,23 +166,6 @@ export function activateSkillFromPrompt(
       skill,
       artifactRef: { type: "autopilot", id: artifact.id },
       route: `/agent/flow/${artifact.id}`,
-    }
-  } else if (skill === "widget") {
-    const artifact = buildSampleWidget(prompt, chatId)
-    upsertWidgetArtifact(artifact)
-    messages.push(
-      msg(
-        "assistant",
-        `Built a ${artifact.type} widget you can drop on the home dashboard. Opening it now.`,
-        "result",
-        { artifactRef: { type: "widget", id: artifact.id } },
-      ),
-    )
-    result = {
-      chatId,
-      skill,
-      artifactRef: { type: "widget", id: artifact.id },
-      route: `/agent/widget/${artifact.id}`,
     }
   } else {
     messages.push(

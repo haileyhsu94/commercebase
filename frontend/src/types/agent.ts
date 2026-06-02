@@ -1,3 +1,5 @@
+import type { AssistantCard } from "@/lib/assistant-cards"
+
 export type SkillType = "campaign" | "autopilot" | "widget" | "chat"
 
 export type ConnectorId =
@@ -74,6 +76,8 @@ export interface AgentChatMessage {
     questionChoices?: AgentChatChoice[]
     /** Set after the user picks a choice; disables the buttons. */
     questionAnswered?: string
+    /** Inline generated-UI card (e.g. a chart) rendered directly in the chat. */
+    card?: AssistantCard
   }
 }
 

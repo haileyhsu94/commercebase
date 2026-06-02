@@ -1,6 +1,7 @@
 import { useRef, useState } from "react"
 import { ArrowUp, Brain, Sparkles } from "lucide-react"
 import type { AgentChatChoice, AgentChatMessage } from "@/types/agent"
+import { AssistantCardView } from "@/components/shared/AssistantCardView"
 import { cn } from "@/lib/utils"
 
 /**
@@ -70,6 +71,16 @@ function MessageBubble({
       <div className="inline-flex items-center gap-1.5 rounded-md border bg-muted/60 px-2 py-1 text-xs font-medium text-foreground">
         <Sparkles className="h-3.5 w-3.5" />
         {message.content.replace(/\*\*/g, "")}
+      </div>
+    )
+  }
+  if (message.meta?.card) {
+    return (
+      <div className="max-w-[92%] space-y-2 text-sm text-foreground">
+        {message.content && (
+          <div className="whitespace-pre-wrap">{renderInline(message.content)}</div>
+        )}
+        <AssistantCardView card={message.meta.card} />
       </div>
     )
   }

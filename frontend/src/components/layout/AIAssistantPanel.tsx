@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react"
-import { useLocation } from "react-router-dom"
 import {
   X,
   Send,
@@ -8,12 +7,12 @@ import {
   GripVertical,
   ThumbsUp,
   ThumbsDown,
-  ChevronUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { Markdown } from "@/components/shared/Markdown"
+import { AssistantCardView } from "@/components/shared/AssistantCardView"
 import { useAIAssistant, type Message } from "@/contexts/AIAssistantContext"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +28,10 @@ function formatRelativeTime(date: Date): string {
 
 function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === "user"
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null)
+
+  const toggleFeedback = (value: "up" | "down") =>
+    setFeedback((prev) => (prev === value ? null : value))
 
   return (
     <div className={cn("flex flex-col gap-1", isUser ? "items-end" : "items-start")}>
@@ -44,7 +47,14 @@ function ChatMessage({ message }: { message: Message }) {
           </div>
         ) : (
           <div className="space-y-2 text-sm leading-relaxed text-slate-800 dark:text-foreground">
-            <p className="whitespace-pre-wrap">{message.content}</p>
+            <Markdown>{message.content}</Markdown>
+            {message.cards && message.cards.length > 0 && (
+              <div className="space-y-2 pt-1">
+                {message.cards.map((card, i) => (
+                  <AssistantCardView key={i} card={card} />
+                ))}
+              </div>
+            )}
             {message.actions && message.actions.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {message.actions.map((action, i) => (
@@ -68,25 +78,38 @@ function ChatMessage({ message }: { message: Message }) {
           {isUser ? "Me" : "Aeris"} • {formatRelativeTime(message.timestamp)}
         </span>
         {!isUser && (
-          <div className="flex items-center gap-0.5 opacity-60">
+          <div className="flex items-center gap-0.5">
             <Button
               type="button"
               variant="ghost"
               size="icon-xs"
-              className="size-6 text-muted-foreground hover:text-foreground"
               aria-label="Helpful"
+              aria-pressed={feedback === "up"}
+              onClick={() => toggleFeedback("up")}
+              className={cn(
+                "size-6 hover:text-foreground",
+                feedback === "up" ? "text-foreground" : "text-muted-foreground"
+              )}
             >
-              <ThumbsUp className="h-3 w-3" />
+              <ThumbsUp className={cn("h-3 w-3", feedback === "up" && "fill-current")} />
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="icon-xs"
-              className="size-6 text-muted-foreground hover:text-foreground"
               aria-label="Not helpful"
+              aria-pressed={feedback === "down"}
+              onClick={() => toggleFeedback("down")}
+              className={cn(
+                "size-6 hover:text-foreground",
+                feedback === "down" ? "text-foreground" : "text-muted-foreground"
+              )}
             >
-              <ThumbsDown className="h-3 w-3" />
+              <ThumbsDown className={cn("h-3 w-3", feedback === "down" && "fill-current")} />
             </Button>
+            {feedback && (
+              <span className="ml-1 text-[11px] text-muted-foreground">Thanks for your feedback</span>
+            )}
           </div>
         )}
       </div>
@@ -119,20 +142,14 @@ export function AIAssistantPanel() {
     clearMessages,
     isLoading,
     sendAssistantQuery,
-    currentContext,
     suggestedQuestions,
     examplePromptGroups,
     pendingComposerText,
     clearPendingComposerText,
   } = useAIAssistant()
 
-  const location = useLocation()
-  const showCampaignCopyHint =
-    currentContext.page === "Campaigns" || location.pathname.includes("/campaign")
-
   const [input, setInput] = useState("")
   const [isResizing, setIsResizing] = useState(false)
-  const [disclaimerMinimized, setDisclaimerMinimized] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -186,10 +203,14 @@ export function AIAssistantPanel() {
     const userMessage = input.trim()
     setInput("")
     await sendAssistantQuery(userMessage)
+    inputRef.current?.focus()
   }
 
-  const handleSuggestedQuestion = (question: string) => {
-    setInput(question)
+  const handleSuggestedQuestion = async (question: string) => {
+    if (isLoading) return
+    setInput("")
+    inputRef.current?.focus()
+    await sendAssistantQuery(question)
     inputRef.current?.focus()
   }
 
@@ -260,38 +281,6 @@ export function AIAssistantPanel() {
               </div>
             </div>
 
-            {!disclaimerMinimized ? (
-              <div className="flex shrink-0 items-start gap-2 border-b border-amber-200/70 bg-amber-50 px-3 py-2 dark:border-amber-800/50 dark:bg-amber-950/35">
-                <p className="min-w-0 flex-1 text-xs leading-snug text-amber-950 dark:text-amber-50">
-                  Aeris is in Beta. Responses may be incomplete or inaccurate.
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  className="shrink-0 text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900/40"
-                  aria-label="Minimize disclaimer"
-                  onClick={() => setDisclaimerMinimized(true)}
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="shrink-0 border-b border-border/60 bg-muted/30 px-3 py-1.5 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted/50"
-                onClick={() => setDisclaimerMinimized(false)}
-              >
-                Aeris Beta disclaimer minimized — tap to show
-              </button>
-            )}
-
-            {/* Context */}
-            <div className="shrink-0 border-b border-border/50 bg-muted/15 px-3 py-1.5">
-              <p className="text-[11px] text-muted-foreground">
-                Viewing: <span className="font-medium text-foreground/80">{currentContext.page}</span>
-              </p>
-            </div>
 
             {/* Messages */}
             <div
@@ -302,27 +291,24 @@ export function AIAssistantPanel() {
             >
               {messages.length === 0 ? (
                 <div className="space-y-4">
+                  {/* Shared gradient for category icons — matches the tutorial border */}
+                  <svg width="0" height="0" className="absolute" aria-hidden>
+                    <defs>
+                      <linearGradient id="aeris-category-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#fb923c" />
+                        <stop offset="50%" stopColor="#f472b6" />
+                        <stop offset="100%" stopColor="#2dd4bf" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
                   <div className="text-center">
-                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <h3 className="mt-3 text-sm font-semibold">How can I help you?</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Ask about campaigns, analytics, or AI visibility.
-                    </p>
-                    {showCampaignCopyHint && (
-                      <p className="mx-auto mt-3 max-w-[20rem] rounded-lg border border-indigo-200/80 bg-indigo-50/80 px-3 py-2 text-left text-[11px] leading-snug text-indigo-950 dark:border-indigo-800/60 dark:bg-indigo-950/40 dark:text-indigo-100">
-                        <span className="font-semibold">Campaign copy:</span> say you want to{" "}
-                        <span className="font-medium">copy</span>, <span className="font-medium">reuse</span>, or{" "}
-                        <span className="font-medium">start from</span> a campaign — after you send, Aeris can show{" "}
-                        <span className="font-medium">Open copy in wizard</span> to pre-fill the create flow.
-                      </p>
-                    )}
+                    <h3 className="text-lg font-semibold">How can I help you?</h3>
                   </div>
                   <div className="space-y-4">
                     {examplePromptGroups.map((group) => (
                       <div key={group.category} className="space-y-2">
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                          <group.icon className="h-3.5 w-3.5" stroke="url(#aeris-category-gradient)" />
                           {group.category}
                         </p>
                         <div className="flex flex-col gap-2">
@@ -357,37 +343,34 @@ export function AIAssistantPanel() {
                       </div>
                     </div>
                   )}
+                  {!isLoading && suggestedQuestions.length > 0 && (
+                    <div className="flex flex-col items-end gap-2 pt-1">
+                      {suggestedQuestions.slice(0, 3).map((q) => (
+                        <button
+                          key={q}
+                          type="button"
+                          onClick={() => handleSuggestedQuestion(q)}
+                          className="max-w-[min(100%,20rem)] rounded-2xl rounded-tr-md border border-indigo-200/80 bg-indigo-50/60 px-3 py-2 text-right text-sm text-indigo-900 transition-colors hover:bg-indigo-100/80 dark:border-indigo-800/50 dark:bg-indigo-950/30 dark:text-indigo-200 dark:hover:bg-indigo-950/50"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
               )}
             </div>
 
-            <Separator className="bg-border/60" />
-
             {/* Composer */}
             <form onSubmit={handleSubmit} className="shrink-0 space-y-2 p-3">
-              {messages.length > 0 && suggestedQuestions.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {suggestedQuestions.slice(0, 3).map((q) => (
-                    <button
-                      key={q}
-                      type="button"
-                      onClick={() => handleSuggestedQuestion(q)}
-                      className="rounded-lg border border-indigo-200/80 bg-indigo-50/50 px-2 py-1 text-[11px] text-indigo-900 transition-colors hover:bg-indigo-100/80 dark:border-indigo-800/50 dark:bg-indigo-950/30 dark:text-indigo-200 dark:hover:bg-indigo-950/50"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              )}
               <div className="flex gap-2">
                 <Input
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask Aeris to analyze, suggest, or act on your campaigns…"
-                  disabled={isLoading}
-                  className="flex-1 rounded-xl border-border/80 bg-muted/40 py-2 text-sm shadow-none focus-visible:ring-indigo-500/25 dark:bg-muted/25"
+                  placeholder="Ask Aeris"
+                  className="flex-1 rounded-xl border-border/80 bg-white py-2 text-sm shadow-none focus-visible:ring-indigo-500/25 dark:bg-background"
                 />
                 <Button
                   type="submit"

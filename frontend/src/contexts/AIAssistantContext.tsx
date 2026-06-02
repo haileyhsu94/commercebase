@@ -4,11 +4,14 @@ import {
   AERIS_EXAMPLE_PROMPT_GROUPS,
   type AerisExamplePromptGroup,
 } from "@/lib/aeris-example-prompts"
-import { getMockResponse } from "@/lib/assistant-mock"
+import { getMockReply } from "@/lib/assistant-mock"
+import type { AssistantCard } from "@/lib/assistant-cards"
 import {
   CAMPAIGN_WIZARD_AI_DRAFT_KEY,
   tryBuildAiCampaignCopy,
 } from "@/lib/campaign-ai-copy-mock"
+import { upsertAgentChat } from "@/lib/agent/storage"
+import type { AgentChat } from "@/types/agent"
 
 export type MessageRole = "user" | "assistant"
 
@@ -22,6 +25,35 @@ export interface Message {
     onClick: () => void
     variant?: "default" | "outline" | "destructive"
   }[]
+  cards?: AssistantCard[]
+}
+
+/**
+ * Session-scoped chat persistence — the conversation follows the user across
+ * refreshes and page changes within a visit, but is NOT a permanent history
+ * archive (sessionStorage clears when the tab/session ends). `actions` carry
+ * non-serializable onClick handlers, so they're dropped on persist.
+ */
+const CHAT_STORAGE_KEY = "aeris-sidebar-chat"
+
+function loadStoredMessages(): Message[] {
+  try {
+    const raw = sessionStorage.getItem(CHAT_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as (Omit<Message, "timestamp"> & { timestamp: string })[]
+    return parsed.map((m) => ({ ...m, timestamp: new Date(m.timestamp) }))
+  } catch {
+    return []
+  }
+}
+
+function storeMessages(messages: Message[]) {
+  try {
+    const serializable = messages.map(({ actions: _actions, ...rest }) => rest)
+    sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(serializable))
+  } catch {
+    /* ignore quota / serialization errors */
+  }
 }
 
 export type Permission = "view" | "campaigns" | "budgets" | "catalog" | "publishers"
@@ -38,7 +70,7 @@ interface AIAssistantContextType {
   addMessage: (
     content: string,
     role: MessageRole,
-    options?: Pick<Message, "actions">
+    options?: Pick<Message, "actions" | "cards">
   ) => void
   clearMessages: () => void
   isLoading: boolean
@@ -153,7 +185,7 @@ export function AIAssistantProvider({ children }: AIAssistantProviderProps) {
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>(loadStoredMessages)
   const [isLoading, setIsLoading] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>(["view"])
   const [pendingComposerText, setPendingComposerText] = useState<string | null>(null)
@@ -161,12 +193,45 @@ export function AIAssistantProvider({ children }: AIAssistantProviderProps) {
 
   const pageContext = getPageContext(location.pathname)
 
+  const messagesRef = useRef<Message[]>(messages)
+  useEffect(() => {
+    messagesRef.current = messages
+    storeMessages(messages)
+  }, [messages])
+
+  /** Promote the current sidebar conversation into a saved Agent chat. */
+  const continueInAgent = useCallback(() => {
+    const current = messagesRef.current
+    if (current.length === 0) return
+    const now = new Date().toISOString()
+    const firstUser = current.find((m) => m.role === "user")
+    const lastAssistant = [...current].reverse().find((m) => m.role === "assistant")
+    const chat: AgentChat = {
+      id: crypto.randomUUID(),
+      title: (firstUser?.content ?? "Conversation with Aeris").slice(0, 60),
+      preview: (lastAssistant?.content ?? "").replace(/\s+/g, " ").slice(0, 120),
+      createdAt: now,
+      updatedAt: now,
+      pinned: false,
+      messages: current.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        kind: "text" as const,
+        timestamp: m.timestamp.toISOString(),
+      })),
+    }
+    upsertAgentChat(chat)
+    setIsOpen(false)
+    navigate(`/agent/chats/${chat.id}`)
+  }, [navigate])
+
   const toggleOpen = useCallback(() => {
     setIsOpen((prev) => !prev)
   }, [])
 
   const addMessage = useCallback(
-    (content: string, role: MessageRole, options?: Pick<Message, "actions">) => {
+    (content: string, role: MessageRole, options?: Pick<Message, "actions" | "cards">) => {
       const message: Message = {
         id: crypto.randomUUID(),
         role,
@@ -214,17 +279,28 @@ export function AIAssistantProvider({ children }: AIAssistantProviderProps) {
           })
           return
         }
-        addMessage(getMockResponse(trimmed), "assistant")
+        const reply = getMockReply(trimmed)
+        addMessage(reply.content, "assistant", {
+          cards: reply.cards,
+          actions: reply.handoff
+            ? [{ label: "Continue in Agent", variant: "default", onClick: continueInAgent }]
+            : undefined,
+        })
       } finally {
         setIsLoading(false)
         loadingLock.current = false
       }
     },
-    [addMessage, location.pathname, navigate]
+    [addMessage, location.pathname, navigate, continueInAgent]
   )
 
   const clearMessages = useCallback(() => {
     setMessages([])
+    try {
+      sessionStorage.removeItem(CHAT_STORAGE_KEY)
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   const clearPendingComposerText = useCallback(() => {

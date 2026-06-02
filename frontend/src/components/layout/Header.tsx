@@ -10,7 +10,7 @@ import { useHomeMode } from "@/contexts/HomeModeContext"
 import { cn } from "@/lib/utils"
 
 export function Header() {
-  const { toggleOpen } = useAIAssistant()
+  const { toggleOpen, isOpen } = useAIAssistant()
   const { openSearch } = useGlobalSearch()
   const { mode, setMode, campaignPanelOpen, setCampaignPanelOpen } = useHomeMode()
   const navigate = useNavigate()
@@ -117,24 +117,23 @@ export function Header() {
           }
         </button>
       )}
-      {mode !== "ai" && (
+      {mode !== "ai" && !isOpen && (
         <Button
           onClick={toggleOpen}
           variant="outline"
           size="sm"
           className={cn(
-            "gap-1.5 border-indigo-500/45 bg-indigo-500/15 text-indigo-950 shadow-none",
-            "hover:bg-indigo-500/28 hover:text-indigo-950",
-            "focus-visible:ring-indigo-500/45 [&_svg]:text-indigo-600",
-            "dark:border-indigo-400/50 dark:bg-indigo-500/22 dark:text-indigo-50",
-            "dark:hover:bg-indigo-500/32 dark:hover:text-indigo-50 dark:[&_svg]:text-indigo-300"
+            "gap-1.5 border-indigo-300/70 bg-indigo-50 text-indigo-950 shadow-none",
+            "hover:bg-indigo-100 hover:text-indigo-950",
+            "focus-visible:ring-indigo-400/40 [&_svg]:text-indigo-600",
+            "dark:border-indigo-700/60 dark:bg-indigo-950/40 dark:text-indigo-50 dark:hover:bg-indigo-900/50 dark:[&_svg]:text-indigo-300"
           )}
         >
           <Sparkles className="h-4 w-4 shrink-0" />
           Ask Aeris
           <Badge
             variant="secondary"
-            className="h-5 border border-violet-300/90 bg-violet-100 px-1.5 text-[10px] font-semibold text-violet-900 dark:border-violet-500/40 dark:bg-violet-950/60 dark:text-violet-200"
+            className="h-5 border border-indigo-200/90 bg-indigo-100 px-2 text-[10px] font-medium text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300"
           >
             Beta
           </Badge>
